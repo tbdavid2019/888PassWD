@@ -49,6 +49,7 @@
 | Login requests | ✅ | ✅ | **Passwordless login approval across devices; cross-device unlock requests** |
 | **Multi-user** | ✅ | ✅ | Invite-code registration |
 | Domain rules | ✅ | ✅ | Custom equivalent domains, global domain exclusions |
+| Fill-assist | ✅ | ✅ | `POST /fill-assist` for client autofill assist; does not bypass vault unlock |
 | Organizations / collections / member roles | ✅ | ❌ | Not implemented |
 | SSO / SCIM / enterprise directory | ✅ | ❌ | Not implemented |
 
