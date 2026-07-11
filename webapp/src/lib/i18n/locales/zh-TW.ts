@@ -1451,4 +1451,39 @@ const zhTW: Record<string, string> = {
   "txt_auth_request_missing_public_key": "裝置登入請求缺少公鑰"
 };
 
+Object.assign(zhTW, {
+  "nav_password_security": "密碼安全",
+  "txt_password_security": "密碼安全檢查",
+  "txt_password_security_privacy": "密碼僅在本機前端檢查；只有匿名雜湊前綴會傳送到外洩密碼庫。",
+  "txt_check_password_security": "開始檢查",
+  "txt_checking_password_security": "檢查中",
+  "txt_recheck_password_security": "重新檢查",
+  "txt_password_security_ready": "密碼庫已準備好進行安全檢查。",
+  "txt_password_security_no_login": "沒有可檢查的登入密碼。",
+  "txt_password_security_manual": "僅在您主動開始後才會連線檢查；結果會保留到重新整理頁面或密碼庫內容變更前。",
+  "txt_password_security_no_login_help": "新增一個含有密碼的登入項目後，再回到此處檢查。",
+  "txt_exposed_passwords": "已外洩",
+  "txt_reused_passwords": "重複使用",
+  "txt_weak_passwords": "較弱",
+  "txt_passwords_checked": "已檢查",
+  "txt_password_security_last_checked": "上次檢查：{value}",
+  "txt_password_security_show_all": "顯示全部",
+  "txt_password_security_hide_all": "隱藏全部",
+  "txt_password_security_jump": "跳轉",
+  "txt_password_security_exposed_short": "外洩 {count} 次",
+  "txt_password_security_weak_short": "弱密碼",
+  "txt_password_security_reused_short": "重複",
+  "txt_password_security_unavailable": "有 {count} 個密碼無法連線至外洩資料庫，未被標記為安全。",
+  "txt_password_security_not_checked": "未檢查",
+  "txt_password_exposed_count": "已在 {count} 次外洩中出現",
+  "txt_password_reused_count": "使用了 {count} 次",
+  "txt_weak_password": "較弱密碼",
+  "txt_no_password_risks": "未發現密碼風險",
+  "txt_no_password_risks_in_filter": "此類別中沒有密碼風險",
+  "txt_open_vault": "開啟密碼庫",
+  "txt_check_password_breach": "檢查外洩",
+  "txt_password_not_found_in_breaches": "未在外洩密碼庫中發現",
+  "txt_password_security_check_failed": "無法完成外洩檢查。"
+});
+
 export default zhTW;

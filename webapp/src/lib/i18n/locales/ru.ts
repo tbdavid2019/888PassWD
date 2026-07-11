@@ -1448,4 +1448,12 @@ const ru: Record<string, string> = {
   "txt_auth_request_missing_public_key": "В запросе входа с устройства отсутствует открытый ключ"
 };
 
+Object.assign(ru, {
+  "nav_password_security": "Безопасность паролей", "txt_password_security": "Проверка безопасности паролей", "txt_password_security_privacy": "Пароли проверяются локально. После запуска в базу утечек передаётся только анонимный префикс хеша.", "txt_check_password_security": "Начать проверку", "txt_checking_password_security": "Проверка", "txt_recheck_password_security": "Проверить снова", "txt_password_security_ready": "Ваше хранилище готово к проверке безопасности.", "txt_password_security_no_login": "Нет паролей для входа, доступных для проверки.", "txt_password_security_manual": "Проверка запускается только по вашему выбору. Результаты остаются только на этой странице.", "txt_password_security_no_login_help": "Добавьте запись входа с паролем и вернитесь сюда для проверки.", "txt_exposed_passwords": "Скомпрометированы", "txt_reused_passwords": "Повторно используются", "txt_weak_passwords": "Слабые", "txt_passwords_checked": "Проверено", "txt_password_security_unavailable": "{count} проверок не смогли обратиться к базе утечек. Они не помечены безопасными.", "txt_password_security_not_checked": "Не проверено", "txt_password_exposed_count": "Найдено в {count} утечках", "txt_password_reused_count": "Используется {count} раз", "txt_weak_password": "Слабый пароль", "txt_no_password_risks": "Рисков паролей не найдено", "txt_open_vault": "Открыть хранилище", "txt_check_password_breach": "Проверить утечку", "txt_password_not_found_in_breaches": "Не найден в базе утечек", "txt_password_security_check_failed": "Не удалось завершить проверку утечки."
+});
+
+Object.assign(ru, { "txt_password_security_last_checked": "Последняя проверка: {value}" });
+Object.assign(ru, { "txt_no_password_risks_in_filter": "В этой категории нет рисков для паролей" });
+Object.assign(ru, { "txt_password_security_show_all": "Show all", "txt_password_security_hide_all": "Hide all", "txt_password_security_jump": "Go to item", "txt_password_security_exposed_short": "Exposed {count} times", "txt_password_security_weak_short": "Weak password", "txt_password_security_reused_short": "Reused" });
+
 export default ru;

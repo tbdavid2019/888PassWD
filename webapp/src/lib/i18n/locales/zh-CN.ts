@@ -1451,4 +1451,39 @@ const zhCN: Record<string, string> = {
   "txt_ip_address": "IP 地址"
 };
 
+Object.assign(zhCN, {
+  "nav_password_security": "安全检测",
+  "txt_password_security": "安全检测",
+  "txt_password_security_privacy": "密码仅在本地前端检查；只有匿名哈希前缀会发送到泄露密码库。",
+  "txt_check_password_security": "开始检查",
+  "txt_checking_password_security": "检查中",
+  "txt_recheck_password_security": "重新检查",
+  "txt_password_security_ready": "密码库已准备好进行安全检查。",
+  "txt_password_security_no_login": "没有可检查的登录密码。",
+  "txt_password_security_manual": "仅在您主动开始后才会联网检查；结果会保留到刷新页面或密码库内容变更前。",
+  "txt_password_security_no_login_help": "添加一个包含密码的登录项目后，再回到此处检查。",
+  "txt_exposed_passwords": "已泄露",
+  "txt_reused_passwords": "重复使用",
+  "txt_weak_passwords": "较弱",
+  "txt_passwords_checked": "已检查",
+  "txt_password_security_last_checked": "上次检测：{value}",
+  "txt_password_security_show_all": "显示全部",
+  "txt_password_security_hide_all": "隐藏全部",
+  "txt_password_security_jump": "跳转",
+  "txt_password_security_exposed_short": "泄露 {count} 次",
+  "txt_password_security_weak_short": "弱密码",
+  "txt_password_security_reused_short": "重复",
+  "txt_password_security_unavailable": "有 {count} 个密码无法连接泄露库，未被标记为安全。",
+  "txt_password_security_not_checked": "未检查",
+  "txt_password_exposed_count": "已在 {count} 次泄露中出现",
+  "txt_password_reused_count": "使用了 {count} 次",
+  "txt_weak_password": "较弱密码",
+  "txt_no_password_risks": "未发现密码风险",
+  "txt_no_password_risks_in_filter": "此类别中没有密码风险",
+  "txt_open_vault": "打开密码库",
+  "txt_check_password_breach": "检查泄露",
+  "txt_password_not_found_in_breaches": "未在泄露密码库中发现",
+  "txt_password_security_check_failed": "无法完成泄露检查。"
+});
+
 export default zhCN;

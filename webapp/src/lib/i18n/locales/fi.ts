@@ -1448,4 +1448,12 @@ const fi: Record<string, string> = {
   "txt_ip_address": "IP-osoite"
 };
 
+Object.assign(fi, {
+  "nav_password_security": "Salasanasuojaus", "txt_password_security": "Salasanojen turvatarkistus", "txt_password_security_privacy": "Salasanat tarkistetaan paikallisesti. Vain anonyymi hajautteen alku lähetetään vuototietokantaan tarkistuksen alkaessa.", "txt_check_password_security": "Aloita tarkistus", "txt_checking_password_security": "Tarkistetaan", "txt_recheck_password_security": "Tarkista uudelleen", "txt_password_security_ready": "Holvisi on valmis turvatarkistukseen.", "txt_password_security_no_login": "Tarkistettavia kirjautumissalasanoja ei ole.", "txt_password_security_manual": "Tarkistus käynnistyy vain valinnastasi. Tulokset säilyvät vain tällä sivulla.", "txt_password_security_no_login_help": "Lisää kirjautuminen salasanalla ja palaa sitten tarkistamaan se.", "txt_exposed_passwords": "Vuotaneet", "txt_reused_passwords": "Uudelleenkäytetyt", "txt_weak_passwords": "Heikot", "txt_passwords_checked": "Tarkistettu", "txt_password_security_unavailable": "{count} salasanatarkistusta ei tavoittanut vuototietokantaa. Niitä ei merkitä turvallisiksi.", "txt_password_security_not_checked": "Ei tarkistettu", "txt_password_exposed_count": "Löytyi {count} vuodosta", "txt_password_reused_count": "Käytetty {count} kertaa", "txt_weak_password": "Heikko salasana", "txt_no_password_risks": "Salasanariskejä ei löytynyt", "txt_open_vault": "Avaa holvi", "txt_check_password_breach": "Tarkista vuoto", "txt_password_not_found_in_breaches": "Ei löytynyt vuototietokannasta", "txt_password_security_check_failed": "Vuototarkistusta ei voitu suorittaa."
+});
+
+Object.assign(fi, { "txt_password_security_last_checked": "Tarkistettu viimeksi: {value}" });
+Object.assign(fi, { "txt_no_password_risks_in_filter": "Tässä luokassa ei ole salasanojen riskejä" });
+Object.assign(fi, { "txt_password_security_show_all": "Show all", "txt_password_security_hide_all": "Hide all", "txt_password_security_jump": "Go to item", "txt_password_security_exposed_short": "Exposed {count} times", "txt_password_security_weak_short": "Weak password", "txt_password_security_reused_short": "Reused" });
+
 export default fi;

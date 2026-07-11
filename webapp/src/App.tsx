@@ -68,6 +68,7 @@ import { t } from '@/lib/i18n';
 import { APP_NOTIFY_EVENT, type AppNotifyDetail } from '@/lib/app-notify';
 import { dispatchBackupProgress, type BackupProgressDetail } from '@/lib/backup-restore-progress';
 import { clearOfflineUnlockRecord } from '@/lib/offline-auth';
+import { clearPasswordSecurityCache } from '@/lib/password-security-cache';
 import { decryptSends, decryptVaultCore } from '@/lib/vault-decrypt';
 import { decryptSendsInWorker, decryptVaultCoreInWorker } from '@/lib/vault-worker';
 import {
@@ -111,6 +112,7 @@ const APP_ROUTE_PATHS = [
   '/',
   '/vault',
   '/vault/totp',
+  '/security/password-health',
   '/generator',
   '/sends',
   '/admin',
@@ -385,6 +387,10 @@ export default function App() {
       setUnlockPreparing(false);
     }
   }, [phase, profile, session]);
+
+  useEffect(() => {
+    if (phase !== 'app') clearPasswordSecurityCache();
+  }, [phase]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -872,6 +878,7 @@ export default function App() {
     setDecryptedFolders([]);
     setDecryptedCiphers([]);
     setDecryptedSends([]);
+    clearPasswordSecurityCache();
     setUnlockPassword('');
     setPendingTotp(null);
     setPendingTotpMode(null);
@@ -893,6 +900,7 @@ export default function App() {
     setSession(null);
     clearProfileSnapshot();
     clearOfflineUnlockRecord();
+    clearPasswordSecurityCache();
     setProfile(null);
     setUnlockPreparing(false);
     setPendingTotp(null);
@@ -1910,6 +1918,7 @@ export default function App() {
           ? '/vault'
           : '/settings';
   const currentPageTitle = (() => {
+    if (location === '/security/password-health') return t('txt_password_security');
     if (location === '/vault/totp') return t('txt_verification_code');
     if (location === '/generator') return t('txt_password_generator');
     if (location === '/sends') return t('nav_sends');

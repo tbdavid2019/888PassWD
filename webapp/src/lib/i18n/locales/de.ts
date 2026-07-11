@@ -1448,4 +1448,12 @@ const de: Record<string, string> = {
   "txt_ip_address": "IP-Adresse"
 };
 
+Object.assign(de, {
+  "nav_password_security": "Passwortsicherheit", "txt_password_security": "Passwort-Sicherheitsprüfung", "txt_password_security_privacy": "Passwörter werden lokal geprüft. Erst nach dem Start wird nur ein anonymer Hash-Präfix an die Leckdatenbank gesendet.", "txt_check_password_security": "Prüfung starten", "txt_checking_password_security": "Prüfung läuft", "txt_recheck_password_security": "Erneut prüfen", "txt_password_security_ready": "Ihr Tresor ist für eine Sicherheitsprüfung bereit.", "txt_password_security_no_login": "Es gibt keine Login-Passwörter zu prüfen.", "txt_password_security_manual": "Die Prüfung startet nur auf Ihre Anfrage. Ergebnisse bleiben nur auf dieser Seite.", "txt_password_security_no_login_help": "Fügen Sie einen Login-Eintrag mit Passwort hinzu und prüfen Sie ihn anschließend hier.", "txt_exposed_passwords": "Geleakt", "txt_reused_passwords": "Wiederverwendet", "txt_weak_passwords": "Schwach", "txt_passwords_checked": "Geprüft", "txt_password_security_unavailable": "{count} Passwortprüfungen konnten die Leckdatenbank nicht erreichen. Sie werden nicht als sicher markiert.", "txt_password_security_not_checked": "Nicht geprüft", "txt_password_exposed_count": "In {count} Lecks gefunden", "txt_password_reused_count": "{count}-mal verwendet", "txt_weak_password": "Schwaches Passwort", "txt_no_password_risks": "Keine Passwortrisiken gefunden", "txt_open_vault": "Tresor öffnen", "txt_check_password_breach": "Leck prüfen", "txt_password_not_found_in_breaches": "Nicht in der Leckdatenbank gefunden", "txt_password_security_check_failed": "Die Leckprüfung konnte nicht abgeschlossen werden."
+});
+
+Object.assign(de, { "txt_password_security_last_checked": "Zuletzt überprüft: {value}" });
+Object.assign(de, { "txt_no_password_risks_in_filter": "Keine Passwortrisiken in dieser Kategorie" });
+Object.assign(de, { "txt_password_security_show_all": "Alle anzeigen", "txt_password_security_hide_all": "Alle ausblenden", "txt_password_security_jump": "Öffnen", "txt_password_security_exposed_short": "{count}-mal geleakt", "txt_password_security_weak_short": "Schwaches Passwort", "txt_password_security_reused_short": "Wiederverwendet" });
+
 export default de;

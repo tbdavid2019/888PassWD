@@ -1471,4 +1471,39 @@ const en: Record<string, string> = {
   "txt_ip_address": "IP address"
 };
 
+Object.assign(en, {
+  "nav_password_security": "Password Security",
+  "txt_password_security": "Password Security Check",
+  "txt_password_security_privacy": "Passwords are checked locally in your browser. Only an anonymous hash prefix is sent to the breach database.",
+  "txt_check_password_security": "Start check",
+  "txt_checking_password_security": "Checking",
+  "txt_recheck_password_security": "Check again",
+  "txt_password_security_ready": "Your vault is ready for a security check.",
+  "txt_password_security_no_login": "There are no login passwords to check.",
+  "txt_password_security_manual": "The check only starts when you choose it. Results are kept until you refresh or your vault changes.",
+  "txt_password_security_no_login_help": "Add a login item with a password, then return here to check it.",
+  "txt_exposed_passwords": "Exposed",
+  "txt_reused_passwords": "Reused",
+  "txt_weak_passwords": "Weak",
+  "txt_passwords_checked": "Checked",
+  "txt_password_security_last_checked": "Last checked: {value}",
+  "txt_password_security_show_all": "Show all",
+  "txt_password_security_hide_all": "Hide all",
+  "txt_password_security_jump": "Go to item",
+  "txt_password_security_exposed_short": "Exposed {count} times",
+  "txt_password_security_weak_short": "Weak password",
+  "txt_password_security_reused_short": "Reused",
+  "txt_password_security_unavailable": "{count} password checks could not reach the breach database. They are not marked safe.",
+  "txt_password_security_not_checked": "Not checked",
+  "txt_password_exposed_count": "Found in {count} breaches",
+  "txt_password_reused_count": "Used {count} times",
+  "txt_weak_password": "Weak password",
+  "txt_no_password_risks": "No password risks found",
+  "txt_no_password_risks_in_filter": "No password risks in this category",
+  "txt_open_vault": "Open vault",
+  "txt_check_password_breach": "Check breach",
+  "txt_password_not_found_in_breaches": "Not found in the breach database",
+  "txt_password_security_check_failed": "The breach check could not be completed."
+});
+
 export default en;

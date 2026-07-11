@@ -1448,4 +1448,12 @@ const sv: Record<string, string> = {
   "txt_ip_address": "IP-adress"
 };
 
+Object.assign(sv, {
+  "nav_password_security": "Lösenordssäkerhet", "txt_password_security": "Säkerhetskontroll för lösenord", "txt_password_security_privacy": "Lösenord kontrolleras lokalt. Endast ett anonymt hashprefix skickas till läckdatabasen när du startar kontrollen.", "txt_check_password_security": "Starta kontroll", "txt_checking_password_security": "Kontrollerar", "txt_recheck_password_security": "Kontrollera igen", "txt_password_security_ready": "Ditt valv är redo för en säkerhetskontroll.", "txt_password_security_no_login": "Det finns inga inloggningslösenord att kontrollera.", "txt_password_security_manual": "Kontrollen startar bara när du väljer den. Resultaten stannar på denna sida.", "txt_password_security_no_login_help": "Lägg till en inloggning med lösenord och återvänd sedan hit för att kontrollera den.", "txt_exposed_passwords": "Läckta", "txt_reused_passwords": "Återanvända", "txt_weak_passwords": "Svaga", "txt_passwords_checked": "Kontrollerade", "txt_password_security_unavailable": "{count} lösenordskontroller kunde inte nå läckdatabasen. De markeras inte som säkra.", "txt_password_security_not_checked": "Inte kontrollerad", "txt_password_exposed_count": "Hittades i {count} läckor", "txt_password_reused_count": "Användes {count} gånger", "txt_weak_password": "Svagt lösenord", "txt_no_password_risks": "Inga lösenordsrisker hittades", "txt_open_vault": "Öppna valv", "txt_check_password_breach": "Kontrollera läcka", "txt_password_not_found_in_breaches": "Hittades inte i läckdatabasen", "txt_password_security_check_failed": "Läckkontrollen kunde inte slutföras."
+});
+
+Object.assign(sv, { "txt_password_security_last_checked": "Senast kontrollerad: {value}" });
+Object.assign(sv, { "txt_no_password_risks_in_filter": "Inga lösenordsrisker i denna kategori" });
+Object.assign(sv, { "txt_password_security_show_all": "Show all", "txt_password_security_hide_all": "Hide all", "txt_password_security_jump": "Go to item", "txt_password_security_exposed_short": "Exposed {count} times", "txt_password_security_weak_short": "Weak password", "txt_password_security_reused_short": "Reused" });
+
 export default sv;
