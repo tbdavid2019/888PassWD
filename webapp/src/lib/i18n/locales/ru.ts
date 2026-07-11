@@ -8,6 +8,7 @@ const ru: Record<string, string> = {
   "nav_my_vault": "Мое хранилище",
   "nav_vault_items": "Хранилище",
   "nav_sends": "Отправляет",
+  "nav_generator": "Генератор", "txt_password_generator": "Генератор паролей", "txt_password_generator_description": "Создайте надежный уникальный пароль локально на этом устройстве.", "txt_generator_type": "Тип генератора", "txt_passphrase": "Парольная фраза", "txt_generated_password": "Созданный пароль", "txt_password_strength": "Надежность", "txt_password_strength_weak": "Слабый", "txt_password_strength_fair": "Средний", "txt_password_strength_good": "Хороший", "txt_password_strength_strong": "Надежный", "txt_generator_security_note": "Генерация выполняется локально. Пароль никогда не отправляется на сервер.", "txt_generator_length": "Длина", "txt_generator_character_types": "Типы символов", "txt_generator_uppercase": "Заглавные буквы (A-Z)", "txt_generator_lowercase": "Строчные буквы (a-z)", "txt_generator_numbers": "Цифры (0-9)", "txt_generator_special": "Специальные символы (!@#$%^&*)", "txt_generator_minimum": "Минимум", "txt_generator_avoid_ambiguous": "Исключить похожие символы", "txt_generator_words": "Количество слов", "txt_generator_separator": "Разделитель слов", "txt_generator_capitalize": "С заглавной буквы", "txt_generator_include_number": "Добавить число",
   "nav_backup_strategy": "Облачное резервное копирование",
   "nav_import_export": "Импорт и экспорт",
   "nav_group_data_backup": "Данные и резервные копии",

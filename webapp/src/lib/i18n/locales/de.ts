@@ -7,6 +7,7 @@ const de: Record<string, string> = {
   "nav_my_vault": "Mein Tresor",
   "nav_vault_items": "Tresor",
   "nav_sends": "Sendungen",
+  "nav_generator": "Passwortwerkzeug", "txt_password_generator": "Passwortgenerator", "txt_password_generator_description": "Erstellen Sie lokal auf diesem Gerät ein starkes, einzigartiges Passwort.", "txt_generator_type": "Generatortyp", "txt_passphrase": "Kennwortsatz", "txt_generated_password": "Generiertes Passwort", "txt_password_strength": "Stärke", "txt_password_strength_weak": "Schwach", "txt_password_strength_fair": "Mittel", "txt_password_strength_good": "Gut", "txt_password_strength_strong": "Stark", "txt_generator_security_note": "Die Erzeugung erfolgt lokal. Ihr Passwort wird nie an den Server gesendet.", "txt_generator_length": "Länge", "txt_generator_character_types": "Zeichentypen", "txt_generator_uppercase": "Großbuchstaben (A-Z)", "txt_generator_lowercase": "Kleinbuchstaben (a-z)", "txt_generator_numbers": "Zahlen (0-9)", "txt_generator_special": "Sonderzeichen (!@#$%^&*)", "txt_generator_minimum": "Mindestanzahl", "txt_generator_avoid_ambiguous": "Verwechselbare Zeichen vermeiden", "txt_generator_words": "Anzahl der Wörter", "txt_generator_separator": "Worttrenner", "txt_generator_capitalize": "Großschreibung", "txt_generator_include_number": "Eine Zahl einfügen",
   "nav_backup_strategy": "Cloud-Backup",
   "nav_import_export": "Import und Export",
   "nav_group_data_backup": "Daten & Backup",

@@ -7,6 +7,7 @@ const sv: Record<string, string> = {
   "nav_my_vault": "Mitt valv",
   "nav_vault_items": "Valv",
   "nav_sends": "Skickat",
+  "nav_generator": "Generator", "txt_password_generator": "Lösenordsgenerator", "txt_password_generator_description": "Skapa ett starkt och unikt lösenord lokalt på den här enheten.", "txt_generator_type": "Generatortyp", "txt_passphrase": "Lösenfras", "txt_generated_password": "Genererat lösenord", "txt_password_strength": "Styrka", "txt_password_strength_weak": "Svagt", "txt_password_strength_fair": "Medel", "txt_password_strength_good": "Bra", "txt_password_strength_strong": "Starkt", "txt_generator_security_note": "Generering sker lokalt. Ditt lösenord skickas aldrig till servern.", "txt_generator_length": "Längd", "txt_generator_character_types": "Teckentyper", "txt_generator_uppercase": "Versaler (A-Z)", "txt_generator_lowercase": "Gemener (a-z)", "txt_generator_numbers": "Siffror (0-9)", "txt_generator_special": "Specialtecken (!@#$%^&*)", "txt_generator_minimum": "Minst", "txt_generator_avoid_ambiguous": "Undvik tvetydiga tecken", "txt_generator_words": "Antal ord", "txt_generator_separator": "Ordavgränsare", "txt_generator_capitalize": "Stor begynnelsebokstav", "txt_generator_include_number": "Inkludera en siffra",
   "nav_backup_strategy": "Molnsäkerhetskopiering",
   "nav_import_export": "Importera och Exportera",
   "nav_group_data_backup": "Data och Säkerhetskopiering",

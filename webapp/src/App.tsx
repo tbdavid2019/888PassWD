@@ -111,6 +111,7 @@ const APP_ROUTE_PATHS = [
   '/',
   '/vault',
   '/vault/totp',
+  '/generator',
   '/sends',
   '/admin',
   '/logs',
@@ -1901,6 +1902,8 @@ export default function App() {
   const mobilePrimaryRoute =
     location === '/sends'
       ? '/sends'
+      : location === '/generator'
+        ? '/generator'
       : location === '/vault/totp'
         ? '/vault/totp'
         : location === '/vault'
@@ -1908,6 +1911,7 @@ export default function App() {
           : '/settings';
   const currentPageTitle = (() => {
     if (location === '/vault/totp') return t('txt_verification_code');
+    if (location === '/generator') return t('txt_password_generator');
     if (location === '/sends') return t('nav_sends');
     if (location === '/admin') return t('nav_admin_panel');
     if (location === '/logs') return t('nav_log_center');

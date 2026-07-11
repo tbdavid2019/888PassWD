@@ -7,6 +7,7 @@ const es: Record<string, string> = {
   "nav_my_vault": "Mi bóveda",
   "nav_vault_items": "Bóveda",
   "nav_sends": "Envíos",
+  "nav_generator": "Generador", "txt_password_generator": "Generador de contraseñas", "txt_password_generator_description": "Crea una contraseña única y segura localmente en este dispositivo.", "txt_generator_type": "Tipo de generador", "txt_passphrase": "Frase de contraseña", "txt_generated_password": "Contraseña generada", "txt_password_strength": "Seguridad", "txt_password_strength_weak": "Débil", "txt_password_strength_fair": "Regular", "txt_password_strength_good": "Buena", "txt_password_strength_strong": "Fuerte", "txt_generator_security_note": "La generación se realiza localmente. Tu contraseña nunca se envía al servidor.", "txt_generator_length": "Longitud", "txt_generator_character_types": "Tipos de caracteres", "txt_generator_uppercase": "Mayúsculas (A-Z)", "txt_generator_lowercase": "Minúsculas (a-z)", "txt_generator_numbers": "Números (0-9)", "txt_generator_special": "Caracteres especiales (!@#$%^&*)", "txt_generator_minimum": "Mínimo", "txt_generator_avoid_ambiguous": "Evitar caracteres ambiguos", "txt_generator_words": "Número de palabras", "txt_generator_separator": "Separador de palabras", "txt_generator_capitalize": "Usar mayúsculas", "txt_generator_include_number": "Incluir un número",
   "nav_backup_strategy": "Copia de seguridad en la nube",
   "nav_import_export": "Importar y exportar",
   "nav_group_data_backup": "Datos y copias",

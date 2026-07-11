@@ -7,6 +7,7 @@ const fr: Record<string, string> = {
   "nav_my_vault": "Mon coffre-fort",
   "nav_vault_items": "Coffre-fort",
   "nav_sends": "Envois",
+  "nav_generator": "Générateur", "txt_password_generator": "Générateur de mots de passe", "txt_password_generator_description": "Créez un mot de passe fort et unique localement sur cet appareil.", "txt_generator_type": "Type de générateur", "txt_passphrase": "Phrase secrète", "txt_generated_password": "Mot de passe généré", "txt_password_strength": "Robustesse", "txt_password_strength_weak": "Faible", "txt_password_strength_fair": "Correcte", "txt_password_strength_good": "Bonne", "txt_password_strength_strong": "Forte", "txt_generator_security_note": "La génération est locale. Votre mot de passe n'est jamais envoyé au serveur.", "txt_generator_length": "Longueur", "txt_generator_character_types": "Types de caractères", "txt_generator_uppercase": "Majuscules (A-Z)", "txt_generator_lowercase": "Minuscules (a-z)", "txt_generator_numbers": "Chiffres (0-9)", "txt_generator_special": "Caractères spéciaux (!@#$%^&*)", "txt_generator_minimum": "Minimum", "txt_generator_avoid_ambiguous": "Éviter les caractères ambigus", "txt_generator_words": "Nombre de mots", "txt_generator_separator": "Séparateur de mots", "txt_generator_capitalize": "Mettre une majuscule", "txt_generator_include_number": "Inclure un chiffre",
   "nav_backup_strategy": "Sauvegarde Cloud",
   "nav_import_export": "Importer & Exporter",
   "nav_group_data_backup": "Données & Sauvegarde",

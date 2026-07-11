@@ -13,6 +13,7 @@ import type { ExportRequest } from '@/lib/export-formats';
 
 const VaultPage = lazy(() => import('@/components/VaultPage'));
 const SendsPage = lazy(() => import('@/components/SendsPage'));
+const PasswordGeneratorPage = lazy(() => import('@/components/PasswordGeneratorPage'));
 const TotpCodesPage = lazy(() => import('@/components/TotpCodesPage'));
 const SettingsPage = lazy(() => import('@/components/SettingsPage'));
 const DomainRulesPage = lazy(() => import('@/components/DomainRulesPage'));
@@ -207,6 +208,11 @@ export default function AppMainRoutes(props: AppMainRoutesProps) {
 
   return (
     <Switch>
+      <Route path="/generator">
+        <Suspense fallback={<RouteContentFallback />}>
+          <PasswordGeneratorPage />
+        </Suspense>
+      </Route>
       <Route path="/sends">
         <Suspense fallback={<RouteContentFallback />}>
           <SendsPage

@@ -7,6 +7,7 @@ const it: Record<string, string> = {
   "nav_my_vault": "La mia Cassaforte",
   "nav_vault_items": "Cassaforte",
   "nav_sends": "Invii",
+  "nav_generator": "Generatore", "txt_password_generator": "Generatore di password", "txt_password_generator_description": "Crea una password forte e univoca localmente su questo dispositivo.", "txt_generator_type": "Tipo di generatore", "txt_passphrase": "Frase segreta", "txt_generated_password": "Password generata", "txt_password_strength": "Robustezza", "txt_password_strength_weak": "Debole", "txt_password_strength_fair": "Discreta", "txt_password_strength_good": "Buona", "txt_password_strength_strong": "Forte", "txt_generator_security_note": "La generazione avviene localmente. La password non viene mai inviata al server.", "txt_generator_length": "Lunghezza", "txt_generator_character_types": "Tipi di caratteri", "txt_generator_uppercase": "Maiuscole (A-Z)", "txt_generator_lowercase": "Minuscole (a-z)", "txt_generator_numbers": "Numeri (0-9)", "txt_generator_special": "Caratteri speciali (!@#$%^&*)", "txt_generator_minimum": "Minimo", "txt_generator_avoid_ambiguous": "Evita caratteri ambigui", "txt_generator_words": "Numero di parole", "txt_generator_separator": "Separatore di parole", "txt_generator_capitalize": "Iniziale maiuscola", "txt_generator_include_number": "Includi un numero",
   "nav_backup_strategy": "Backup su Cloud",
   "nav_import_export": "Importa ed Esporta",
   "nav_group_data_backup": "Dati e Backup",
