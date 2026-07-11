@@ -178,9 +178,9 @@ export default function PasswordGeneratorPage() {
     <section className="generator-page" aria-label={t('txt_password_generator')}>
       <div className="generator-layout">
         <section className="generator-output-card" aria-live="polite">
-          <div className="generator-type-tabs" role="tablist" aria-label={t('txt_generator_type')}>
-            <button type="button" role="tab" aria-selected={mode === 'password'} className={mode === 'password' ? 'active' : ''} onClick={() => setMode('password')}>{t('txt_password')}</button>
-            <button type="button" role="tab" aria-selected={mode === 'passphrase'} className={mode === 'passphrase' ? 'active' : ''} onClick={() => setMode('passphrase')}>{t('txt_passphrase')}</button>
+          <div className="settings-category-tabs" role="tablist" aria-label={t('txt_generator_type')}>
+            <button type="button" role="tab" aria-selected={mode === 'password'} className={`settings-category-tab ${mode === 'password' ? 'active' : ''}`} onClick={() => setMode('password')}>{t('txt_password')}</button>
+            <button type="button" role="tab" aria-selected={mode === 'passphrase'} className={`settings-category-tab ${mode === 'passphrase' ? 'active' : ''}`} onClick={() => setMode('passphrase')}>{t('txt_passphrase')}</button>
           </div>
           <output className="generator-value" aria-label={t('txt_generated_password')}>{generated}</output>
           <div className="generator-strength-row">
@@ -189,7 +189,7 @@ export default function PasswordGeneratorPage() {
             </div>
             <span><ShieldCheck size={15} /> {strength.label}</span>
           </div>
-          <div className="generator-actions">
+          <div className="actions generator-actions">
             <button type="button" className="btn btn-primary" onClick={regenerate}><RefreshCw size={16} className="btn-icon" />{t('txt_regenerate')}</button>
             <button type="button" className="btn btn-secondary" onClick={() => void copy()}><Copy size={16} className="btn-icon" />{copied ? t('txt_copied') : t('txt_copy')}</button>
           </div>
