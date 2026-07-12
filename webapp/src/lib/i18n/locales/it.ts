@@ -981,6 +981,7 @@ const it: Record<string, string> = {
   "txt_save_profile_failed": "Salvataggio Profilo fallito",
   "txt_search_sends": "Cerca invii...",
   "txt_session_refresh_failed": "Aggiornamento della sessione fallito. Per favore, accedi di nuovo.",
+  "txt_session_refresh_temporarily_unavailable": "La sessione non può essere verificata temporaneamente. L'accesso viene mantenuto e verrà effettuato un nuovo tentativo.",
   "txt_search_your_secure_vault": "Cerca nella tua cassaforte sicura...",
   "txt_search_items_count": "Cerca in {count} elementi...",
   "txt_clear_search": "Cancella Ricerca",

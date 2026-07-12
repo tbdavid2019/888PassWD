@@ -981,6 +981,7 @@ const es: Record<string, string> = {
   "txt_save_profile_failed": "Error al guardar perfil",
   "txt_search_sends": "Buscar envíos...",
   "txt_session_refresh_failed": "Error al actualizar la sesión. Inicia sesión de nuevo.",
+  "txt_session_refresh_temporarily_unavailable": "La sesión no se puede verificar temporalmente. Tu inicio de sesión se conserva y se volverá a intentar.",
   "txt_search_your_secure_vault": "Buscar en su bóveda segura...",
   "txt_search_items_count": "Buscar entre {count} elementos...",
   "txt_clear_search": "Limpiar búsqueda",

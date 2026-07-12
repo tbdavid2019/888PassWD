@@ -981,6 +981,7 @@ const de: Record<string, string> = {
   "txt_save_profile_failed": "Fehler beim Speichern des Profils",
   "txt_search_sends": "Sendungen suchen...",
   "txt_session_refresh_failed": "Sitzungsaktualisierung fehlgeschlagen. Bitte melden Sie sich erneut an.",
+  "txt_session_refresh_temporarily_unavailable": "Die Sitzung kann vorübergehend nicht geprüft werden. Die Anmeldung bleibt erhalten und wird erneut versucht.",
   "txt_search_your_secure_vault": "Ihren sicheren Tresor durchsuchen...",
   "txt_search_items_count": "In {count} Einträgen suchen...",
   "txt_clear_search": "Suche löschen",

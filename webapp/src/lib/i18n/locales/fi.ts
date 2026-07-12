@@ -981,6 +981,7 @@ const fi: Record<string, string> = {
   "txt_save_profile_failed": "Profiilin tallennus epäonnistui",
   "txt_search_sends": "Hae lähetyksiä...",
   "txt_session_refresh_failed": "Istunnon päivitys epäonnistui. Kirjaudu sisään uudelleen.",
+  "txt_session_refresh_temporarily_unavailable": "Istuntoa ei voida tarkistaa juuri nyt. Kirjautuminen säilytetään ja tarkistusta yritetään uudelleen.",
   "txt_search_your_secure_vault": "Hae turvallisesta holvistasi...",
   "txt_search_items_count": "Hae {count} nimikkeen joukosta...",
   "txt_clear_search": "Tyhjennä haku",

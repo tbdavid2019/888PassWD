@@ -984,6 +984,7 @@ const zhTW: Record<string, string> = {
   "txt_save_profile_failed": "保存資料失敗",
   "txt_search_sends": "搜索 Send...",
   "txt_session_refresh_failed": "會話刷新失敗，請重新登入",
+  "txt_session_refresh_temporarily_unavailable": "暫時無法驗證會話，登入狀態已保留，稍後會自動重試",
   "txt_search_your_secure_vault": "搜索你的密碼庫...",
   "txt_search_items_count": "在共 {count} 項中搜索...",
   "txt_clear_search": "清空搜索",

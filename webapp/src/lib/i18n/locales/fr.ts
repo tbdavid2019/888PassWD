@@ -981,6 +981,7 @@ const fr: Record<string, string> = {
   "txt_save_profile_failed": "L'enregistrement du profil a échoué",
   "txt_search_sends": "Rechercher des envois...",
   "txt_session_refresh_failed": "L'actualisation de la session a échoué. Veuillez vous reconnecter.",
+  "txt_session_refresh_temporarily_unavailable": "La session ne peut pas être vérifiée temporairement. Votre connexion est conservée et une nouvelle tentative sera effectuée.",
   "txt_search_your_secure_vault": "Recherchez dans votre coffre-fort sécurisé...",
   "txt_search_items_count": "Rechercher parmi {count} éléments...",
   "txt_clear_search": "Effacer la recherche",

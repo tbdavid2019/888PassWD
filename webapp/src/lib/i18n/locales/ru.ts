@@ -981,6 +981,7 @@ const ru: Record<string, string> = {
   "txt_save_profile_failed": "Сохранить профиль не удалось",
   "txt_search_sends": "Поиск отправляет...",
   "txt_session_refresh_failed": "Не удалось обновить сеанс. Войдите снова.",
+  "txt_session_refresh_temporarily_unavailable": "Сеанс временно не удаётся проверить. Вход сохранён, проверка будет повторена.",
   "txt_search_your_secure_vault": "Найдите свое безопасное хранилище...",
   "txt_search_items_count": "Поиск по {count} элементам...",
   "txt_clear_search": "Очистить поиск",

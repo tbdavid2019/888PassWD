@@ -981,6 +981,7 @@ const sv: Record<string, string> = {
   "txt_save_profile_failed": "Misslyckades med att spara profil",
   "txt_search_sends": "Sök sändningar...",
   "txt_session_refresh_failed": "Sessionsuppdatering misslyckades. Vänligen logga in igen.",
+  "txt_session_refresh_temporarily_unavailable": "Sessionen kan inte verifieras tillfälligt. Inloggningen bevaras och ett nytt försök görs.",
   "txt_search_your_secure_vault": "Sök i ditt säkra valv...",
   "txt_search_items_count": "Sök bland {count} objekt...",
   "txt_clear_search": "Rensa sökning",

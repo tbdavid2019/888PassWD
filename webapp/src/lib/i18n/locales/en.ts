@@ -1004,6 +1004,7 @@ const en: Record<string, string> = {
   "txt_save_profile_failed": "Save profile failed",
   "txt_search_sends": "Search sends...",
   "txt_session_refresh_failed": "Session refresh failed. Please sign in again.",
+  "txt_session_refresh_temporarily_unavailable": "Session verification is temporarily unavailable. Your login is preserved and will retry.",
   "txt_search_your_secure_vault": "Search your secure vault...",
   "txt_search_items_count": "Search within {count} items...",
   "txt_clear_search": "Clear search",
