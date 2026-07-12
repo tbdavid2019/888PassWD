@@ -1856,6 +1856,8 @@ export default function App() {
   });
   const adminActions = useAdminActions({
     authedFetch,
+    email: String(profile?.email || session?.email || ''),
+    defaultKdfIterations,
     onNotify: pushToast,
     onSetConfirm: setConfirm,
     refetchUsers: usersQuery.refetch,
