@@ -13,6 +13,8 @@ const ru: Record<string, string> = {
   "nav_import_export": "Импорт и экспорт",
   "nav_group_data_backup": "Данные и резервные копии",
   "nav_group_management": "Управление",
+  "nav_group_tools": "Инструменты",
+  "nav_group_system_management": "Управление системой",
   "txt_settings_appearance": "Внешний вид",
   "txt_theme": "Тема",
   "txt_use_system_theme": "Использовать системную тему",

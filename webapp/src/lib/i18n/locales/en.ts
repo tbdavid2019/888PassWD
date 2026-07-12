@@ -35,6 +35,8 @@ const en: Record<string, string> = {
   "nav_import_export": "Import & Export",
   "nav_group_data_backup": "Data & Backup",
   "nav_group_management": "Management",
+  "nav_group_tools": "Tools",
+  "nav_group_system_management": "System Management",
   "txt_settings_appearance": "Appearance",
   "txt_theme": "Theme",
   "txt_use_system_theme": "Use system theme",

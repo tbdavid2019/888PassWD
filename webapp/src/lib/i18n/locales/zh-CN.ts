@@ -15,6 +15,8 @@ const zhCN: Record<string, string> = {
   "nav_import_export": "导入导出",
   "nav_group_data_backup": "数据与备份",
   "nav_group_management": "管理",
+  "nav_group_tools": "工具",
+  "nav_group_system_management": "系统管理",
   "txt_settings_appearance": "外观",
   "txt_theme": "主题",
   "txt_use_system_theme": "使用系统主题",

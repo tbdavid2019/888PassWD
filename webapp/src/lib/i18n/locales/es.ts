@@ -12,6 +12,8 @@ const es: Record<string, string> = {
   "nav_import_export": "Importar y exportar",
   "nav_group_data_backup": "Datos y copias",
   "nav_group_management": "Gestión",
+  "nav_group_tools": "Herramientas",
+  "nav_group_system_management": "Administración del sistema",
   "txt_settings_appearance": "Apariencia",
   "txt_theme": "Tema",
   "txt_use_system_theme": "Usar tema del sistema",

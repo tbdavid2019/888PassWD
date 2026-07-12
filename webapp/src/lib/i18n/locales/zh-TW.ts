@@ -15,6 +15,8 @@ const zhTW: Record<string, string> = {
   "nav_import_export": "導入導出",
   "nav_group_data_backup": "資料與備份",
   "nav_group_management": "管理",
+  "nav_group_tools": "工具",
+  "nav_group_system_management": "系統管理",
   "txt_settings_appearance": "外觀",
   "txt_theme": "主題",
   "txt_use_system_theme": "使用系統主題",

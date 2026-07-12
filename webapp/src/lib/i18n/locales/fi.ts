@@ -12,6 +12,8 @@ const fi: Record<string, string> = {
   "nav_import_export": "Tuonti ja Vienti",
   "nav_group_data_backup": "Data & Varmuuskopiointi",
   "nav_group_management": "Hallinta",
+  "nav_group_tools": "Työkalut",
+  "nav_group_system_management": "Järjestelmän hallinta",
   "txt_settings_appearance": "Ulkoasu",
   "txt_theme": "Teema",
   "txt_use_system_theme": "Käytä järjestelmän teemaa",

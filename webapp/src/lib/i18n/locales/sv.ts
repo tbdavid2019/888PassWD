@@ -12,6 +12,8 @@ const sv: Record<string, string> = {
   "nav_import_export": "Importera och Exportera",
   "nav_group_data_backup": "Data och Säkerhetskopiering",
   "nav_group_management": "Hantering",
+  "nav_group_tools": "Verktyg",
+  "nav_group_system_management": "Systemadministration",
   "txt_settings_appearance": "Utseende",
   "txt_theme": "Tema",
   "txt_use_system_theme": "Använd systemtema",

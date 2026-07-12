@@ -12,6 +12,8 @@ const de: Record<string, string> = {
   "nav_import_export": "Import und Export",
   "nav_group_data_backup": "Daten & Backup",
   "nav_group_management": "Verwaltung",
+  "nav_group_tools": "Werkzeuge",
+  "nav_group_system_management": "Systemverwaltung",
   "txt_settings_appearance": "Erscheinungsbild",
   "txt_theme": "Design",
   "txt_use_system_theme": "Systemdesign verwenden",
