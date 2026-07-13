@@ -204,6 +204,10 @@ function readNestedNumber(source: unknown, path: string[]): number | undefined {
   return typeof current === 'number' ? current : undefined;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
+
 async function readRequestBody(request: Request): Promise<Record<string, unknown>> {
   const contentType = request.headers.get('content-type') || '';
   if (contentType.includes('application/x-www-form-urlencoded')) {
@@ -670,31 +674,88 @@ export async function handleChangePassword(request: Request, env: Env, userId: s
   const valid = await auth.verifyPassword(currentHash, user.masterPasswordHash, user.email);
   if (!valid) return errorResponse('Invalid password', 400);
 
-  const newMasterPasswordHash =
-    body.newMasterPasswordHash ||
-    readNestedString(body, ['authenticationData', 'masterPasswordAuthenticationHash']);
-  if (!newMasterPasswordHash) {
-    return errorResponse('newMasterPasswordHash is required', 400);
+  const hasAuthenticationData = isRecord(body.authenticationData);
+  const hasUnlockData = isRecord(body.unlockData);
+  if (hasAuthenticationData !== hasUnlockData) {
+    return errorResponse('authenticationData and unlockData must be provided together', 400);
   }
-  const nextKey =
-    body.newKey ||
-    body.key ||
-    readNestedString(body, ['unlockData', 'masterKeyWrappedUserKey']);
+
+  const legacyMasterPasswordHash = typeof body.newMasterPasswordHash === 'string'
+    ? body.newMasterPasswordHash.trim()
+    : '';
+  const legacyKey = typeof body.newKey === 'string' && body.newKey.trim()
+    ? body.newKey.trim()
+    : typeof body.key === 'string'
+      ? body.key.trim()
+      : '';
+  let newMasterPasswordHash: string;
+  let nextKey: string;
+
+  if (hasAuthenticationData && hasUnlockData) {
+    newMasterPasswordHash = readNestedString(body, ['authenticationData', 'masterPasswordAuthenticationHash']).trim();
+    nextKey = readNestedString(body, ['unlockData', 'masterKeyWrappedUserKey']).trim();
+    if (!newMasterPasswordHash || !nextKey) {
+      return errorResponse('authenticationData and unlockData are incomplete', 400);
+    }
+
+    const authKdf = readNestedNumber(body, ['authenticationData', 'kdf', 'kdfType']);
+    const authIterations = readNestedNumber(body, ['authenticationData', 'kdf', 'iterations']);
+    const authMemory = readNestedNumber(body, ['authenticationData', 'kdf', 'memory']);
+    const authParallelism = readNestedNumber(body, ['authenticationData', 'kdf', 'parallelism']);
+    const unlockKdf = readNestedNumber(body, ['unlockData', 'kdf', 'kdfType']);
+    const unlockIterations = readNestedNumber(body, ['unlockData', 'kdf', 'iterations']);
+    const unlockMemory = readNestedNumber(body, ['unlockData', 'kdf', 'memory']);
+    const unlockParallelism = readNestedNumber(body, ['unlockData', 'kdf', 'parallelism']);
+    const authSalt = readNestedString(body, ['authenticationData', 'salt']);
+    const unlockSalt = readNestedString(body, ['unlockData', 'salt']);
+    const expectedSalt = user.email.trim().toLowerCase();
+
+    if (authKdf === undefined || authIterations === undefined || unlockKdf === undefined || unlockIterations === undefined) {
+      return errorResponse('authenticationData and unlockData must include KDF settings', 400);
+    }
+    if (
+      authKdf !== unlockKdf ||
+      authIterations !== unlockIterations ||
+      authMemory !== unlockMemory ||
+      authParallelism !== unlockParallelism
+    ) {
+      return errorResponse('authenticationData and unlockData must use the same KDF settings', 400);
+    }
+    if (!authSalt || authSalt !== unlockSalt || authSalt !== expectedSalt) {
+      return errorResponse('Invalid master password salt', 400);
+    }
+    if (
+      authKdf !== user.kdfType ||
+      authIterations !== user.kdfIterations ||
+      (authKdf === 1 && (authMemory !== user.kdfMemory || authParallelism !== user.kdfParallelism))
+    ) {
+      return errorResponse('KDF settings cannot be changed with the password endpoint', 400);
+    }
+  } else {
+    if (!legacyMasterPasswordHash || !legacyKey) {
+      return errorResponse('newMasterPasswordHash and key must be provided together', 400);
+    }
+    newMasterPasswordHash = legacyMasterPasswordHash;
+    nextKey = legacyKey;
+  }
+
   const nextPrivateKey = body.newEncryptedPrivateKey || body.encryptedPrivateKey;
   const nextPublicKey = body.newPublicKey || body.publicKey;
-  if (nextKey && !looksLikeEncString(nextKey)) {
+  if (!looksLikeEncString(nextKey)) {
     return errorResponse('new key is not a valid encrypted string', 400);
   }
   if (nextPrivateKey && !looksLikeEncString(nextPrivateKey)) {
     return errorResponse('new encryptedPrivateKey is not a valid encrypted string', 400);
   }
 
-  const nextKdf = body.kdf ?? readNestedNumber(body, ['unlockData', 'kdf', 'kdfType']) ?? user.kdfType;
-  const nextKdfIterations = body.kdfIterations ?? readNestedNumber(body, ['unlockData', 'kdf', 'iterations']);
-  const nextKdfMemory = body.kdfMemory ?? readNestedNumber(body, ['unlockData', 'kdf', 'memory']);
-  const nextKdfParallelism = body.kdfParallelism ?? readNestedNumber(body, ['unlockData', 'kdf', 'parallelism']);
-  const kdfErr = validateKdfParams(nextKdf, nextKdfIterations, nextKdfMemory, nextKdfParallelism);
-  if (kdfErr) return errorResponse(kdfErr, 400);
+  if (
+    (typeof body.kdf === 'number' && body.kdf !== user.kdfType) ||
+    (typeof body.kdfIterations === 'number' && body.kdfIterations !== user.kdfIterations) ||
+    (typeof body.kdfMemory === 'number' && body.kdfMemory !== user.kdfMemory) ||
+    (typeof body.kdfParallelism === 'number' && body.kdfParallelism !== user.kdfParallelism)
+  ) {
+    return errorResponse('KDF settings cannot be changed with the password endpoint', 400);
+  }
   const shouldUpdateHint = typeof body.masterPasswordHint === 'string' || body.masterPasswordHint === null;
   const nextMasterPasswordHint = shouldUpdateHint ? normalizeMasterPasswordHint(body.masterPasswordHint) : undefined;
   if (nextMasterPasswordHint && nextMasterPasswordHint.length > 120) {
@@ -702,13 +763,9 @@ export async function handleChangePassword(request: Request, env: Env, userId: s
   }
 
   user.masterPasswordHash = await auth.hashPasswordServer(newMasterPasswordHash, user.email);
-  if (nextKey) user.key = nextKey;
+  user.key = nextKey;
   if (nextPrivateKey) user.privateKey = nextPrivateKey;
   if (nextPublicKey) user.publicKey = nextPublicKey;
-  if (typeof nextKdf === 'number') user.kdfType = nextKdf;
-  if (typeof nextKdfIterations === 'number') user.kdfIterations = nextKdfIterations;
-  if (typeof nextKdfMemory === 'number') user.kdfMemory = nextKdfMemory;
-  if (typeof nextKdfParallelism === 'number') user.kdfParallelism = nextKdfParallelism;
   if (shouldUpdateHint) {
     user.masterPasswordHint = nextMasterPasswordHint ?? null;
   }

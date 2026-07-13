@@ -631,8 +631,6 @@ export async function changeMasterPassword(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       masterPasswordHash: current.hash,
-      newMasterPasswordHash,
-      key: newKey,
       authenticationData: {
         kdf: {
           kdfType: 0,
@@ -653,8 +651,6 @@ export async function changeMasterPassword(
         masterKeyWrappedUserKey: newKey,
         salt: args.email.trim().toLowerCase(),
       },
-      kdf: 0,
-      kdfIterations: current.kdfIterations,
     }),
   });
   if (!resp.ok) throw new Error('Change master password failed');
