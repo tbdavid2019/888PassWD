@@ -6,7 +6,7 @@ import { auditRequestMetadata, writeAuditEvent, safeWriteAuditEvent } from '../s
 import { jsonResponse, errorResponse } from '../utils/response';
 import { generateUUID } from '../utils/uuid';
 import { LIMITS } from '../config/limits';
-import { hashApiKey } from '../utils/api-key';
+import { isStoredApiKeyHash } from '../utils/api-key';
 import { findMatchingTotpCounter, isTotpEnabled } from '../utils/totp';
 import { createRecoveryCode, recoveryCodeEquals } from '../utils/recovery-code';
 import { buildAccountKeys } from '../utils/user-decryption';
@@ -343,7 +343,9 @@ export async function handleRegister(request: Request, env: Env): Promise<Respon
     yubikeyKey4: null,
     yubikeyKey5: null,
     yubikeyNfc: false,
-    apiKey: null,
+    // Bitwarden creates a readable personal API key with the account. It is
+    // returned only after fresh user verification and is excluded from backups.
+    apiKey: randomStringAlphanum(LIMITS.auth.clientSecretLength),
     createdAt: now,
     updatedAt: now,
   };
@@ -1568,19 +1570,24 @@ async function apiKey(request: Request, env: Env, userId: string, rotate: boolea
   const valid = await auth.verifyPassword(currentHash, user.masterPasswordHash, user.email);
   if (!valid) return errorResponse('Invalid password', 400);
 
-  // Only the fresh secret is returned once; the database stores a hash.
-  const plainApiKey = randomStringAlphanum(LIMITS.auth.clientSecretLength);
-  user.apiKey = await hashApiKey(plainApiKey);
-  if (rotate) {
-    user.securityStamp = generateUUID();
-    await storage.deleteRefreshTokensByUserId(user.id);
+  if (!rotate && isStoredApiKeyHash(user.apiKey)) {
+    return errorResponse(
+      'This API key was created by an older NodeWarden version and cannot be displayed. Rotate it once to use the Bitwarden-compatible readable format.',
+      409
+    );
   }
-  user.updatedAt = new Date().toISOString();
-  await storage.saveUser(user);
-  AuthService.invalidateUserCache(user.id);
+
+  let auditAction = 'account.api_key.view';
+  if (rotate || !user.apiKey) {
+    user.apiKey = randomStringAlphanum(LIMITS.auth.clientSecretLength);
+    user.updatedAt = new Date().toISOString();
+    await storage.saveUser(user);
+    AuthService.invalidateUserCache(user.id);
+    auditAction = rotate ? 'account.api_key.rotate' : 'account.api_key.create';
+  }
   await writeAuditEvent(storage, {
     actorUserId: user.id,
-    action: rotate ? 'account.api_key.rotate' : 'account.api_key.create',
+    action: auditAction,
     category: 'security',
     level: rotate ? 'security' : 'info',
     targetType: 'user',
@@ -1589,7 +1596,7 @@ async function apiKey(request: Request, env: Env, userId: string, rotate: boolea
   });
 
   return jsonResponse({
-    apiKey: plainApiKey,
+    apiKey: user.apiKey,
     revisionDate: user.updatedAt,
     object: 'apiKey',
   });
