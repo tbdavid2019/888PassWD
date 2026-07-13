@@ -14,11 +14,7 @@ export interface Env {
   WEBAUTHN_RP_ID?: string;
   WEBAUTHN_RP_NAME?: string;
   WEBAUTHN_ALLOWED_ORIGINS?: string;
-  YUBICO_CLIENT_ID?: string;
-  YUBICO_SECRET_KEY?: string;
   YUBICO_VALIDATION_URLS?: string;
-  'globalSettings__yubico__clientId'?: string;
-  'globalSettings__yubico__key'?: string;
   'globalSettings__yubico__validationUrls'?: string;
 }
 

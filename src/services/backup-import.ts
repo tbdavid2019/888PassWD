@@ -1,6 +1,7 @@
 import type { Env, User } from '../types';
 import { KV_MAX_OBJECT_BYTES, deleteBlobObject, getAttachmentObjectKey, getBlobStorageKind, putBlobObject } from './blob-store';
 import { BACKUP_SETTINGS_CONFIG_KEY, normalizeImportedBackupSettingsValue } from './backup-config';
+import { YUBICO_BOOTSTRAP_CLAIM_CONFIG_KEY } from './yubico-config';
 import {
   type BackupManifestAttachmentBlob,
   type BackupPayload,
@@ -276,7 +277,9 @@ async function prepareImportedConfigRows(
   configRows: SqlRow[],
   userRows: SqlRow[]
 ): Promise<SqlRow[]> {
-  let nextConfigRows = cloneRows(configRows || []);
+  let nextConfigRows = cloneRows(configRows || []).filter(
+    (row) => String(row.key || '').trim() !== YUBICO_BOOTSTRAP_CLAIM_CONFIG_KEY
+  );
   const rawBackupSettings = nextConfigRows.find((row) => String(row.key || '').trim() === BACKUP_SETTINGS_CONFIG_KEY);
   const normalizedBackupSettings = await normalizeImportedBackupSettingsValue(
     typeof rawBackupSettings?.value === 'string' ? rawBackupSettings.value : null,

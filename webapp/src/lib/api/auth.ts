@@ -687,6 +687,7 @@ function normalizeYubiKeySettings(raw: any): YubiKeyOtpSettings {
     ],
     nfc: !!(raw?.nfc ?? raw?.Nfc),
     yubicoConfigured: !!(raw?.yubicoConfigured ?? raw?.YubicoConfigured),
+    yubicoCanManage: !!(raw?.yubicoCanManage ?? raw?.YubicoCanManage),
     yubicoClientId: String(raw?.yubicoClientId ?? raw?.YubicoClientId ?? ''),
     yubicoSecretKey: String(raw?.yubicoSecretKey ?? raw?.YubicoSecretKey ?? ''),
   };

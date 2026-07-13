@@ -11,15 +11,18 @@ import { findMatchingTotpCounter, isTotpEnabled } from '../utils/totp';
 import { createRecoveryCode, recoveryCodeEquals } from '../utils/recovery-code';
 import { buildAccountKeys } from '../utils/user-decryption';
 import { buildProfileResponse } from '../utils/profile-response';
-import { isYubiKeyEnabled, isYubiKeyPublicId, requestYubicoApiCredentials, verifyYubicoOtp, yubicoCredentialsFromEnv, yubiKeyPublicIdFromOtp, type YubicoApiCredentials } from '../utils/yubico-otp';
+import { isYubiKeyEnabled, isYubiKeyPublicId, requestYubicoApiCredentials, verifyYubicoOtp, yubiKeyPublicIdFromOtp } from '../utils/yubico-otp';
+import {
+  getYubicoCredentials,
+  initializeYubicoCredentialsOnce,
+  replaceYubicoCredentials,
+} from '../services/yubico-config';
 
 const TWO_FACTOR_PROVIDER_AUTHENTICATOR = 0;
 const TWO_FACTOR_PROVIDER_YUBIKEY = 3;
 const TWO_FACTOR_PROVIDER_WEBAUTHN = 7;
 const TOTP_USER_VERIFICATION_TOKEN_TTL_MS = 10 * 60 * 1000;
 const TOTP_BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
-const YUBICO_CLIENT_ID_CONFIG_KEY = 'globalSettings__yubico__clientId';
-const YUBICO_KEY_CONFIG_KEY = 'globalSettings__yubico__key';
 
 // CONTRACT:
 // users.master_password_hash is server-side login verification only. It does
@@ -199,31 +202,6 @@ function readNestedNumber(source: unknown, path: string[]): number | undefined {
     current = (current as Record<string, unknown>)[key];
   }
   return typeof current === 'number' ? current : undefined;
-}
-
-async function getStoredYubicoCredentials(storage: StorageService, env: Env): Promise<YubicoApiCredentials | null> {
-  const fromEnv = yubicoCredentialsFromEnv(env);
-  if (fromEnv) return fromEnv;
-  const clientId = String(await storage.getConfigValue(YUBICO_CLIENT_ID_CONFIG_KEY) || '').trim();
-  if (!clientId) return null;
-  const secretKey = String(await storage.getConfigValue(YUBICO_KEY_CONFIG_KEY) || '').trim();
-  return { clientId, secretKey };
-}
-
-async function ensureStoredYubicoCredentials(
-  storage: StorageService,
-  env: Env,
-  email: string,
-  otp: string
-): Promise<YubicoApiCredentials | null> {
-  const existing = await getStoredYubicoCredentials(storage, env);
-  if (existing) return existing;
-
-  const credentials = await requestYubicoApiCredentials(email, otp);
-  if (!credentials) return null;
-  await storage.setConfigValue(YUBICO_CLIENT_ID_CONFIG_KEY, credentials.clientId);
-  await storage.setConfigValue(YUBICO_KEY_CONFIG_KEY, credentials.secretKey);
-  return credentials;
 }
 
 async function readRequestBody(request: Request): Promise<Record<string, unknown>> {
@@ -815,12 +793,19 @@ function deviceVerificationSettingsResponse(_user: User): Record<string, unknown
 }
 
 async function yubiKeySettingsResponse(storage: StorageService, env: Env, user: User): Promise<Record<string, unknown>> {
-  const credentials = await getStoredYubicoCredentials(storage, env);
+  void storage;
+  const credentials = await getYubicoCredentials(env.DB);
+  const canManageCredentials = user.role === 'admin' && user.status === 'active';
   return {
     ...yubiKeyResponse(user),
     YubicoConfigured: !!credentials?.clientId,
-    YubicoClientId: credentials?.clientId ?? '',
-    YubicoSecretKey: credentials?.secretKey ?? '',
+    YubicoCanManage: canManageCredentials,
+    ...(canManageCredentials
+      ? {
+          YubicoClientId: credentials?.clientId ?? '',
+          YubicoSecretKey: credentials?.secretKey ?? '',
+        }
+      : {}),
   };
 }
 
@@ -1013,7 +998,7 @@ export async function handlePutTwoFactorYubiKey(request: Request, env: Env, user
     readBodyString(body, ['key5', 'Key5']),
   ];
   const publicIds: Array<string | null> = [];
-  let credentials = await getStoredYubicoCredentials(storage, env);
+  let credentials = await getYubicoCredentials(env.DB);
   let apiKeyBootstrapOtpIndex: number | null = null;
   for (const key of keys) {
     const trimmed = key.trim();
@@ -1028,9 +1013,10 @@ export async function handlePutTwoFactorYubiKey(request: Request, env: Env, user
       continue;
     }
     if (!credentials) {
-      credentials = await ensureStoredYubicoCredentials(storage, env, user.email, trimmed);
-      if (!credentials) return errorResponse('Unable to initialize Yubico validation credentials.', 400);
-      apiKeyBootstrapOtpIndex = publicIds.length;
+      const initialized = await initializeYubicoCredentialsOnce(env.DB, user.email, trimmed);
+      if (!initialized) return errorResponse('Unable to initialize Yubico validation credentials.', 400);
+      credentials = initialized.credentials;
+      if (initialized.created) apiKeyBootstrapOtpIndex = publicIds.length;
     }
     if (apiKeyBootstrapOtpIndex !== publicIds.length && !await verifyYubicoOtp(env, trimmed, credentials)) {
       return errorResponse('Invalid YubiKey OTP.', 400);
@@ -1071,6 +1057,7 @@ export async function handlePutTwoFactorYubiKeyConfig(request: Request, env: Env
   const auth = new AuthService(env);
   const user = await storage.getUserById(userId);
   if (!user) return errorResponse('User not found', 404);
+  if (user.role !== 'admin' || user.status !== 'active') return errorResponse('Forbidden', 403);
 
   let body: Record<string, unknown>;
   try {
@@ -1085,10 +1072,18 @@ export async function handlePutTwoFactorYubiKeyConfig(request: Request, env: Env
 
   const clientId = readBodyString(body, ['yubicoClientId', 'YubicoClientId', 'clientId', 'ClientId']).trim();
   const secretKey = readBodyString(body, ['yubicoSecretKey', 'YubicoSecretKey', 'secretKey', 'SecretKey']).trim();
-  if (!clientId) return errorResponse('Yubico Client ID is required.', 400);
+  if (!clientId || !secretKey) return errorResponse('Yubico Client ID and Secret Key are required.', 400);
 
-  await storage.setConfigValue(YUBICO_CLIENT_ID_CONFIG_KEY, clientId);
-  await storage.setConfigValue(YUBICO_KEY_CONFIG_KEY, secretKey);
+  await replaceYubicoCredentials(env.DB, { clientId, secretKey });
+  await writeAuditEvent(storage, {
+    actorUserId: user.id,
+    action: 'system.yubico.credentials.update',
+    category: 'security',
+    level: 'security',
+    targetType: 'system',
+    targetId: 'yubico',
+    metadata: auditRequestMetadata(request),
+  });
 
   return jsonResponse(await yubiKeySettingsResponse(storage, env, user));
 }
@@ -1113,11 +1108,42 @@ export async function handleBootstrapTwoFactorYubiKeyConfig(request: Request, en
 
   const otp = readBodyString(body, ['otp', 'OTP', 'token', 'Token']).trim();
   if (!yubiKeyPublicIdFromOtp(otp)) return errorResponse('Invalid YubiKey OTP.', 400);
-  const credentials = await requestYubicoApiCredentials(user.email, otp);
-  if (!credentials) return errorResponse('Unable to initialize Yubico validation credentials.', 400);
+  const existing = await getYubicoCredentials(env.DB);
+  if (user.role !== 'admin' && existing) {
+    return errorResponse('Yubico validation credentials are already configured.', 403);
+  }
 
-  await storage.setConfigValue(YUBICO_CLIENT_ID_CONFIG_KEY, credentials.clientId);
-  await storage.setConfigValue(YUBICO_KEY_CONFIG_KEY, credentials.secretKey);
+  let credentials;
+  if (user.role === 'admin') {
+    credentials = await requestYubicoApiCredentials(user.email, otp);
+    if (!credentials?.clientId || !credentials.secretKey) {
+      return errorResponse('Unable to initialize Yubico validation credentials.', 400);
+    }
+    await replaceYubicoCredentials(env.DB, credentials);
+  } else {
+    const initialized = await initializeYubicoCredentialsOnce(env.DB, user.email, otp);
+    if (!initialized?.created) {
+      return errorResponse(
+        initialized?.credentials
+          ? 'Yubico validation credentials are already configured.'
+          : 'Unable to initialize Yubico validation credentials.',
+        initialized?.credentials ? 403 : 400
+      );
+    }
+    credentials = initialized.credentials;
+  }
+
+  await writeAuditEvent(storage, {
+    actorUserId: user.id,
+    action: user.role === 'admin'
+      ? 'system.yubico.credentials.reconfigure'
+      : 'system.yubico.credentials.initialize',
+    category: 'security',
+    level: 'security',
+    targetType: 'system',
+    targetId: 'yubico',
+    metadata: auditRequestMetadata(request),
+  });
 
   return jsonResponse(await yubiKeySettingsResponse(storage, env, user));
 }
