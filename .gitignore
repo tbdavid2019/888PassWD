@@ -18,6 +18,7 @@ build/
 .idea/
 *.swp
 *.swo
+docs/
 
 # OS
 .DS_Store
@@ -42,7 +43,7 @@ tmp/
 .tmp/
 .tmp-bitwarden-clients/
 
-nodewarden.wiki/
+nodewarden-wiki/
 wiki/
 AGENTS.md
 settings.json
@@ -55,9 +56,11 @@ NodeWarden-compat/
 .codex-upstream/bitwarden-browser/
 
 .reasonix/
+.upstream/
 
 # Compatibility analysis documents
 BITWARDEN_COMPATIBILITY_ANALYSIS.md
+security-audits/
 .mcp.json
 opencode.jsonc
 .cursor/

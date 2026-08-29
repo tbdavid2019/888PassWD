@@ -11,6 +11,7 @@ import RecoverTwoFactorPage from '@/components/RecoverTwoFactorPage';
 import JwtWarningPage from '@/components/JwtWarningPage';
 import {
   createAuthedFetch,
+  deriveLoginHash,
   getAuthorizedDevices,
   clearProfileSnapshot,
   getCurrentDeviceIdentifier,
@@ -19,7 +20,8 @@ import {
   loadProfileSnapshot,
   saveProfileSnapshot,
   revokeCurrentSession,
-  getTotpStatus,
+  getTwoFactorProviderStatus,
+  getVaultRevisionDate,
   saveSession,
   stripProfileSecrets,
 } from '@/lib/api/auth';
@@ -31,9 +33,9 @@ import {
 } from '@/lib/api/auth-requests';
 import { clearAuditLogs, getAuditLogSettings, listAdminInvites, listAdminUsers, listAuditLogs, saveAuditLogSettings, type AuditLogFilters } from '@/lib/api/admin';
 import { getDomainRules, saveDomainRules } from '@/lib/api/domains';
-import { getSends } from '@/lib/api/send';
-import { repairCipherKeyMismatches, repairCipherUriChecksums } from '@/lib/api/vault';
-import { getCachedVaultCoreSnapshot, invalidateVaultCoreSyncSnapshot, loadVaultCoreSyncSnapshot } from '@/lib/api/vault-sync';
+import { getSendById, getSends } from '@/lib/api/send';
+import { getCipherById, getFolderById, repairCipherKeyMismatches, repairCipherUriChecksums } from '@/lib/api/vault';
+import { getCachedVaultCoreSnapshot, invalidateVaultCoreSyncSnapshot, loadVaultCoreSyncSnapshot, saveVaultCoreSyncSnapshot } from '@/lib/api/vault-sync';
 import { silentlyRepairBackupSettingsIfNeeded } from '@/lib/backup-settings-repair';
 import {
   parseSignalRTextFrames,
@@ -56,6 +58,7 @@ import {
   type PendingPasskeyPassword,
   type PendingTotp,
 } from '@/lib/app-auth';
+import { assertTwoFactorPasskey } from '@/lib/account-passkeys';
 import useAccountSecurityActions from '@/hooks/useAccountSecurityActions';
 import useAdminActions from '@/hooks/useAdminActions';
 import useBackupActions from '@/hooks/useBackupActions';
@@ -65,6 +68,7 @@ import { t } from '@/lib/i18n';
 import { APP_NOTIFY_EVENT, type AppNotifyDetail } from '@/lib/app-notify';
 import { dispatchBackupProgress, type BackupProgressDetail } from '@/lib/backup-restore-progress';
 import { clearOfflineUnlockRecord } from '@/lib/offline-auth';
+import { clearPasswordSecurityCache } from '@/lib/password-security-cache';
 import { decryptSends, decryptVaultCore } from '@/lib/vault-decrypt';
 import { decryptSendsInWorker, decryptVaultCoreInWorker } from '@/lib/vault-worker';
 import {
@@ -108,6 +112,8 @@ const APP_ROUTE_PATHS = [
   '/',
   '/vault',
   '/vault/totp',
+  '/security/password-health',
+  '/generator',
   '/sends',
   '/admin',
   '/logs',
@@ -134,10 +140,24 @@ function normalizeRoutePath(path: string): string {
 }
 const THEME_STORAGE_KEY = 'nodewarden.theme.preference.v1';
 const SIGNALR_RECORD_SEPARATOR = String.fromCharCode(0x1e);
+const SIGNALR_UPDATE_TYPE_SYNC_CIPHER_UPDATE = 0;
+const SIGNALR_UPDATE_TYPE_SYNC_CIPHER_CREATE = 1;
+const SIGNALR_UPDATE_TYPE_SYNC_FOLDER_DELETE = 3;
+const SIGNALR_UPDATE_TYPE_SYNC_CIPHERS = 4;
 const SIGNALR_UPDATE_TYPE_SYNC_VAULT = 5;
+const SIGNALR_UPDATE_TYPE_SYNC_FOLDER_CREATE = 7;
+const SIGNALR_UPDATE_TYPE_SYNC_FOLDER_UPDATE = 8;
+const SIGNALR_UPDATE_TYPE_SYNC_CIPHER_DELETE = 9;
 const SIGNALR_UPDATE_TYPE_LOG_OUT = 11;
-const SIGNALR_UPDATE_TYPE_DEVICE_STATUS = 12;
-const SIGNALR_UPDATE_TYPE_BACKUP_RESTORE_PROGRESS = 13;
+const SIGNALR_UPDATE_TYPE_SYNC_SEND_CREATE = 12;
+const SIGNALR_UPDATE_TYPE_SYNC_SEND_UPDATE = 13;
+const SIGNALR_UPDATE_TYPE_SYNC_SEND_DELETE = 14;
+const SIGNALR_UPDATE_TYPE_AUTH_REQUEST = 15;
+const SIGNALR_UPDATE_TYPE_AUTH_REQUEST_RESPONSE = 16;
+const SIGNALR_UPDATE_TYPE_DEVICE_STATUS = 101;
+const SIGNALR_UPDATE_TYPE_BACKUP_RESTORE_PROGRESS = 102;
+const TWO_FACTOR_PROVIDER_YUBIKEY = 3;
+const TWO_FACTOR_PROVIDER_WEBAUTHN = 7;
 
 type ThemePreference = 'system' | 'light' | 'dark';
 type LockTimeoutMinutes = 0 | 1 | 5 | 15 | 30;
@@ -211,6 +231,7 @@ export default function App() {
     hint: null,
   });
   const [inviteCodeFromUrl, setInviteCodeFromUrl] = useState(initialInviteCode);
+  const [hashPathRaw, setHashPathRaw] = useState(() => (typeof window !== 'undefined' ? window.location.hash || '' : ''));
   const [unlockPassword, setUnlockPassword] = useState('');
   const [pendingTotp, setPendingTotp] = useState<PendingTotp | null>(null);
   const [pendingTotpMode, setPendingTotpMode] = useState<'login' | 'unlock' | null>(null);
@@ -224,6 +245,7 @@ export default function App() {
   const [disableTotpPassword, setDisableTotpPassword] = useState('');
   const [disableTotpSubmitting, setDisableTotpSubmitting] = useState(false);
   const [authRequestDialogDismissedId, setAuthRequestDialogDismissedId] = useState<string | null>(null);
+  const [authRequestDialogSelectedId, setAuthRequestDialogSelectedId] = useState<string | null>(null);
   const [authRequestSubmittingId, setAuthRequestSubmittingId] = useState<string | null>(null);
   const [recoverValues, setRecoverValues] = useState({ email: '', password: '', recoveryCode: '' });
   const [themePreference, setThemePreference] = useState<ThemePreference>(() => readThemePreference());
@@ -231,6 +253,8 @@ export default function App() {
   const [lockTimeoutMinutes, setLockTimeoutMinutesState] = useState<LockTimeoutMinutes>(() => readLockTimeoutMinutes());
   const [sessionTimeoutAction, setSessionTimeoutActionState] = useState<SessionTimeoutAction>(() => readSessionTimeoutAction());
   const [unlockPreparing, setUnlockPreparing] = useState(() => initialBootstrap.phase === 'locked' && !initialBootstrap.session?.email);
+  const [lockedSessionRefreshError, setLockedSessionRefreshError] = useState('');
+  const [lockedSessionRetryKey, setLockedSessionRetryKey] = useState(0);
 
   const [confirm, setConfirm] = useState<AppConfirmState | null>(null);
   const [mobileLayout, setMobileLayout] = useState(false);
@@ -247,9 +271,16 @@ export default function App() {
   const [vaultDecryptError, setVaultDecryptError] = useState('');
   const [sendsDecryptDone, setSendsDecryptDone] = useState(false);
   const sessionRef = useRef<SessionState | null>(initialBootstrap.session);
+  const lockedSessionRetryAttemptRef = useRef(0);
   const silentRefreshVaultRef = useRef<() => Promise<void>>(async () => {});
   const refreshAuthorizedDevicesRef = useRef<() => Promise<void>>(async () => {});
+  const refreshPendingAuthRequestsRef = useRef<() => Promise<void>>(async () => {});
   const repairAttemptRef = useRef<string>('');
+  const loginScopedBackupRepairAuthRef = useRef<{
+    accessToken: string;
+    masterPasswordHash?: string | null;
+    userVerificationToken?: string | null;
+  } | null>(null);
   const uriChecksumRepairAttemptRef = useRef<string>('');
   const pendingVaultCoreQueryRefreshRef = useRef<Promise<{ data?: VaultCoreSnapshot } | unknown> | null>(null);
   const pendingVaultCoreRefreshRef = useRef<Promise<unknown> | null>(null);
@@ -271,15 +302,16 @@ export default function App() {
   }, [pushToast]);
 
   useEffect(() => {
-    const syncInviteFromUrl = () => {
+    const syncUrlState = () => {
       setInviteCodeFromUrl(readInviteCodeFromUrl());
+      setHashPathRaw(window.location.hash || '');
     };
-    syncInviteFromUrl();
-    window.addEventListener('hashchange', syncInviteFromUrl);
-    window.addEventListener('popstate', syncInviteFromUrl);
+    syncUrlState();
+    window.addEventListener('hashchange', syncUrlState);
+    window.addEventListener('popstate', syncUrlState);
     return () => {
-      window.removeEventListener('hashchange', syncInviteFromUrl);
-      window.removeEventListener('popstate', syncInviteFromUrl);
+      window.removeEventListener('hashchange', syncUrlState);
+      window.removeEventListener('popstate', syncUrlState);
     };
   }, []);
 
@@ -358,6 +390,10 @@ export default function App() {
       setUnlockPreparing(false);
     }
   }, [phase, profile, session]);
+
+  useEffect(() => {
+    if (phase !== 'app') clearPasswordSecurityCache();
+  }, [phase]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -470,13 +506,15 @@ export default function App() {
     if (phase !== 'locked' || !session) return;
     if (IS_DEMO_MODE) return;
     let cancelled = false;
+    let retryTimerId: number | null = null;
     void (async () => {
       const result = await hydrateLockedSession(session, profile);
       if (cancelled) return;
-      if (!result.session) {
+      if (result.kind === 'expired') {
         setSession(null);
         setProfile(null);
         setUnlockPreparing(false);
+        setLockedSessionRefreshError('');
         setPhase('login');
         if (location !== '/login') navigate('/login');
         return;
@@ -485,16 +523,57 @@ export default function App() {
       if (result.profile) {
         setProfile(stripProfileSecrets(result.profile));
       }
+      if (result.kind === 'transient') {
+        setUnlockPreparing(false);
+        setLockedSessionRefreshError(result.message || t('txt_session_refresh_temporarily_unavailable'));
+        const retrySchedule = [2_000, 5_000, 15_000, 30_000, 60_000];
+        const scheduledDelay = retrySchedule[Math.min(lockedSessionRetryAttemptRef.current, retrySchedule.length - 1)];
+        lockedSessionRetryAttemptRef.current += 1;
+        const retryAfterMs = Math.min(60_000, Math.max(scheduledDelay, result.retryAfterMs || 0));
+        retryTimerId = window.setTimeout(() => {
+          setLockedSessionRetryKey((value) => value + 1);
+        }, retryAfterMs);
+        return;
+      }
+      lockedSessionRetryAttemptRef.current = 0;
+      setLockedSessionRefreshError('');
     })();
     return () => {
       cancelled = true;
+      if (retryTimerId !== null) window.clearTimeout(retryTimerId);
     };
-  }, [phase, session?.email, location, navigate]);
+  }, [phase, session?.email, location, navigate, lockedSessionRetryKey]);
 
-  async function finalizeLogin(login: CompletedLogin, successMessage = t('txt_login_success')) {
+  useEffect(() => {
+    if (!lockedSessionRefreshError || phase !== 'locked') return;
+    const retryNow = () => {
+      lockedSessionRetryAttemptRef.current = 0;
+      setLockedSessionRetryKey((value) => value + 1);
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') retryNow();
+    };
+    window.addEventListener('online', retryNow);
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.removeEventListener('online', retryNow);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [lockedSessionRefreshError, phase]);
+
+  async function finalizeLogin(login: CompletedLogin) {
+    loginScopedBackupRepairAuthRef.current =
+      login.session.accessToken && (login.freshMasterPasswordHash || login.freshUserVerificationToken)
+        ? {
+            accessToken: login.session.accessToken,
+            masterPasswordHash: login.freshMasterPasswordHash || null,
+            userVerificationToken: login.freshUserVerificationToken || null,
+          }
+        : null;
     setSession(login.session);
     setProfile(login.profile);
     setUnlockPreparing(false);
+    setLockedSessionRefreshError('');
     setPendingTotp(null);
     setPendingTotpMode(null);
     setPendingPasskeyPassword(null);
@@ -505,7 +584,6 @@ export default function App() {
     if (location === '/' || location === '/login' || location === '/register' || location === '/lock') {
       navigate('/vault');
     }
-    pushToast('success', successMessage);
     void (async () => {
       try {
         const hydratedProfile = await login.profilePromise;
@@ -522,7 +600,7 @@ export default function App() {
     if (IS_DEMO_MODE) {
       setPendingAuthAction('login');
       try {
-        await finalizeLogin(createDemoCompletedLogin(loginValues.email), t('txt_login_success'));
+        await finalizeLogin(createDemoCompletedLogin(loginValues.email));
       } finally {
         setPendingAuthAction(null);
       }
@@ -594,7 +672,7 @@ export default function App() {
     try {
       const result = await performPasskeyLogin(defaultKdfIterations, expectedEmail);
       if (result.kind === 'success') {
-        await finalizeLogin(result.login, t('txt_unlocked'));
+        await finalizeLogin(result.login);
         return;
       }
       if (result.kind === 'password') {
@@ -626,19 +704,38 @@ export default function App() {
     }
   }
 
+  function handleSelectTotpProvider(providerType: number) {
+    if (totpSubmitting) return;
+    setPendingTotp((current) => {
+      if (!current || current.providerType === providerType) return current;
+      const canUseProvider = current.availableProviders.includes(providerType);
+      if (!canUseProvider) return current;
+      return {
+        ...current,
+        providerType,
+        providerData: current.providerDataByType[providerType],
+      };
+    });
+    setTotpCode('');
+  }
+
   async function handleTotpVerify() {
     if (totpSubmitting) return;
     if (!pendingTotp) return;
-    if (!totpCode.trim()) {
-      pushToast('error', t('txt_please_input_totp_code'));
+    const isPasskeyTwoFactor = pendingTotp.providerType === TWO_FACTOR_PROVIDER_WEBAUTHN;
+    if (!isPasskeyTwoFactor && !totpCode.trim()) {
+      pushToast('error', pendingTotp.providerType === TWO_FACTOR_PROVIDER_YUBIKEY ? t('txt_please_input_yubikey_otp') : t('txt_please_input_totp_code'));
       return;
     }
     setTotpSubmitting(true);
     try {
-      const login = await performTotpLogin(pendingTotp, totpCode, rememberDevice);
-      await finalizeLogin(login, pendingTotpMode === 'unlock' ? t('txt_unlocked') : t('txt_login_success'));
+      const token = isPasskeyTwoFactor
+        ? await assertTwoFactorPasskey(pendingTotp.providerData)
+        : totpCode;
+      const login = await performTotpLogin(pendingTotp, token, rememberDevice);
+      await finalizeLogin(login);
     } catch (error) {
-      pushToast('error', error instanceof Error ? error.message : t('txt_totp_verify_failed'));
+      pushToast('error', error instanceof Error ? error.message : pendingTotp.providerType === 3 ? t('txt_yubikey_verify_failed') : isPasskeyTwoFactor ? t('txt_passkey_verification_failed') : t('txt_totp_verify_failed'));
     } finally {
       setTotpSubmitting(false);
     }
@@ -776,7 +873,7 @@ export default function App() {
     if (IS_DEMO_MODE) {
       setPendingAuthAction('unlock');
       try {
-        await finalizeLogin(createDemoCompletedLogin(session.email), t('txt_unlocked'));
+        await finalizeLogin(createDemoCompletedLogin(session.email));
       } finally {
         setPendingAuthAction(null);
       }
@@ -790,7 +887,7 @@ export default function App() {
     try {
       const result = await performUnlock(session, profile, unlockPassword, defaultKdfIterations);
       if (result.kind === 'success') {
-        await finalizeLogin(result.login, t('txt_unlocked'));
+        await finalizeLogin(result.login);
         return;
       }
       if (result.kind === 'totp') {
@@ -819,11 +916,13 @@ export default function App() {
     setDecryptedFolders([]);
     setDecryptedCiphers([]);
     setDecryptedSends([]);
+    clearPasswordSecurityCache();
     setUnlockPassword('');
     setPendingTotp(null);
     setPendingTotpMode(null);
     setTotpCode('');
     setUnlockPreparing(false);
+    setLockedSessionRefreshError('');
     setPhase('locked');
     navigate('/lock');
   }
@@ -840,6 +939,7 @@ export default function App() {
     setSession(null);
     clearProfileSnapshot();
     clearOfflineUnlockRecord();
+    clearPasswordSecurityCache();
     setProfile(null);
     setUnlockPreparing(false);
     setPendingTotp(null);
@@ -923,11 +1023,14 @@ export default function App() {
         confirm={null}
         onCancelConfirm={() => {}}
         pendingTotpOpen={false}
+        pendingTotpProviderType={0}
+        pendingTotpAvailableProviders={[]}
         totpCode=""
         rememberDevice={false}
         onTotpCodeChange={() => {}}
         onRememberDeviceChange={() => {}}
         onConfirmTotp={() => {}}
+        onSelectTotpProvider={() => {}}
         onCancelTotp={() => {}}
         onUseRecoveryCode={() => {}}
         totpSubmitting={false}
@@ -1053,9 +1156,9 @@ export default function App() {
     enabled: !IS_DEMO_MODE && phase === 'app' && !!session?.accessToken && isAdmin && vaultInitialDecryptDone,
     staleTime: 30_000,
   });
-  const totpStatusQuery = useQuery({
-    queryKey: ['totp-status', vaultCacheKey || session?.email],
-    queryFn: () => getTotpStatus(authedFetch),
+  const twoFactorStatusQuery = useQuery({
+    queryKey: ['two-factor-status', vaultCacheKey || session?.email],
+    queryFn: () => getTwoFactorProviderStatus(authedFetch),
     enabled: !IS_DEMO_MODE && phase === 'app' && !!session?.accessToken && vaultInitialDecryptDone,
     staleTime: 30_000,
   });
@@ -1072,17 +1175,38 @@ export default function App() {
     enabled: !IS_DEMO_MODE && phase === 'app' && !!session?.accessToken && vaultInitialDecryptDone,
     staleTime: 30_000,
   });
+
+  async function deriveCurrentMasterPasswordHash(masterPassword: string): Promise<string> {
+    const email = String(profile?.email || session?.email || '').trim().toLowerCase();
+    if (!email) throw new Error(t('txt_profile_unavailable'));
+    const normalizedPassword = String(masterPassword || '');
+    if (!normalizedPassword) throw new Error(t('txt_master_password_is_required'));
+    const derived = await deriveLoginHash(email, normalizedPassword, defaultKdfIterations);
+    return derived.hash;
+  }
+  const pendingAuthRequestsQueryKey = useMemo(() => ['auth-requests-pending', vaultCacheKey || session?.email] as const, [vaultCacheKey, session?.email]);
   const pendingAuthRequestsQuery = useQuery({
-    queryKey: ['auth-requests-pending', vaultCacheKey || session?.email],
+    queryKey: pendingAuthRequestsQueryKey,
     queryFn: () => listPendingAuthRequests(authedFetch, profile?.email || session?.email || ''),
     enabled: !IS_DEMO_MODE && phase === 'app' && !!session?.accessToken && !!session?.symEncKey && !!session?.symMacKey && !!(profile?.email || session?.email),
     staleTime: 5_000,
-    refetchInterval: 15_000,
-    refetchIntervalInBackground: true,
   });
   const pendingAuthRequests = (pendingAuthRequestsQuery.data || []).filter(isPendingAuthRequest);
   const latestPendingAuthRequest = pendingAuthRequests[0] || null;
-  const authRequestDialogOpen = !!latestPendingAuthRequest && latestPendingAuthRequest.id !== authRequestDialogDismissedId;
+  const selectedPendingAuthRequest = authRequestDialogSelectedId
+    ? pendingAuthRequests.find((request) => request.id === authRequestDialogSelectedId) || null
+    : null;
+  const authRequestDialogRequest = selectedPendingAuthRequest || (
+    latestPendingAuthRequest && latestPendingAuthRequest.id !== authRequestDialogDismissedId
+      ? latestPendingAuthRequest
+      : null
+  );
+  const authRequestDialogOpen = !!authRequestDialogRequest;
+
+  async function beginApproveAuthRequest(authRequest: AuthRequest): Promise<void> {
+    setAuthRequestDialogSelectedId(authRequest.id);
+    setAuthRequestDialogDismissedId(null);
+  }
 
   async function approveAuthRequest(authRequest: AuthRequest): Promise<void> {
     if (!session) throw new Error(t('txt_vault_key_unavailable'));
@@ -1091,11 +1215,11 @@ export default function App() {
       const key = await encryptSessionUserKeyForAuthRequest(session, authRequest);
       await respondToAuthRequest(authedFetch, authRequest.id, {
         key,
-        masterPasswordHash: null,
         deviceIdentifier: getCurrentDeviceIdentifier(),
         requestApproved: true,
       });
       setAuthRequestDialogDismissedId(null);
+      setAuthRequestDialogSelectedId(null);
       pushToast('success', t('txt_auth_request_approved'));
       await pendingAuthRequestsQuery.refetch();
     } finally {
@@ -1111,6 +1235,7 @@ export default function App() {
         requestApproved: false,
       });
       setAuthRequestDialogDismissedId(null);
+      setAuthRequestDialogSelectedId(null);
       pushToast('success', t('txt_auth_request_denied'));
       await pendingAuthRequestsQuery.refetch();
     } finally {
@@ -1175,13 +1300,25 @@ export default function App() {
     if (!isAdminProfile(profile)) return;
     if (repairAttemptRef.current === session.accessToken) return;
 
+    const loginScopedRepairAuth = loginScopedBackupRepairAuthRef.current?.accessToken === session.accessToken
+      ? loginScopedBackupRepairAuthRef.current
+      : null;
     repairAttemptRef.current = session.accessToken;
-    void silentlyRepairBackupSettingsIfNeeded(session, profile);
+    void (async () => {
+      try {
+        await silentlyRepairBackupSettingsIfNeeded(session, profile, loginScopedRepairAuth);
+      } finally {
+        if (loginScopedBackupRepairAuthRef.current?.accessToken === session.accessToken) {
+          loginScopedBackupRepairAuthRef.current = null;
+        }
+      }
+    })();
   }, [phase, session?.accessToken, session?.symEncKey, session?.symMacKey, profile, vaultInitialDecryptDone]);
 
   useEffect(() => {
     if (session?.accessToken) return;
     repairAttemptRef.current = '';
+    loginScopedBackupRepairAuthRef.current = null;
     uriChecksumRepairAttemptRef.current = '';
   }, [session?.accessToken]);
 
@@ -1327,6 +1464,193 @@ export default function App() {
 
   silentRefreshVaultRef.current = refreshVaultSilently;
 
+  function normalizeVaultCoreSnapshot(snapshot?: Partial<VaultCoreSnapshot> | null): VaultCoreSnapshot {
+    return {
+      ciphers: Array.isArray(snapshot?.ciphers) ? snapshot.ciphers : [],
+      folders: Array.isArray(snapshot?.folders) ? snapshot.folders : [],
+      sends: Array.isArray(snapshot?.sends) ? snapshot.sends : [],
+    };
+  }
+
+  function upsertById<T extends { id: string }>(items: T[], nextItem: T): T[] {
+    const nextId = String(nextItem.id || '').trim();
+    if (!nextId) return items;
+    const index = items.findIndex((item) => String(item.id || '').trim() === nextId);
+    if (index < 0) return [...items, nextItem];
+    const next = items.slice();
+    next[index] = nextItem;
+    return next;
+  }
+
+  function removeById<T extends { id: string }>(items: T[], id: string): T[] {
+    const normalizedId = String(id || '').trim();
+    if (!normalizedId) return items;
+    return items.filter((item) => String(item.id || '').trim() !== normalizedId);
+  }
+
+  function revisionStampFromIso(value: unknown): number | null {
+    const stamp = new Date(String(value || '').trim()).getTime();
+    return Number.isFinite(stamp) && stamp > 0 ? stamp : null;
+  }
+
+  function patchVaultCoreSnapshot(
+    updater: (snapshot: VaultCoreSnapshot) => VaultCoreSnapshot,
+    options?: { revisionStamp?: number | null }
+  ): void {
+    if (!vaultCacheKey) return;
+    let nextSnapshot: VaultCoreSnapshot | null = null;
+    queryClient.setQueryData(['vault-core', vaultCacheKey], (previous?: VaultCoreSnapshot) => {
+      const base = normalizeVaultCoreSnapshot(previous || cachedVaultCore);
+      nextSnapshot = updater(base);
+      return nextSnapshot;
+    });
+    if (nextSnapshot) {
+      setCachedVaultCore(nextSnapshot);
+      void saveVaultCoreSyncSnapshot(vaultCacheKey, nextSnapshot, options?.revisionStamp ?? null);
+    }
+  }
+
+  async function refreshVaultCoreRevisionStamp(): Promise<void> {
+    if (!vaultCacheKey || !session?.accessToken) return;
+    try {
+      const revisionStamp = await getVaultRevisionDate(authedFetch);
+      const currentSnapshot = normalizeVaultCoreSnapshot(
+        queryClient.getQueryData<VaultCoreSnapshot>(['vault-core', vaultCacheKey]) || cachedVaultCore
+      );
+      await saveVaultCoreSyncSnapshot(vaultCacheKey, currentSnapshot, revisionStamp);
+    } catch {
+      // A stale revision stamp only affects the next cache validation; the local resource patch remains valid.
+    }
+  }
+
+  function upsertEncryptedCipher(cipher: Cipher, revisionStamp?: number | null): void {
+    patchVaultCoreSnapshot((snapshot) => ({
+      ...snapshot,
+      ciphers: upsertById(snapshot.ciphers, cipher),
+    }), { revisionStamp: revisionStamp ?? revisionStampFromIso(cipher.revisionDate) });
+  }
+
+  function deleteCipherLocally(cipherId: string, revisionStamp?: number | null): void {
+    const id = String(cipherId || '').trim();
+    if (!id) return;
+    patchVaultCoreSnapshot((snapshot) => ({
+      ...snapshot,
+      ciphers: removeById(snapshot.ciphers, id),
+    }), { revisionStamp });
+    setDecryptedCiphers((current) => removeById(current, id));
+  }
+
+  function upsertEncryptedFolder(folder: VaultFolder, revisionStamp?: number | null): void {
+    patchVaultCoreSnapshot((snapshot) => ({
+      ...snapshot,
+      folders: upsertById(snapshot.folders, folder),
+    }), { revisionStamp: revisionStamp ?? revisionStampFromIso(folder.revisionDate) });
+  }
+
+  function deleteFolderLocally(folderId: string, revisionStamp?: number | null): void {
+    const id = String(folderId || '').trim();
+    if (!id) return;
+    patchVaultCoreSnapshot((snapshot) => ({
+      ...snapshot,
+      folders: removeById(snapshot.folders, id),
+      ciphers: snapshot.ciphers.map((cipher) => (
+        String(cipher.folderId || '').trim() === id ? { ...cipher, folderId: null } : cipher
+      )),
+    }), { revisionStamp });
+    setDecryptedFolders((current) => removeById(current, id));
+    setDecryptedCiphers((current) => current.map((cipher) => (
+      String(cipher.folderId || '').trim() === id ? { ...cipher, folderId: null } : cipher
+    )));
+  }
+
+  function upsertEncryptedSend(send: Send, revisionStamp?: number | null): void {
+    patchVaultCoreSnapshot((snapshot) => ({
+      ...snapshot,
+      sends: upsertById(snapshot.sends, send),
+    }), { revisionStamp: revisionStamp ?? revisionStampFromIso(send.revisionDate) });
+    queryClient.setQueryData(sendsQueryKey, (previous?: Send[]) => upsertById(Array.isArray(previous) ? previous : [], send));
+  }
+
+  function deleteSendLocally(sendId: string, revisionStamp?: number | null): void {
+    const id = String(sendId || '').trim();
+    if (!id) return;
+    patchVaultCoreSnapshot((snapshot) => ({
+      ...snapshot,
+      sends: removeById(snapshot.sends, id),
+    }), { revisionStamp });
+    queryClient.setQueryData(sendsQueryKey, (previous?: Send[]) => removeById(Array.isArray(previous) ? previous : [], id));
+    setDecryptedSends((current) => removeById(current, id));
+  }
+
+  async function upsertCipherFromNotification(cipherId: string, revisionStamp?: number | null): Promise<void> {
+    const id = String(cipherId || '').trim();
+    if (!id || !session?.symEncKey || !session?.symMacKey) return;
+    try {
+      const encrypted = await getCipherById(authedFetch, id);
+      upsertEncryptedCipher(encrypted, revisionStamp);
+      const result = await decryptVaultCore({
+        folders: [],
+        ciphers: [encrypted],
+        symEncKeyB64: session.symEncKey,
+        symMacKeyB64: session.symMacKey,
+      });
+      const decrypted = result.ciphers[0];
+      if (decrypted) setDecryptedCiphers((current) => upsertById(current, decrypted));
+    } catch (error) {
+      if ((error as { status?: number }).status === 404) {
+        deleteCipherLocally(id);
+        return;
+      }
+      console.warn('Failed to upsert cipher from notification:', error);
+    }
+  }
+
+  async function upsertFolderFromNotification(folderId: string, revisionStamp?: number | null): Promise<void> {
+    const id = String(folderId || '').trim();
+    if (!id || !session?.symEncKey || !session?.symMacKey) return;
+    try {
+      const encrypted = await getFolderById(authedFetch, id);
+      upsertEncryptedFolder(encrypted, revisionStamp);
+      const result = await decryptVaultCore({
+        folders: [encrypted],
+        ciphers: [],
+        symEncKeyB64: session.symEncKey,
+        symMacKeyB64: session.symMacKey,
+      });
+      const decrypted = result.folders[0];
+      if (decrypted) setDecryptedFolders((current) => upsertById(current, decrypted));
+    } catch (error) {
+      if ((error as { status?: number }).status === 404) {
+        deleteFolderLocally(id);
+        return;
+      }
+      console.warn('Failed to upsert folder from notification:', error);
+    }
+  }
+
+  async function upsertSendFromNotification(sendId: string, revisionStamp?: number | null): Promise<void> {
+    const id = String(sendId || '').trim();
+    if (!id || !session?.symEncKey || !session?.symMacKey) return;
+    try {
+      const encrypted = await getSendById(authedFetch, id);
+      upsertEncryptedSend(encrypted, revisionStamp);
+      const sends = await decryptSends({
+        sends: [encrypted],
+        symEncKeyB64: session.symEncKey,
+        symMacKeyB64: session.symMacKey,
+        origin: window.location.origin,
+      });
+      const decrypted = sends[0];
+      if (decrypted) setDecryptedSends((current) => upsertById(current, decrypted));
+    } catch (error) {
+      if ((error as { status?: number }).status === 404) {
+        deleteSendLocally(id);
+        return;
+      }
+      console.warn('Failed to upsert send from notification:', error);
+    }
+  }
+
   useEffect(() => {
     if (IS_DEMO_MODE) return;
     if (phase !== 'app' || !session?.accessToken || !session?.symEncKey || !session?.symMacKey || !vaultInitialDecryptDone) return;
@@ -1403,7 +1727,18 @@ export default function App() {
         const frames = parseSignalRTextFrames(event.data);
         for (const frame of frames) {
           if (frame.type !== 1 || frame.target !== 'ReceiveMessage') continue;
-          const updateType = Number(frame.arguments?.[0]?.Type || 0);
+          const message = frame.arguments?.[0] as Record<string, unknown> | undefined;
+          const updateType = Number(message?.Type || 0);
+          const contextId = String(message?.ContextId || '').trim();
+          const payload = message?.Payload;
+          const payloadRecord = payload && typeof payload === 'object' ? payload as Record<string, unknown> : null;
+          const resourceId = String(payloadRecord?.Id || payloadRecord?.id || '').trim();
+          const revisionStamp = revisionStampFromIso(
+            payloadRecord?.RevisionDate
+            || payloadRecord?.revisionDate
+            || message?.Date
+            || message?.date
+          );
           if (updateType === SIGNALR_UPDATE_TYPE_LOG_OUT) {
             logoutNow();
             return;
@@ -1412,21 +1747,49 @@ export default function App() {
             void refreshAuthorizedDevicesRef.current();
             continue;
           }
+          if (updateType === SIGNALR_UPDATE_TYPE_AUTH_REQUEST || updateType === SIGNALR_UPDATE_TYPE_AUTH_REQUEST_RESPONSE) {
+            void refreshPendingAuthRequestsRef.current();
+            continue;
+          }
           if (updateType === SIGNALR_UPDATE_TYPE_BACKUP_RESTORE_PROGRESS) {
-            const payload = frame.arguments?.[0]?.Payload;
             if (isBackupProgressDetail(payload)) dispatchBackupProgress(payload);
             continue;
           }
-          if (updateType !== SIGNALR_UPDATE_TYPE_SYNC_VAULT) continue;
-          const contextId = String(frame.arguments?.[0]?.ContextId || '').trim();
           if (contextId && contextId === getCurrentDeviceIdentifier()) continue;
-          if (notificationRefreshTimerRef.current !== null) {
-            window.clearTimeout(notificationRefreshTimerRef.current);
+          if (updateType === SIGNALR_UPDATE_TYPE_SYNC_CIPHERS || updateType === SIGNALR_UPDATE_TYPE_SYNC_VAULT) {
+            if (notificationRefreshTimerRef.current !== null) {
+              window.clearTimeout(notificationRefreshTimerRef.current);
+            }
+            notificationRefreshTimerRef.current = window.setTimeout(() => {
+              notificationRefreshTimerRef.current = null;
+              void silentRefreshVaultRef.current();
+            }, 250);
+            continue;
           }
-          notificationRefreshTimerRef.current = window.setTimeout(() => {
-            notificationRefreshTimerRef.current = null;
-            void silentRefreshVaultRef.current();
-          }, 250);
+          if ((updateType === SIGNALR_UPDATE_TYPE_SYNC_CIPHER_CREATE || updateType === SIGNALR_UPDATE_TYPE_SYNC_CIPHER_UPDATE) && resourceId) {
+            void upsertCipherFromNotification(resourceId, revisionStamp);
+            continue;
+          }
+          if (updateType === SIGNALR_UPDATE_TYPE_SYNC_CIPHER_DELETE && resourceId) {
+            deleteCipherLocally(resourceId, revisionStamp);
+            continue;
+          }
+          if ((updateType === SIGNALR_UPDATE_TYPE_SYNC_FOLDER_CREATE || updateType === SIGNALR_UPDATE_TYPE_SYNC_FOLDER_UPDATE) && resourceId) {
+            void upsertFolderFromNotification(resourceId, revisionStamp);
+            continue;
+          }
+          if (updateType === SIGNALR_UPDATE_TYPE_SYNC_FOLDER_DELETE && resourceId) {
+            deleteFolderLocally(resourceId, revisionStamp);
+            continue;
+          }
+          if ((updateType === SIGNALR_UPDATE_TYPE_SYNC_SEND_CREATE || updateType === SIGNALR_UPDATE_TYPE_SYNC_SEND_UPDATE) && resourceId) {
+            void upsertSendFromNotification(resourceId, revisionStamp);
+            continue;
+          }
+          if (updateType === SIGNALR_UPDATE_TYPE_SYNC_SEND_DELETE && resourceId) {
+            deleteSendLocally(resourceId, revisionStamp);
+            continue;
+          }
         }
       });
 
@@ -1485,8 +1848,33 @@ export default function App() {
     },
     refetchSends: refetchSendsFromVaultCore,
     onNotify: pushToast,
+    patchEncryptedCiphers: (updater) => {
+      patchVaultCoreSnapshot((snapshot) => ({
+        ...snapshot,
+        ciphers: updater(snapshot.ciphers),
+      }));
+    },
+    patchEncryptedFolders: (updater) => {
+      patchVaultCoreSnapshot((snapshot) => ({
+        ...snapshot,
+        folders: updater(snapshot.folders),
+      }));
+    },
+    patchEncryptedSends: (updater) => {
+      let nextSends: Send[] = [];
+      patchVaultCoreSnapshot((snapshot) => {
+        nextSends = updater(snapshot.sends);
+        return {
+          ...snapshot,
+          sends: nextSends,
+        };
+      });
+      queryClient.setQueryData(sendsQueryKey, nextSends);
+    },
     patchDecryptedCiphers: setDecryptedCiphers,
     patchDecryptedFolders: setDecryptedFolders,
+    patchDecryptedSends: setDecryptedSends,
+    refreshVaultRevisionStamp: refreshVaultCoreRevisionStamp,
   });
   const accountSecurityActions = useAccountSecurityActions({
     authedFetch,
@@ -1502,11 +1890,13 @@ export default function App() {
     onNotify: pushToast,
     onProfileUpdated: setProfile,
     onSetConfirm: setConfirm,
-    refetchTotpStatus: totpStatusQuery.refetch,
+    refetchTwoFactorStatus: twoFactorStatusQuery.refetch,
     refetchAuthorizedDevices: authorizedDevicesQuery.refetch,
   });
   const adminActions = useAdminActions({
     authedFetch,
+    email: String(profile?.email || session?.email || ''),
+    defaultKdfIterations,
     onNotify: pushToast,
     onSetConfirm: setConfirm,
     refetchUsers: usersQuery.refetch,
@@ -1517,8 +1907,12 @@ export default function App() {
     if (!vaultInitialDecryptDone) return;
     await authorizedDevicesQuery.refetch();
   };
+  refreshPendingAuthRequestsRef.current = async () => {
+    if (!vaultInitialDecryptDone || !(profile?.email || session?.email)) return;
+    setAuthRequestDialogDismissedId(null);
+    await pendingAuthRequestsQuery.refetch();
+  };
 
-  const hashPathRaw = typeof window !== 'undefined' ? window.location.hash || '' : '';
   const hashPath = hashPathRaw.startsWith('#') ? hashPathRaw.slice(1) : hashPathRaw;
   const hashPathOnly = String(hashPath || '').split('?')[0].split('#')[0];
   const trimmedHashPath = hashPathOnly.replace(/^\/+/, '').replace(/\/+$/, '');
@@ -1557,13 +1951,17 @@ export default function App() {
   const mobilePrimaryRoute =
     location === '/sends'
       ? '/sends'
+      : location === '/generator'
+        ? '/generator'
       : location === '/vault/totp'
         ? '/vault/totp'
         : location === '/vault'
           ? '/vault'
           : '/settings';
   const currentPageTitle = (() => {
+    if (location === '/security/password-health') return t('txt_password_security');
     if (location === '/vault/totp') return t('txt_verification_code');
+    if (location === '/generator') return t('txt_password_generator');
     if (location === '/sends') return t('nav_sends');
     if (location === '/admin') return t('nav_admin_panel');
     if (location === '/logs') return t('nav_log_center');
@@ -1620,6 +2018,7 @@ export default function App() {
     session,
     mobileLayout,
     mobileSidebarToggleKey,
+    themePreference,
     importRoute: IMPORT_ROUTE,
     settingsHomeRoute: SETTINGS_HOME_ROUTE,
     settingsAccountRoute: SETTINGS_ACCOUNT_ROUTE,
@@ -1634,10 +2033,13 @@ export default function App() {
     invites: invitesQuery.data || [],
     adminLoading: (usersQuery.isFetching && !usersQuery.data) || (invitesQuery.isFetching && !invitesQuery.data),
     adminError: usersQuery.isError || invitesQuery.isError ? t('txt_load_admin_data_failed') : '',
-    totpEnabled: !!totpStatusQuery.data?.enabled,
+    totpEnabled: !!twoFactorStatusQuery.data?.totpEnabled,
+    yubikeyEnabled: !!twoFactorStatusQuery.data?.yubikeyEnabled,
+    passkey2faEnabled: !!twoFactorStatusQuery.data?.passkeyEnabled,
     lockTimeoutMinutes,
     sessionTimeoutAction,
     authorizedDevices: authorizedDevicesQuery.data || [],
+    currentDeviceIdentifier: getCurrentDeviceIdentifier(),
     authorizedDevicesLoading: authorizedDevicesQuery.isFetching,
     authorizedDevicesError: authorizedDevicesQuery.isError && !authorizedDevicesQuery.data ? t('txt_load_devices_failed') : '',
     domainRules: IS_DEMO_MODE ? demoDomainRules : domainRulesQuery.data || null,
@@ -1646,6 +2048,7 @@ export default function App() {
     onNavigate: navigate,
     onLogout: handleLogout,
     onNotify: pushToast,
+    onThemePreferenceChange: setThemePreference,
     onImport: vaultSendActions.importVault,
     onImportEncryptedRaw: vaultSendActions.importEncryptedRaw,
     onExport: vaultSendActions.exportVault,
@@ -1680,11 +2083,20 @@ export default function App() {
     sendUploadPercent: vaultSendActions.sendUploadPercent,
     onChangePassword: accountSecurityActions.changePassword,
     onSavePasswordHint: accountSecurityActions.savePasswordHint,
-    onEnableTotp: async (secret: string, token: string) => {
-      await accountSecurityActions.enableTotp(secret, token);
-      await totpStatusQuery.refetch();
+    onEnableTotp: async (secret: string, token: string, masterPassword: string) => {
+      await accountSecurityActions.enableTotp(secret, token, masterPassword);
+      await twoFactorStatusQuery.refetch();
     },
     onOpenDisableTotp: () => setDisableTotpOpen(true),
+    onGetYubiKeySettings: accountSecurityActions.getYubiKeySettings,
+    onSaveYubiKeySettings: accountSecurityActions.saveYubiKeySettings,
+    onSaveYubiKeyApiCredentials: accountSecurityActions.saveYubiKeyApiCredentials,
+    onBootstrapYubiKeyApiCredentials: accountSecurityActions.bootstrapYubiKeyApiCredentials,
+    onDisableYubiKey: accountSecurityActions.disableYubiKey,
+    onGetTwoFactorPasskeySettings: accountSecurityActions.getTwoFactorPasskeySettings,
+    onCreateTwoFactorPasskey: accountSecurityActions.createTwoFactorPasskey,
+    onDeleteTwoFactorPasskey: accountSecurityActions.deleteTwoFactorPasskey,
+    onDisableTwoFactorPasskeys: accountSecurityActions.disableTwoFactorPasskeys,
     onGetRecoveryCode: accountSecurityActions.getRecoveryCode,
     onGetApiKey: accountSecurityActions.getApiKey,
     onRotateApiKey: accountSecurityActions.rotateApiKey,
@@ -1692,12 +2104,16 @@ export default function App() {
     onCreateAccountPasskey: accountSecurityActions.createAccountPasskey,
     onEnableAccountPasskeyDirectUnlock: accountSecurityActions.enableAccountPasskeyDirectUnlock,
     onDeleteAccountPasskey: accountSecurityActions.deleteAccountPasskey,
+    onRefreshTwoFactorStatus: async () => {
+      await twoFactorStatusQuery.refetch();
+    },
     pendingAuthRequests,
-    pendingAuthRequestsLoading: pendingAuthRequestsQuery.isFetching,
+    pendingAuthRequestsLoading: pendingAuthRequestsQuery.isLoading,
+    pendingAuthRequestsRefreshing: pendingAuthRequestsQuery.isFetching && !pendingAuthRequestsQuery.isLoading,
     onRefreshPendingAuthRequests: async () => {
       await pendingAuthRequestsQuery.refetch();
     },
-    onApproveAuthRequest: approveAuthRequest,
+    onApproveAuthRequest: beginApproveAuthRequest,
     onDenyAuthRequest: denyAuthRequest,
     onLockTimeoutChange: setLockTimeoutMinutes,
     onSessionTimeoutActionChange: setSessionTimeoutAction,
@@ -1710,34 +2126,70 @@ export default function App() {
     onRevokeDeviceTrust: accountSecurityActions.openRevokeDeviceTrust,
     onTrustDevicePermanently: accountSecurityActions.openTrustDevicePermanently,
     onRemoveDevice: accountSecurityActions.openRemoveDevice,
+    onRemoveSelectedDevices: accountSecurityActions.openRemoveSelectedDevices,
     onRevokeAllDeviceTrust: accountSecurityActions.openRevokeAllDeviceTrust,
     onRemoveAllDevices: accountSecurityActions.openRemoveAllDevices,
     onRefreshAdmin: adminActions.refreshAdmin,
     onCreateInvite: adminActions.createInvite,
+    onDeleteInvalidInvites: adminActions.deleteInvalidInvites,
     onDeleteAllInvites: adminActions.deleteAllInvites,
     onToggleUserStatus: adminActions.toggleUserStatus,
     onDeleteUser: adminActions.deleteUser,
-    onRevokeInvite: adminActions.revokeInvite,
+    onDeleteInvite: adminActions.deleteInvite,
     onLoadAuditLogs: (filters: AuditLogFilters) => listAuditLogs(authedFetch, filters),
     onLoadAuditLogSettings: () => getAuditLogSettings(authedFetch),
     onSaveAuditLogSettings: (settings: AuditLogSettings) => saveAuditLogSettings(authedFetch, settings),
     onClearAuditLogs: () => clearAuditLogs(authedFetch),
-    onExportBackup: backupActions.exportBackup,
-    onImportBackup: backupActions.importBackup,
-    onImportBackupAllowingChecksumMismatch: backupActions.importBackupAllowingChecksumMismatch,
+    onExportBackup: async (masterPassword: string, includeAttachments?: boolean) => {
+      const hash = await deriveCurrentMasterPasswordHash(masterPassword);
+      return backupActions.exportBackup(hash, includeAttachments);
+    },
+    onImportBackup: async (masterPassword: string, file: File, replaceExisting?: boolean) => {
+      const hash = await deriveCurrentMasterPasswordHash(masterPassword);
+      return backupActions.importBackup(hash, file, replaceExisting);
+    },
+    onImportBackupAllowingChecksumMismatch: async (masterPassword: string, file: File, replaceExisting?: boolean) => {
+      const hash = await deriveCurrentMasterPasswordHash(masterPassword);
+      return backupActions.importBackupAllowingChecksumMismatch(hash, file, replaceExisting);
+    },
     onLoadBackupSettings: () => queryClient.ensureQueryData({
       queryKey: ['admin-backup-settings', vaultCacheKey],
       queryFn: () => backupActions.loadSettings(),
       staleTime: 30_000,
     }),
-    onSaveBackupSettings: backupActions.saveSettings,
-    onRunRemoteBackup: backupActions.runRemoteBackup,
+    onSaveBackupSettings: async (masterPassword: string, settings: AdminBackupSettings) => {
+      const hash = await deriveCurrentMasterPasswordHash(masterPassword);
+      const saved = await backupActions.saveSettings(hash, settings);
+      queryClient.setQueryData(['admin-backup-settings', vaultCacheKey], saved);
+      return saved;
+    },
+    onRunRemoteBackup: async (masterPassword: string, destinationId?: string | null) => {
+      const hash = await deriveCurrentMasterPasswordHash(masterPassword);
+      const result = await backupActions.runRemoteBackup(hash, destinationId);
+      queryClient.setQueryData(['admin-backup-settings', vaultCacheKey], result.settings);
+      return result;
+    },
     onListRemoteBackups: backupActions.listRemoteBackups,
-    onDownloadRemoteBackup: backupActions.downloadRemoteBackup,
-    onInspectRemoteBackup: backupActions.inspectRemoteBackup,
-    onDeleteRemoteBackup: backupActions.deleteRemoteBackup,
-    onRestoreRemoteBackup: backupActions.restoreRemoteBackup,
-    onRestoreRemoteBackupAllowingChecksumMismatch: backupActions.restoreRemoteBackupAllowingChecksumMismatch,
+    onDownloadRemoteBackup: async (masterPassword: string, destinationId: string, path: string, onProgress?: (percent: number | null) => void) => {
+      const hash = await deriveCurrentMasterPasswordHash(masterPassword);
+      return backupActions.downloadRemoteBackup(hash, destinationId, path, onProgress);
+    },
+    onInspectRemoteBackup: async (masterPassword: string, destinationId: string, path: string) => {
+      const hash = await deriveCurrentMasterPasswordHash(masterPassword);
+      return backupActions.inspectRemoteBackup(hash, destinationId, path);
+    },
+    onDeleteRemoteBackup: async (masterPassword: string, destinationId: string, path: string) => {
+      const hash = await deriveCurrentMasterPasswordHash(masterPassword);
+      return backupActions.deleteRemoteBackup(hash, destinationId, path);
+    },
+    onRestoreRemoteBackup: async (masterPassword: string, destinationId: string, path: string, replaceExisting?: boolean) => {
+      const hash = await deriveCurrentMasterPasswordHash(masterPassword);
+      return backupActions.restoreRemoteBackup(hash, destinationId, path, replaceExisting);
+    },
+    onRestoreRemoteBackupAllowingChecksumMismatch: async (masterPassword: string, destinationId: string, path: string, replaceExisting?: boolean) => {
+      const hash = await deriveCurrentMasterPasswordHash(masterPassword);
+      return backupActions.restoreRemoteBackupAllowingChecksumMismatch(hash, destinationId, path, replaceExisting);
+    },
   };
   const effectiveMainRoutesProps = IS_DEMO_MODE
     ? createDemoMainRoutesProps(mainRoutesProps, pushToast, {
@@ -1808,6 +2260,7 @@ export default function App() {
           unlockPlaceholder={IS_DEMO_MODE ? t('txt_demo_unlock_placeholder') : undefined}
           unlockReady={!!session?.email}
           unlockPreparing={unlockPreparing}
+          sessionRefreshError={lockedSessionRefreshError}
           loginValues={loginValues}
           pendingPasskeyPasswordEmail={pendingPasskeyPassword?.email || null}
           passkeyPassword={passkeyPassword}
@@ -1848,6 +2301,11 @@ export default function App() {
           onLogout={logoutNow}
           onTogglePasswordHint={() => void handleTogglePasswordHint()}
           onShowLockedPasswordHint={handleShowLockedPasswordHint}
+          onRetrySessionRefresh={() => {
+            lockedSessionRetryAttemptRef.current = 0;
+            setLockedSessionRefreshError('');
+            setLockedSessionRetryKey((value) => value + 1);
+          }}
         />
         <AppGlobalOverlays
           toasts={toasts}
@@ -1855,11 +2313,14 @@ export default function App() {
           confirm={confirm}
           onCancelConfirm={() => setConfirm(null)}
           pendingTotpOpen={!!pendingTotp}
+          pendingTotpProviderType={pendingTotp?.providerType ?? 0}
+          pendingTotpAvailableProviders={pendingTotp?.availableProviders ?? []}
           totpCode={totpCode}
           rememberDevice={rememberDevice}
           onTotpCodeChange={setTotpCode}
           onRememberDeviceChange={setRememberDevice}
           onConfirmTotp={() => void handleTotpVerify()}
+          onSelectTotpProvider={handleSelectTotpProvider}
           onCancelTotp={() => {
             if (totpSubmitting) return;
             setPendingTotp(null);
@@ -1914,11 +2375,14 @@ export default function App() {
         confirm={confirm}
         onCancelConfirm={() => setConfirm(null)}
         pendingTotpOpen={false}
+        pendingTotpProviderType={0}
+        pendingTotpAvailableProviders={[]}
         totpCode=""
         rememberDevice={false}
         onTotpCodeChange={() => {}}
         onRememberDeviceChange={() => {}}
         onConfirmTotp={() => {}}
+        onSelectTotpProvider={() => {}}
         onCancelTotp={() => {}}
         onUseRecoveryCode={() => {}}
         totpSubmitting={false}
@@ -1945,21 +2409,24 @@ export default function App() {
       />
       <AuthRequestApprovalDialog
         open={authRequestDialogOpen}
-        authRequest={latestPendingAuthRequest}
+        authRequest={authRequestDialogRequest}
         submitting={!!authRequestSubmittingId}
         onApprove={() => {
-          if (!latestPendingAuthRequest) return;
-          void approveAuthRequest(latestPendingAuthRequest).catch((error) => {
+          if (!authRequestDialogRequest) return;
+          void approveAuthRequest(authRequestDialogRequest).catch((error) => {
             pushToast('error', error instanceof Error ? error.message : t('txt_auth_request_update_failed'));
           });
         }}
         onDeny={() => {
-          if (!latestPendingAuthRequest) return;
-          void denyAuthRequest(latestPendingAuthRequest).catch((error) => {
+          if (!authRequestDialogRequest) return;
+          void denyAuthRequest(authRequestDialogRequest).catch((error) => {
             pushToast('error', error instanceof Error ? error.message : t('txt_auth_request_update_failed'));
           });
         }}
-        onClose={() => setAuthRequestDialogDismissedId(latestPendingAuthRequest?.id || null)}
+        onClose={() => {
+          setAuthRequestDialogSelectedId(null);
+          setAuthRequestDialogDismissedId(authRequestDialogRequest?.id || null);
+        }}
       />
     </>
   );

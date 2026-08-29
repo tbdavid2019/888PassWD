@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS users (
   security_stamp TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'user',
   status TEXT NOT NULL DEFAULT 'active',
-  verify_devices INTEGER NOT NULL DEFAULT 1,
+  verify_devices INTEGER NOT NULL DEFAULT 0,
   totp_secret TEXT,
   totp_recovery_code TEXT,
   api_key TEXT,
@@ -132,6 +132,11 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
   expires_at INTEGER NOT NULL,
   device_identifier TEXT,
   device_session_stamp TEXT,
+  security_stamp TEXT,
+  created_at INTEGER,
+  last_used_at INTEGER,
+  absolute_expires_at INTEGER,
+  client_type TEXT,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);
@@ -176,6 +181,8 @@ CREATE TABLE IF NOT EXISTS devices (
   encrypted_user_key TEXT,
   encrypted_public_key TEXT,
   encrypted_private_key TEXT,
+  push_uuid TEXT,
+  push_token TEXT,
   banned INTEGER NOT NULL DEFAULT 0,
   banned_at TEXT,
   device_note TEXT,
@@ -187,6 +194,7 @@ CREATE TABLE IF NOT EXISTS devices (
 );
 CREATE INDEX IF NOT EXISTS idx_devices_user_updated ON devices(user_id, updated_at);
 CREATE INDEX IF NOT EXISTS idx_devices_user_last_seen ON devices(user_id, last_seen_at);
+CREATE INDEX IF NOT EXISTS idx_devices_user_push ON devices(user_id, push_token);
 
 CREATE TABLE IF NOT EXISTS auth_requests (
   id TEXT PRIMARY KEY,
@@ -225,9 +233,20 @@ CREATE TABLE IF NOT EXISTS trusted_two_factor_device_tokens (
 CREATE INDEX IF NOT EXISTS idx_trusted_two_factor_device_tokens_user_device
   ON trusted_two_factor_device_tokens(user_id, device_identifier);
 
+CREATE TABLE IF NOT EXISTS totp_login_replays (
+  user_id TEXT NOT NULL,
+  time_counter INTEGER NOT NULL,
+  consumed_at INTEGER NOT NULL,
+  PRIMARY KEY (user_id, time_counter),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_totp_login_replays_consumed_at
+  ON totp_login_replays(consumed_at);
+
 CREATE TABLE IF NOT EXISTS webauthn_credentials (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
+  purpose TEXT NOT NULL DEFAULT 'login',
   name TEXT NOT NULL,
   public_key TEXT NOT NULL,
   credential_id TEXT NOT NULL,
