@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://workers.cloudflare.com/"><img src="https://img.shields.io/badge/Powered%20by-Cloudflare-F38020?logo=cloudflare&logoColor=white" alt="Powered by Cloudflare" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-LGPL--3.0-2ea44f" alt="License: LGPL-3.0" /></a>
-  <a href="https://github.com/shuaiplus/NodeWarden/releases/latest"><img src="https://img.shields.io/github/v/release/shuaiplus/NodeWarden?display_name=tag" alt="Latest Release" /></a>
+  <a href="https://github.com/tbdavid2019/nodewarden/releases/latest"><img src="https://img.shields.io/github/v/release/tbdavid2019/nodewarden?display_name=tag" alt="Latest Release" /></a>
 
 </p>
 
@@ -19,7 +19,8 @@
 </p>
 
 <p align="center">
-  <a href="./README_ZH.md">中文</a> |
+  <a href="./README_ZH.md">简体中文</a> |
+  <a href="./README_ZH_TW.md">繁體中文</a> |
   <a href="./CONTRIBUTING.md">Contributing</a> |
   <a href="https://nodewarden.app">Official wiki</a>
 </p>
@@ -120,8 +121,8 @@
 ## CLI deploy
 
 ```powershell
-git clone https://github.com/shuaiplus/NodeWarden.git
-cd NodeWarden
+git clone https://github.com/tbdavid2019/nodewarden.git
+cd nodewarden
 
 npm install
 npx wrangler login
@@ -146,8 +147,9 @@ LGPL-3.0 License
 
 ---
 
-## Credits
+## Credits & Acknowledgments
 
+- [shuaiplus/NodeWarden](https://github.com/shuaiplus/NodeWarden) - Original project and server implementation created by [@shuaiplus](https://github.com/shuaiplus) and community contributors. We sincerely thank the original author and contributors for their foundational work!
 - [Bitwarden](https://bitwarden.com/) - Original design and clients
 - [Vaultwarden](https://github.com/dani-garcia/vaultwarden) - Server implementation reference
 - [Cloudflare Workers](https://workers.cloudflare.com/) - Serverless platform

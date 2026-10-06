@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://workers.cloudflare.com/"><img src="https://img.shields.io/badge/Powered%20by-Cloudflare-F38020?logo=cloudflare&logoColor=white" alt="Powered by Cloudflare" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-LGPL--3.0-2ea44f" alt="License: LGPL-3.0" /></a>
-  <a href="https://github.com/shuaiplus/NodeWarden/releases/latest"><img src="https://img.shields.io/github/v/release/shuaiplus/NodeWarden?display_name=tag" alt="Latest Release" /></a>
+  <a href="https://github.com/tbdavid2019/nodewarden/releases/latest"><img src="https://img.shields.io/github/v/release/tbdavid2019/nodewarden?display_name=tag" alt="Latest Release" /></a>
 
 </p>
 
@@ -20,6 +20,7 @@
 
 <p align="center">
   <a href="./README.md">English</a> |
+  <a href="./README_ZH_TW.md">繁體中文</a> |
   <a href="./CONTRIBUTING.md">贡献指南</a> |
   <a href="https://nodewarden.app">官方wiki</a>
 </p>
@@ -118,8 +119,8 @@
 ## CLI 部署
 
 ```powershell
-git clone https://github.com/shuaiplus/NodeWarden.git
-cd NodeWarden
+git clone https://github.com/tbdavid2019/nodewarden.git
+cd nodewarden
 
 npm install
 npx wrangler login
@@ -146,6 +147,7 @@ LGPL-3.0 License
 
 ## 致谢
 
+- [shuaiplus/NodeWarden](https://github.com/shuaiplus/NodeWarden) - 感谢原作者 [@shuaiplus](https://github.com/shuaiplus) 及其贡献者奠定的开源基础与原始实现。深表感谢！
 - [Bitwarden](https://bitwarden.com/) - 原始设计与客户端
 - [Vaultwarden](https://github.com/dani-garcia/vaultwarden) - 服务端实现参考
 - [Cloudflare Workers](https://workers.cloudflare.com/) - 无服务器平台
