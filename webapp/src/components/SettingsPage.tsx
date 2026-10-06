@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
-import { Clipboard, KeyRound, RefreshCw, ShieldCheck, ShieldOff, Trash2 } from 'lucide-preact';
+import { Clipboard, KeyRound, Mail, RefreshCw, ShieldCheck, ShieldOff, Trash2 } from 'lucide-preact';
 import { copyTextToClipboard } from '@/lib/clipboard';
 import qrcode from 'qrcode-generator';
 import type { AccountPasskeyCredential, Profile, TwoFactorPasskeyCredential, TwoFactorPasskeySettings, YubiKeyOtpSettings } from '@/lib/types';
@@ -11,6 +11,7 @@ interface SettingsPageProps {
   totpEnabled: boolean;
   yubikeyEnabled: boolean;
   passkey2faEnabled: boolean;
+  email2faEnabled: boolean;
   themePreference: ThemePreference;
   lockTimeoutMinutes: 0 | 1 | 5 | 15 | 30;
   sessionTimeoutAction: 'lock' | 'logout';
@@ -20,6 +21,9 @@ interface SettingsPageProps {
   onSavePasswordHint: (masterPasswordHint: string) => Promise<void>;
   onEnableTotp: (secret: string, token: string, masterPassword: string) => Promise<void>;
   onOpenDisableTotp: () => void;
+  onSendEmail2faCode: () => Promise<void>;
+  onEnableEmail2fa: (code: string, masterPassword: string) => Promise<void>;
+  onDisableEmail2fa: (masterPassword: string) => Promise<void>;
   onGetYubiKeySettings: (masterPassword: string) => Promise<YubiKeyOtpSettings>;
   onSaveYubiKeySettings: (keys: string[], nfc: boolean, masterPassword: string) => Promise<YubiKeyOtpSettings>;
   onSaveYubiKeyApiCredentials: (clientId: string, secretKey: string, masterPassword: string) => Promise<YubiKeyOtpSettings>;
@@ -53,6 +57,7 @@ type MasterPasswordPromptAction =
   | 'manageTotp'
   | 'manageYubiKey'
   | 'managePasskey2fa'
+  | 'manageEmail2fa'
   | 'createPasskey'
   | 'enablePasskeyDirectUnlock'
   | 'deletePasskey';
@@ -157,6 +162,11 @@ export default function SettingsPage(props: SettingsPageProps) {
   const [twoFactorPasskeyName, setTwoFactorPasskeyName] = useState(t('txt_passkey'));
   const [twoFactorPasskeySubmitting, setTwoFactorPasskeySubmitting] = useState(false);
   const [twoFactorStatusRefreshing, setTwoFactorStatusRefreshing] = useState(false);
+  const [email2faDialogOpen, setEmail2faDialogOpen] = useState(false);
+  const [email2faMasterPassword, setEmail2faMasterPassword] = useState('');
+  const [email2faCode, setEmail2faCode] = useState('');
+  const [email2faSending, setEmail2faSending] = useState(false);
+  const [email2faSubmitting, setEmail2faSubmitting] = useState(false);
   const [recoveryCodeDialogOpen, setRecoveryCodeDialogOpen] = useState(false);
   const [totpManagePassword, setTotpManagePassword] = useState('');
   const [masterPasswordPrompt, setMasterPasswordPrompt] = useState<MasterPasswordPromptAction | null>(null);
@@ -273,6 +283,11 @@ export default function SettingsPage(props: SettingsPageProps) {
         applyTwoFactorPasskeySettings(settings);
         setTwoFactorPasskeyName(t('txt_passkey'));
         setTwoFactorPasskeyDialogOpen(true);
+      } else if (masterPasswordPrompt === 'manageEmail2fa') {
+        await props.onVerifyMasterPassword(props.profile.email, masterPassword);
+        setEmail2faMasterPassword(masterPassword);
+        setEmail2faCode('');
+        setEmail2faDialogOpen(true);
       } else if (masterPasswordPrompt === 'createPasskey') {
         await props.onVerifyMasterPassword(props.profile.email, masterPassword);
         setCreatePasskeyMasterPassword(masterPassword);
@@ -309,6 +324,8 @@ export default function SettingsPage(props: SettingsPageProps) {
             ? 'YubiKey'
             : masterPasswordPrompt === 'managePasskey2fa'
               ? t('txt_two_step_passkeys')
+            : masterPasswordPrompt === 'manageEmail2fa'
+              ? `${t('txt_email')} OTP`
             : masterPasswordPrompt === 'createPasskey'
             ? t('txt_add_account_passkey')
             : masterPasswordPrompt === 'enablePasskeyDirectUnlock'
@@ -333,6 +350,51 @@ export default function SettingsPage(props: SettingsPageProps) {
   function closeTotpManageDialog(): void {
     setTotpManageDialogOpen(false);
     setTotpManagePassword('');
+  }
+
+  function closeEmail2faDialog(): void {
+    if (email2faSubmitting || email2faSending) return;
+    setEmail2faDialogOpen(false);
+    setEmail2faMasterPassword('');
+    setEmail2faCode('');
+  }
+
+  async function handleSendEmail2fa(): Promise<void> {
+    if (email2faSending) return;
+    setEmail2faSending(true);
+    try {
+      await props.onSendEmail2faCode();
+    } catch (error) {
+      props.onNotify?.('error', error instanceof Error ? error.message : t('txt_email'));
+    } finally {
+      setEmail2faSending(false);
+    }
+  }
+
+  async function handleEnableEmail2fa(): Promise<void> {
+    if (email2faSubmitting || !email2faCode.trim()) return;
+    setEmail2faSubmitting(true);
+    try {
+      await props.onEnableEmail2fa(email2faCode.trim(), email2faMasterPassword);
+      closeEmail2faDialog();
+    } catch (error) {
+      props.onNotify?.('error', error instanceof Error ? error.message : t('txt_email'));
+    } finally {
+      setEmail2faSubmitting(false);
+    }
+  }
+
+  async function handleDisableEmail2fa(): Promise<void> {
+    if (email2faSubmitting) return;
+    setEmail2faSubmitting(true);
+    try {
+      await props.onDisableEmail2fa(email2faMasterPassword);
+      closeEmail2faDialog();
+    } catch (error) {
+      props.onNotify?.('error', error instanceof Error ? error.message : t('txt_email'));
+    } finally {
+      setEmail2faSubmitting(false);
+    }
   }
 
   function applyYubiKeySettings(settings: YubiKeyOtpSettings): void {
@@ -803,6 +865,22 @@ export default function SettingsPage(props: SettingsPageProps) {
 
                   <div className="two-step-provider-row">
                     <div className="two-step-provider-icon">
+                      <Mail size={28} />
+                    </div>
+                    <div className="two-step-provider-copy">
+                      <div className="two-step-provider-title">
+                        <strong>{t('txt_email')} OTP</strong>
+                        {props.email2faEnabled && <span className="two-step-enabled-badge">{t('txt_enabled')}</span>}
+                      </div>
+                      <span>{t('txt_email')} OTP ({props.profile.email})</span>
+                    </div>
+                    <button type="button" className="btn btn-secondary" onClick={() => openMasterPasswordPrompt('manageEmail2fa')}>
+                      {t('txt_manage')}
+                    </button>
+                  </div>
+
+                  <div className="two-step-provider-row">
+                    <div className="two-step-provider-icon">
                       <KeyRound size={28} />
                     </div>
                     <div className="two-step-provider-copy">
@@ -1188,6 +1266,78 @@ export default function SettingsPage(props: SettingsPageProps) {
               </button>
             )}
           </div>
+        </div>
+      </ConfirmDialog>
+      <ConfirmDialog
+        open={email2faDialogOpen}
+        title={`${t('txt_two_step_login')} - ${t('txt_email')} OTP`}
+        message=""
+        hideConfirm
+        hideCancel
+        closeButton
+        cancelDisabled={email2faSubmitting || email2faSending}
+        onConfirm={() => {}}
+        onCancel={closeEmail2faDialog}
+      >
+        <div className="settings-vertical-fields">
+          {props.email2faEnabled ? (
+            <>
+              <div className="field-help" style={{ marginBottom: 12 }}>
+                {`${t('txt_email')} OTP: ${props.profile.email}`}
+              </div>
+              <div className="actions">
+                <button
+                  type="button"
+                  className="btn btn-danger"
+                  disabled={email2faSubmitting}
+                  onClick={() => void handleDisableEmail2fa()}
+                >
+                  <ShieldOff size={14} className="btn-icon" />
+                  {t('txt_disable_totp').replace(/totp/i, 'Email')}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="field-help" style={{ marginBottom: 12 }}>
+                {`${t('txt_email')}: ${props.profile.email}`}
+              </div>
+              <div className="actions" style={{ marginBottom: 16 }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  disabled={email2faSending}
+                  onClick={() => void handleSendEmail2fa()}
+                >
+                  <Mail size={14} className="btn-icon" />
+                  {email2faSending ? '...' : `${t('txt_email')} ${t('txt_verification_code')}`}
+                </button>
+              </div>
+              <label className="field">
+                <span>{t('txt_verification_code')}</span>
+                <input
+                  className="input"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="123456"
+                  value={email2faCode}
+                  onInput={(e) => setEmail2faCode((e.currentTarget as HTMLInputElement).value.replace(/\D/g, ''))}
+                />
+              </label>
+              <div className="actions">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={email2faSubmitting || email2faCode.trim().length !== 6}
+                  onClick={() => void handleEnableEmail2fa()}
+                >
+                  <ShieldCheck size={14} className="btn-icon" />
+                  {t('txt_save')}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </ConfirmDialog>
       <ConfirmDialog

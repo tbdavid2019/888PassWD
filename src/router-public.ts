@@ -18,6 +18,7 @@ import {
   handleRegister,
   handleGetPasswordHint,
   handleRecoverTwoFactor,
+  handleSendTwoFactorEmailLogin,
 } from './handlers/accounts';
 import {
   handleCreateAuthRequest,
@@ -454,13 +455,17 @@ export async function handlePublicRoute(
     '/identity/accounts/register/finish',
     '/api/accounts/verify-email-token',
     '/accounts/verify-email-token',
-    '/api/two-factor/send-email-login',
-    '/two-factor/send-email-login',
   ]);
   if (publicMailBackedPaths.has(path) && method === 'POST') {
     const blocked = await enforcePublicRateLimit('public-sensitive', LIMITS.rateLimit.sensitivePublicRequestsPerMinute);
     if (blocked) return blocked;
     return unsupportedResponse('Email delivery is not supported by this server.');
+  }
+
+  if ((path === '/api/two-factor/send-email-login' || path === '/two-factor/send-email-login') && method === 'POST') {
+    const blocked = await enforcePublicRateLimit('public-sensitive', LIMITS.rateLimit.sensitivePublicRequestsPerMinute);
+    if (blocked) return blocked;
+    return handleSendTwoFactorEmailLogin(request, env);
   }
 
   if (path === '/api/accounts/password-hint' && method === 'POST') {

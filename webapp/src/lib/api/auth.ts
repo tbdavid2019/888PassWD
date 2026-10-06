@@ -1038,7 +1038,7 @@ export async function getVaultRevisionDate(authedFetch: AuthedFetch): Promise<nu
   return stamp;
 }
 
-export async function getTwoFactorProviderStatus(authedFetch: AuthedFetch): Promise<{ totpEnabled: boolean; yubikeyEnabled: boolean; passkeyEnabled: boolean }> {
+export async function getTwoFactorProviderStatus(authedFetch: AuthedFetch): Promise<{ totpEnabled: boolean; emailEnabled: boolean; yubikeyEnabled: boolean; passkeyEnabled: boolean }> {
   const resp = await authedFetch('/api/two-factor');
   if (!resp.ok) throw new Error('Failed to load two-factor status');
   const body = (await parseJson<{ data?: unknown[]; Data?: unknown[] }>(resp)) || {};
@@ -1050,9 +1050,53 @@ export async function getTwoFactorProviderStatus(authedFetch: AuthedFetch): Prom
   );
   return {
     totpEnabled: enabledTypes.has(0),
+    emailEnabled: enabledTypes.has(1),
     yubikeyEnabled: enabledTypes.has(3),
     passkeyEnabled: enabledTypes.has(7),
   };
+}
+
+export async function sendTwoFactorEmailCode(authedFetch: AuthedFetch): Promise<void> {
+  const resp = await authedFetch('/api/two-factor/send-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({}),
+  });
+  if (!resp.ok) {
+    const err = await parseJson<{ message?: string; ErrorMessage?: string }>(resp);
+    throw new Error(err?.ErrorMessage || err?.message || 'Failed to send verification code');
+  }
+}
+
+export async function enableTwoFactorEmail(
+  authedFetch: AuthedFetch,
+  code: string,
+  masterPasswordHash: string
+): Promise<void> {
+  const resp = await authedFetch('/api/two-factor/email', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: code.trim(), masterPasswordHash }),
+  });
+  if (!resp.ok) {
+    const err = await parseJson<{ message?: string; ErrorMessage?: string }>(resp);
+    throw new Error(err?.ErrorMessage || err?.message || 'Failed to enable email two-step login');
+  }
+}
+
+export async function disableTwoFactorEmail(
+  authedFetch: AuthedFetch,
+  masterPasswordHash: string
+): Promise<void> {
+  const resp = await authedFetch('/api/two-factor/disable', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 1, masterPasswordHash }),
+  });
+  if (!resp.ok) {
+    const err = await parseJson<{ message?: string; ErrorMessage?: string }>(resp);
+    throw new Error(err?.ErrorMessage || err?.message || 'Failed to disable email two-step login');
+  }
 }
 
 export async function getTotpRecoveryCode(

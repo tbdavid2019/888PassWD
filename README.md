@@ -91,6 +91,34 @@
 >   | R2 | Yes | 100 MB (soft limit, adjustable) | 10 GB |
 >   | KV | No | 25 MiB (Cloudflare limit) | 1 GB |
 
+---
+
+## Configuration & Environment Variables
+
+You can configure variables and secrets under Cloudflare Dashboard **Workers → Settings → Variables and Secrets**, or via the Wrangler CLI using `wrangler secret put`:
+
+| Variable | Type | Required | Description |
+|---|---|---|---|
+| `JWT_SECRET` | Secret | **Yes** | Used to sign identity authentication tokens. Use a cryptographically secure random string (32+ characters). |
+| `RESEND_API_KEY` | Secret | No | Resend API Key (`re_...`). Setting this automatically enables **Email Two-Step Login (Email 2FA OTP)**. |
+| `RESEND_FROM` | Variable / Secret | No | Sender email address (default: `888warden <no-reply@vip.david888.com>`). |
+| `HIDE_WEB_VAULT` | Variable | No | Set to `1` to hide the server-hosted Web Vault (returns 404), keeping Bitwarden clients and extension APIs intact. |
+| `ADMIN_TOKEN` | Secret | No | Admin panel token (optional). |
+
+### Set Parameters via Wrangler CLI
+
+```bash
+# Set JWT secret (required)
+npx wrangler secret put JWT_SECRET
+
+# Set Resend API key to enable Email 2FA OTP (optional)
+npx wrangler secret put RESEND_API_KEY
+
+# Set custom sender address (optional)
+npx wrangler secret put RESEND_FROM
+```
+
+---
 
 ## FAQ
 

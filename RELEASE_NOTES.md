@@ -21,6 +21,32 @@ Release note writing rules:
 7. The English and Chinese versions should match in content and ordering, not be two different summaries.
 -->
 
+# v1.9.0 - Resend Email 2FA OTP, 888warden Rebranding, and Traditional Chinese Localization
+
+### Added
+
+1. **Resend Email 2FA (OTP) Verification.** Users can now configure and receive 6-digit one-time password (OTP) verification codes via email powered by the Resend API (`RESEND_API_KEY`, `RESEND_FROM`). Includes SHA-256 hashed challenge storage in Cloudflare D1, 10-minute expiry windows, brute-force protection, and full compatibility with official Bitwarden apps, extensions, and the Web Vault.
+2. **Taiwan Traditional Chinese (zh-TW) Localization.** Complete localization with 1,540 translated keys matching Taiwan terminology (帳號、兩步驟驗證、通行金鑰、伺服器、註冊、管理員等) and a dedicated `README_ZH_TW.md`.
+
+### Improved
+
+1. **888warden Rebranding & Cyber Shield Visual Identity.** Rebranded interface from NodeWarden to 888warden, upgraded brand logo to a modern dual-tone Cyber Shield SVG with emerald security accents, and refreshed email templates with responsive styling.
+2. **Repository Independence.** Severed upstream tracking links to maintain independent repository development (`tbdavid2019/nodewarden`) while preserving respectful attribution to the original author (`shuaiplus`).
+
+---
+
+### 新增
+
+1. **Resend 電子郵件 2FA (OTP) 驗證。** 支援透過 Resend API 發送 6 位數一次性密碼 (OTP) 驗證碼至使用者信箱（透過 `RESEND_API_KEY` 與 `RESEND_FROM` 配置）。具備 D1 資料庫 SHA-256 挑戰碼雜湊儲存、10 分鐘有效期限、防暴力猜測保護，並完全相容 Bitwarden 官方用戶端、瀏覽器擴充功能與 Web Vault。
+2. **台灣繁體中文 (zh-TW) 完整在地化。** 提供 1,540 個介面鍵值的台灣在地化翻譯，符合台灣標準術語（帳號、兩步驟驗證、通行金鑰、伺服器、註冊、管理員等），並附帶專屬繁中說明文件 `README_ZH_TW.md`。
+
+### 改进
+
+1. **888warden 品牌升級與 Cyber Shield 識別。** 介面全數更名為 888warden，將品牌 Logo 升級為現代化雙色漸層賽博護盾 SVG，並強化響應式電子郵件模板樣式。
+2. **獨立倉庫分岔。** 斷開上游追蹤連結以保持獨立維護（`tbdavid2019/nodewarden`），同時在文檔中完整致謝並保留原作者（`shuaiplus`）之署名。
+
+---
+
 # v1.8.1 - Expanded Generators, Safer Vault Editing, and Client Compatibility
 
 ### Added

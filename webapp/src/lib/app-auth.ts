@@ -78,10 +78,12 @@ export interface CompletedLogin {
 }
 
 const TWO_FACTOR_PROVIDER_AUTHENTICATOR = 0;
+const TWO_FACTOR_PROVIDER_EMAIL = 1;
 const TWO_FACTOR_PROVIDER_YUBIKEY = 3;
 const TWO_FACTOR_PROVIDER_WEBAUTHN = 7;
 const SUPPORTED_TWO_FACTOR_PROVIDERS = [
   TWO_FACTOR_PROVIDER_WEBAUTHN,
+  TWO_FACTOR_PROVIDER_EMAIL,
   TWO_FACTOR_PROVIDER_YUBIKEY,
   TWO_FACTOR_PROVIDER_AUTHENTICATOR,
 ] as const;
@@ -124,11 +126,13 @@ function twoFactorProviderTypeFromValue(value: unknown): number | null {
     ? numeric
     : normalized === 'webauthn'
       ? TWO_FACTOR_PROVIDER_WEBAUTHN
-      : normalized === 'yubikey' || normalized === 'yubikeyotp'
-        ? TWO_FACTOR_PROVIDER_YUBIKEY
-        : normalized === 'authenticator' || normalized === 'totp'
-          ? TWO_FACTOR_PROVIDER_AUTHENTICATOR
-          : Number.NaN;
+      : normalized === 'email'
+        ? TWO_FACTOR_PROVIDER_EMAIL
+        : normalized === 'yubikey' || normalized === 'yubikeyotp'
+          ? TWO_FACTOR_PROVIDER_YUBIKEY
+          : normalized === 'authenticator' || normalized === 'totp'
+            ? TWO_FACTOR_PROVIDER_AUTHENTICATOR
+            : Number.NaN;
   return SUPPORTED_TWO_FACTOR_PROVIDERS.includes(provider as any) ? provider : null;
 }
 

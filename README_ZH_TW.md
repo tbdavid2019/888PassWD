@@ -82,6 +82,33 @@
 
 ---
 
+## 參數與環境變數設定
+
+您可以在 Cloudflare Dashboard 的 **Workers → 設定 (Settings) → 變數與機密 (Variables and Secrets)** 中設定，或是透過 CLI `wrangler secret put` 寫入：
+
+| 變數名稱 | 類型 | 必填 | 說明 |
+|---|---|---|---|
+| `JWT_SECRET` | Secret (機密) | **是** | 用於簽署身份認證權杖。正式環境請至少使用 32 個字元以上的強隨機字串。 |
+| `RESEND_API_KEY` | Secret (機密) | 否 | Resend API 金鑰（如 `re_...`）。配置後自動啟用 **電子郵件兩步驟登入 (Email 2FA OTP)** 功能。 |
+| `RESEND_FROM` | Variable / Secret | 否 | 電子郵件寄件人地址（預設：`888warden <no-reply@vip.david888.com>`）。 |
+| `HIDE_WEB_VAULT` | Variable (變數) | 否 | 設定為 `1` 時將隱藏伺服器託管的 Web Vault（回傳 404），僅保留 Bitwarden App / 擴充功能 API。 |
+| `ADMIN_TOKEN` | Secret (機密) | 否 | 系統管理後台 Token（可選）。 |
+
+### 透過 Wrangler CLI 設定參數
+
+```bash
+# 設定 JWT 金鑰（必須）
+npx wrangler secret put JWT_SECRET
+
+# 設定 Resend API 金鑰以啟用 Email 2FA OTP 發信（可選）
+npx wrangler secret put RESEND_API_KEY
+
+# 自訂發信寄件人名稱與信箱（可選）
+npx wrangler secret put RESEND_FROM
+```
+
+---
+
 ## CLI 部署
 
 ```powershell

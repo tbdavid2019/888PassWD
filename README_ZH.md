@@ -91,6 +91,34 @@
 >   | R2 | 需要 | 100 MB（软限制可更改） | 10 GB |
 >   | KV | 不需要 | 25 MiB（Cloudflare限制） | 1 GB |
 
+---
+
+## 参数与环境变量配置
+
+您可以在 Cloudflare 控制台的 **Workers → Settings → Variables and Secrets** 中配置，也可以通过 Wrangler CLI 使用 `wrangler secret put` 写入：
+
+| 变量名称 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `JWT_SECRET` | Secret | **是** | 用于签名身份认证令牌。生产环境请至少使用 32 个字符以上的强随机字符串。 |
+| `RESEND_API_KEY` | Secret | 否 | Resend API 密钥（如 `re_...`）。配置后自动启用 **邮箱二次验证 (Email 2FA OTP)** 功能。 |
+| `RESEND_FROM` | Variable / Secret | 否 | 发信发件人地址（默认：`888warden <no-reply@vip.david888.com>`）。 |
+| `HIDE_WEB_VAULT` | Variable | 否 | 设置为 `1` 时将隐藏服务器托管的 Web 密码库（返回 404），仅保留客户端和扩展所需的 API。 |
+| `ADMIN_TOKEN` | Secret | 否 | 管理后台令牌（可选）。 |
+
+### 通过 Wrangler CLI 配置参数
+
+```bash
+# 设置 JWT 密钥（必须）
+npx wrangler secret put JWT_SECRET
+
+# 设置 Resend API 密钥以启用邮箱 2FA OTP 发信（可选）
+npx wrangler secret put RESEND_API_KEY
+
+# 自定义发件人名称与邮箱（可选）
+npx wrangler secret put RESEND_FROM
+```
+
+---
 
 ## 常见问题：
 - **Fork 完仓库后，在 Cloudflare 连接 GitHub 账户时看不到自己的仓库，或者选择仓库后返回 404？**  

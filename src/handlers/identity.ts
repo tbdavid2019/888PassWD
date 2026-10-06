@@ -27,9 +27,12 @@ import { createPasskeyUserVerificationToken } from '../utils/user-verification-t
 import { constantTimeEquals, verifyApiKey } from '../utils/api-key';
 import { isYubiKeyEnabled, userYubiKeyPublicIds, verifyYubicoOtp, yubiKeyPublicIdFromOtp } from '../utils/yubico-otp';
 import { getYubicoCredentials, initializeYubicoCredentialsOnce } from '../services/yubico-config';
+import { isResendConfigured, sendTwoFactorOtpEmail } from '../services/resend-service';
+import { generate6DigitOtp } from '../services/storage-email-2fa-repo';
 
 const TWO_FACTOR_REMEMBER_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const TWO_FACTOR_PROVIDER_AUTHENTICATOR = 0;
+const TWO_FACTOR_PROVIDER_EMAIL = 1;
 const TWO_FACTOR_PROVIDER_YUBIKEY = 3;
 const TWO_FACTOR_PROVIDER_REMEMBER = 5;
 const TWO_FACTOR_PROVIDER_WEBAUTHN = 7;
@@ -240,6 +243,14 @@ function masterPasswordPolicyResponse(): TokenResponse['MasterPasswordPolicy'] {
   };
 }
 
+function maskEmailAddress(email: string): string {
+  const parts = email.split('@');
+  if (parts.length !== 2) return email;
+  const [local, domain] = parts;
+  if (local.length <= 2) return `${local[0]}*@${domain}`;
+  return `${local[0]}***${local[local.length - 1]}@${domain}`;
+}
+
 async function twoFactorRequiredResponse(
   request: Request,
   env: Env,
@@ -253,6 +264,18 @@ async function twoFactorRequiredResponse(
   const providers: string[] = [];
   let webAuthnOptions: Record<string, unknown> | null = null;
   if (!user || resolveTotpSecret(user.totpSecret)) providers.push(String(TWO_FACTOR_PROVIDER_AUTHENTICATOR));
+  if (user && user.emailTwoFactor && isResendConfigured(env)) {
+    providers.push(String(TWO_FACTOR_PROVIDER_EMAIL));
+    try {
+      const code = generate6DigitOtp();
+      const saveResult = await storage.saveEmail2faChallenge(user.id, user.email, code);
+      if (saveResult && !saveResult.rateLimited) {
+        await sendTwoFactorOtpEmail(env, user.email, code, 'login');
+      }
+    } catch (err) {
+      console.error('Failed to dispatch 2FA email', err);
+    }
+  }
   if (user && isYubiKeyEnabled(user)) providers.push(String(TWO_FACTOR_PROVIDER_YUBIKEY));
   if (user) {
     webAuthnOptions = await buildTwoFactorPasskeyAssertionOptions(request, env, storage, user) as Record<string, unknown> | null;
@@ -262,9 +285,11 @@ async function twoFactorRequiredResponse(
   for (const provider of providers) {
     providers2[provider] = provider === String(TWO_FACTOR_PROVIDER_YUBIKEY)
       ? { Nfc: user?.yubikeyNfc ?? false }
-      : provider === String(TWO_FACTOR_PROVIDER_WEBAUTHN) && webAuthnOptions
-        ? webAuthnOptions
-        : null;
+      : provider === String(TWO_FACTOR_PROVIDER_EMAIL)
+        ? { Email: maskEmailAddress(user?.email || '') }
+        : provider === String(TWO_FACTOR_PROVIDER_WEBAUTHN) && webAuthnOptions
+          ? webAuthnOptions
+          : null;
   }
   const customResponse = {
     TwoFactorProviders: providers,
@@ -449,7 +474,8 @@ export async function handleToken(request: Request, env: Env): Promise<Response>
     const effectiveTotpSecret = resolveTotpSecret(user.totpSecret);
     const effectiveYubiKeyPublicIds = userYubiKeyPublicIds(user);
     const effectiveWebAuthnCredentials = await storage.getAccountPasskeyCredentialsByUserId(user.id, 'twoFactor');
-    if (effectiveTotpSecret || effectiveYubiKeyPublicIds.length > 0 || effectiveWebAuthnCredentials.length > 0) {
+    const effectiveEmailTwoFactor = !!(user.emailTwoFactor && isResendConfigured(env));
+    if (effectiveTotpSecret || effectiveEmailTwoFactor || effectiveYubiKeyPublicIds.length > 0 || effectiveWebAuthnCredentials.length > 0) {
       const normalizedTwoFactorProvider = String(twoFactorProvider ?? '').trim();
       const normalizedTwoFactorToken = String(twoFactorToken ?? '').trim();
       let rememberRequested = ['1', 'true', 'True', 'TRUE', 'on', 'yes', 'Yes', 'YES'].includes(String(twoFactorRemember || '').trim());
@@ -486,6 +512,14 @@ export async function handleToken(request: Request, env: Env): Promise<Response>
         }
         const consumed = await storage.consumeTotpLoginCounter(user.id, matchedCounter);
         if (!consumed) {
+          return recordFailedTwoFactorAndBuildResponse(rateLimit, loginIdentifier);
+        }
+      } else if (normalizedTwoFactorProvider === String(TWO_FACTOR_PROVIDER_EMAIL)) {
+        if (!effectiveEmailTwoFactor) {
+          return recordFailedTwoFactorAndBuildResponse(rateLimit, loginIdentifier);
+        }
+        const otpCheck = await storage.verifyAndConsumeEmail2faChallenge(user.id, normalizedTwoFactorToken);
+        if (!otpCheck.valid) {
           return recordFailedTwoFactorAndBuildResponse(rateLimit, loginIdentifier);
         }
       } else if (normalizedTwoFactorProvider === String(TWO_FACTOR_PROVIDER_YUBIKEY)) {
@@ -530,6 +564,7 @@ export async function handleToken(request: Request, env: Env): Promise<Response>
           return recordFailedTwoFactorAndBuildResponse(rateLimit, loginIdentifier);
         }
         user.totpSecret = null;
+        user.emailTwoFactor = false;
         user.yubikeyKey1 = null;
         user.yubikeyKey2 = null;
         user.yubikeyKey3 = null;

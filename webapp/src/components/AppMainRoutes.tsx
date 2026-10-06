@@ -59,6 +59,7 @@ export interface AppMainRoutesProps {
   totpEnabled: boolean;
   yubikeyEnabled: boolean;
   passkey2faEnabled: boolean;
+  email2faEnabled: boolean;
   lockTimeoutMinutes: 0 | 1 | 5 | 15 | 30;
   sessionTimeoutAction: 'lock' | 'logout';
   authorizedDevices: AuthorizedDevice[];
@@ -116,6 +117,9 @@ export interface AppMainRoutesProps {
   onSavePasswordHint: (masterPasswordHint: string) => Promise<void>;
   onEnableTotp: (secret: string, token: string, masterPassword: string) => Promise<void>;
   onOpenDisableTotp: () => void;
+  onSendEmail2faCode: () => Promise<void>;
+  onEnableEmail2fa: (code: string, masterPassword: string) => Promise<void>;
+  onDisableEmail2fa: (masterPassword: string) => Promise<void>;
   onGetYubiKeySettings: (masterPassword: string) => Promise<YubiKeyOtpSettings>;
   onSaveYubiKeySettings: (keys: string[], nfc: boolean, masterPassword: string) => Promise<YubiKeyOtpSettings>;
   onSaveYubiKeyApiCredentials: (clientId: string, secretKey: string, masterPassword: string) => Promise<YubiKeyOtpSettings>;
@@ -304,6 +308,7 @@ export default function AppMainRoutes(props: AppMainRoutesProps) {
                 totpEnabled={props.totpEnabled}
                 yubikeyEnabled={props.yubikeyEnabled}
                 passkey2faEnabled={props.passkey2faEnabled}
+                email2faEnabled={props.email2faEnabled}
                 themePreference={props.themePreference}
                 lockTimeoutMinutes={props.lockTimeoutMinutes}
                 sessionTimeoutAction={props.sessionTimeoutAction}
@@ -313,6 +318,9 @@ export default function AppMainRoutes(props: AppMainRoutesProps) {
                 onSavePasswordHint={props.onSavePasswordHint}
                 onEnableTotp={props.onEnableTotp}
                 onOpenDisableTotp={props.onOpenDisableTotp}
+                onSendEmail2faCode={props.onSendEmail2faCode}
+                onEnableEmail2fa={props.onEnableEmail2fa}
+                onDisableEmail2fa={props.onDisableEmail2fa}
                 onGetYubiKeySettings={props.onGetYubiKeySettings}
                 onSaveYubiKeySettings={props.onSaveYubiKeySettings}
                 onSaveYubiKeyApiCredentials={props.onSaveYubiKeyApiCredentials}

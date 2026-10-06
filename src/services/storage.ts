@@ -20,6 +20,10 @@ import {
   upgradePasswordVerifier as upgradeStoredPasswordVerifier,
 } from './storage-user-repo';
 import {
+  saveEmail2faChallenge as saveStoredEmail2faChallenge,
+  verifyAndConsumeEmail2faChallenge as verifyAndConsumeStoredEmail2faChallenge,
+} from './storage-email-2fa-repo';
+import {
   type AuditLogListOptions,
   createAuditLog as createStoredAuditLog,
   clearAuditLogs as clearStoredAuditLogs,
@@ -166,8 +170,8 @@ const STORAGE_SCHEMA_VERSION_KEY = 'schema.version';
 // Bump this whenever src/services/storage-schema.ts or migrations/0001_init.sql
 // changes. Existing D1 installs only rerun ensureStorageSchema() when this value
 // differs from config.schema.version.
-const STORAGE_SCHEMA_VERSION = '2026-07-13-refresh-session-reuse';
-const REQUIRED_SCHEMA_TABLES = ['webauthn_credentials', 'webauthn_challenges', 'auth_requests', 'totp_login_replays'] as const;
+const STORAGE_SCHEMA_VERSION = '2026-10-06-resend-email-otp';
+const REQUIRED_SCHEMA_TABLES = ['webauthn_credentials', 'webauthn_challenges', 'auth_requests', 'totp_login_replays', 'email_2fa_challenges'] as const;
 
 // D1-backed storage.
 // Contract:
@@ -181,12 +185,14 @@ export class StorageService {
   private static lastRefreshTokenCleanupAt = 0;
   private static lastAttachmentTokenCleanupAt = 0;
   private static lastTotpReplayCleanupAt = 0;
+  private static lastEmail2faCleanupAt = 0;
   private static readonly MAX_D1_SQL_VARIABLES = 100;
 
   private static readonly REFRESH_TOKEN_CLEANUP_INTERVAL_MS = LIMITS.cleanup.refreshTokenCleanupIntervalMs;
   private static readonly ATTACHMENT_TOKEN_CLEANUP_INTERVAL_MS = LIMITS.cleanup.attachmentTokenCleanupIntervalMs;
   private static readonly TOTP_REPLAY_CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
   private static readonly TOTP_REPLAY_MARKER_TTL_MS = 5 * 60 * 1000;
+  private static readonly EMAIL_2FA_CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
   private static readonly PERIODIC_CLEANUP_PROBABILITY = LIMITS.cleanup.cleanupProbability;
 
   constructor(private db: D1Database) {}
@@ -247,6 +253,19 @@ export class StorageService {
 
     await this.db.prepare('DELETE FROM refresh_tokens WHERE expires_at < ?').bind(nowMs).run();
     StorageService.lastRefreshTokenCleanupAt = nowMs;
+  }
+
+  private async maybeCleanupExpiredEmail2faChallenges(nowMs: number): Promise<void> {
+    if (!this.shouldRunPeriodicCleanup(StorageService.lastEmail2faCleanupAt, StorageService.EMAIL_2FA_CLEANUP_INTERVAL_MS)) {
+      return;
+    }
+
+    try {
+      await this.db.prepare('DELETE FROM email_2fa_challenges WHERE expires_at < ?').bind(nowMs).run();
+      StorageService.lastEmail2faCleanupAt = nowMs;
+    } catch (error) {
+      console.warn('Failed to cleanup expired email 2FA challenges:', error);
+    }
   }
 
   // --- Database initialization ---
@@ -976,5 +995,25 @@ export class StorageService {
       StorageService.lastAttachmentTokenCleanupAt = result.cleanedUpAt;
     }
     return result.consumed;
+  }
+
+  // --- Email 2FA OTP challenges ---
+  async saveEmail2faChallenge(
+    userId: string,
+    email: string,
+    code: string,
+    ttlMs?: number
+  ): Promise<{ success: boolean; rateLimited?: boolean; retryAfterSeconds?: number }> {
+    await this.initializeDatabase();
+    await this.maybeCleanupExpiredEmail2faChallenges(Date.now());
+    return saveStoredEmail2faChallenge(this.db, userId, email, code, ttlMs);
+  }
+
+  async verifyAndConsumeEmail2faChallenge(
+    userId: string,
+    code: string
+  ): Promise<{ valid: boolean; reason?: 'expired' | 'locked' | 'invalid' | 'missing' }> {
+    await this.initializeDatabase();
+    return verifyAndConsumeStoredEmail2faChallenge(this.db, userId, code);
   }
 }

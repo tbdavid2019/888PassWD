@@ -2044,6 +2044,7 @@ export default function App() {
     totpEnabled: !!twoFactorStatusQuery.data?.totpEnabled,
     yubikeyEnabled: !!twoFactorStatusQuery.data?.yubikeyEnabled,
     passkey2faEnabled: !!twoFactorStatusQuery.data?.passkeyEnabled,
+    email2faEnabled: !!twoFactorStatusQuery.data?.emailEnabled,
     lockTimeoutMinutes,
     sessionTimeoutAction,
     authorizedDevices: authorizedDevicesQuery.data || [],
@@ -2096,6 +2097,9 @@ export default function App() {
       await twoFactorStatusQuery.refetch();
     },
     onOpenDisableTotp: () => setDisableTotpOpen(true),
+    onSendEmail2faCode: accountSecurityActions.sendTwoFactorEmailCode,
+    onEnableEmail2fa: accountSecurityActions.enableTwoFactorEmail,
+    onDisableEmail2fa: accountSecurityActions.disableTwoFactorEmail,
     onGetYubiKeySettings: accountSecurityActions.getYubiKeySettings,
     onSaveYubiKeySettings: accountSecurityActions.saveYubiKeySettings,
     onSaveYubiKeyApiCredentials: accountSecurityActions.saveYubiKeyApiCredentials,

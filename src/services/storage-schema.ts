@@ -28,6 +28,7 @@ const SCHEMA_STATEMENTS: readonly string[] = [
   'ALTER TABLE users ADD COLUMN yubikey_key5 TEXT',
   'ALTER TABLE users ADD COLUMN yubikey_nfc INTEGER NOT NULL DEFAULT 0',
   'ALTER TABLE users ADD COLUMN api_key TEXT',
+  'ALTER TABLE users ADD COLUMN email_two_factor INTEGER NOT NULL DEFAULT 0',
 
   'CREATE TABLE IF NOT EXISTS domain_settings (' +
   'user_id TEXT PRIMARY KEY, equivalent_domains TEXT NOT NULL DEFAULT \'[]\', custom_equivalent_domains TEXT NOT NULL DEFAULT \'[]\', excluded_global_equivalent_domains TEXT NOT NULL DEFAULT \'[]\', updated_at TEXT NOT NULL, ' +
@@ -170,6 +171,11 @@ const SCHEMA_STATEMENTS: readonly string[] = [
 
   'CREATE TABLE IF NOT EXISTS used_attachment_download_tokens (' +
   'jti TEXT PRIMARY KEY, expires_at INTEGER NOT NULL)',
+
+  'CREATE TABLE IF NOT EXISTS email_2fa_challenges (' +
+  'user_id TEXT PRIMARY KEY, email TEXT NOT NULL, code_hash TEXT NOT NULL, attempts INTEGER NOT NULL DEFAULT 0, expires_at INTEGER NOT NULL, created_at INTEGER NOT NULL, ' +
+  'FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE)',
+  'CREATE INDEX IF NOT EXISTS idx_email_2fa_challenges_expires ON email_2fa_challenges(expires_at)',
 ];
 
 async function executeSchemaStatement(db: D1Database, statement: string): Promise<void> {

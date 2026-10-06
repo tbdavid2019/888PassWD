@@ -1274,6 +1274,7 @@ export function createDemoMainRoutesProps(base: AppMainRoutesProps, notify: Noti
     adminError: '',
     totpEnabled: true,
     passkey2faEnabled: false,
+    email2faEnabled: false,
     authorizedDevices: state.authorizedDevices,
     authorizedDevicesLoading: false,
     authorizedDevicesError: '',
@@ -1427,6 +1428,9 @@ export function createDemoMainRoutesProps(base: AppMainRoutesProps, notify: Noti
     onSavePasswordHint: readonly,
     onEnableTotp: readonly,
     onOpenDisableTotp: readonlyVoid,
+    onSendEmail2faCode: readonlyVoid,
+    onEnableEmail2fa: readonly,
+    onDisableEmail2fa: readonly,
     onGetTwoFactorPasskeySettings: async () => ({ enabled: false, keys: [] }),
     onCreateTwoFactorPasskey: async () => {
       await readonly();

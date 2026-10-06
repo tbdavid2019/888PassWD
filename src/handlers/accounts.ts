@@ -17,8 +17,11 @@ import {
   initializeYubicoCredentialsOnce,
   replaceYubicoCredentials,
 } from '../services/yubico-config';
+import { isResendConfigured, sendTwoFactorOtpEmail } from '../services/resend-service';
+import { generate6DigitOtp } from '../services/storage-email-2fa-repo';
 
 const TWO_FACTOR_PROVIDER_AUTHENTICATOR = 0;
+const TWO_FACTOR_PROVIDER_EMAIL = 1;
 const TWO_FACTOR_PROVIDER_YUBIKEY = 3;
 const TWO_FACTOR_PROVIDER_WEBAUTHN = 7;
 const TOTP_USER_VERIFICATION_TOKEN_TTL_MS = 10 * 60 * 1000;
@@ -877,6 +880,7 @@ export async function handleGetTwoFactorProviders(request: Request, env: Env, us
 
   const data = [];
   if (isTotpEnabled(user.totpSecret)) data.push(twoFactorProviderResponse(TWO_FACTOR_PROVIDER_AUTHENTICATOR, true));
+  if (user.emailTwoFactor) data.push(twoFactorProviderResponse(TWO_FACTOR_PROVIDER_EMAIL, true));
   if (isYubiKeyEnabled(user)) data.push(twoFactorProviderResponse(TWO_FACTOR_PROVIDER_YUBIKEY, true));
   const webAuthnCredentials = await storage.getAccountPasskeyCredentialsByUserId(user.id, 'twoFactor');
   if (webAuthnCredentials.length > 0) data.push(twoFactorProviderResponse(TWO_FACTOR_PROVIDER_WEBAUTHN, true));
@@ -886,6 +890,168 @@ export async function handleGetTwoFactorProviders(request: Request, env: Env, us
     ContinuationToken: null,
     Object: 'list',
   });
+}
+
+function maskEmailAddress(email: string): string {
+  const parts = email.split('@');
+  if (parts.length !== 2) return email;
+  const [local, domain] = parts;
+  if (local.length <= 2) return `${local[0]}*@${domain}`;
+  return `${local[0]}***${local[local.length - 1]}@${domain}`;
+}
+
+// GET/POST /api/two-factor/get-email
+export async function handleGetTwoFactorEmail(request: Request, env: Env, userId: string): Promise<Response> {
+  void request;
+  const storage = new StorageService(env.DB);
+  const user = await storage.getUserById(userId);
+  if (!user) return errorResponse('User not found', 404);
+
+  return jsonResponse({
+    Enabled: !!user.emailTwoFactor,
+    Email: maskEmailAddress(user.email),
+    Object: 'twoFactorEmail',
+  });
+}
+
+// POST /api/two-factor/send-email
+export async function handleSendTwoFactorEmail(request: Request, env: Env, userId: string): Promise<Response> {
+  void request;
+  const storage = new StorageService(env.DB);
+  const user = await storage.getUserById(userId);
+  if (!user) return errorResponse('User not found', 404);
+
+  if (!isResendConfigured(env)) {
+    return errorResponse('Email delivery is not configured on this server.', 400);
+  }
+
+  const code = generate6DigitOtp();
+  const saveResult = await storage.saveEmail2faChallenge(user.id, user.email, code);
+  if (saveResult && saveResult.rateLimited) {
+    return new Response(
+      JSON.stringify({
+        error: 'Too many requests',
+        error_description: `Please wait ${saveResult.retryAfterSeconds || 60} seconds before requesting another code.`,
+      }),
+      {
+        status: 429,
+        headers: {
+          'content-type': 'application/json',
+          'retry-after': String(saveResult.retryAfterSeconds || 60),
+        },
+      }
+    );
+  }
+  const result = await sendTwoFactorOtpEmail(env, user.email, code, 'setup');
+  if (!result.success) {
+    return errorResponse(`Failed to send email: ${result.error}`, 500);
+  }
+
+  return jsonResponse({});
+}
+
+// PUT /api/two-factor/email
+export async function handlePutTwoFactorEmail(request: Request, env: Env, userId: string): Promise<Response> {
+  const storage = new StorageService(env.DB);
+  const auth = new AuthService(env);
+  const user = await storage.getUserById(userId);
+  if (!user) return errorResponse('User not found', 404);
+
+  let body: Record<string, unknown>;
+  try {
+    body = await readRequestBody(request);
+  } catch {
+    return errorResponse('Invalid JSON', 400);
+  }
+
+  const secret = readBodyString(body, ['masterPasswordHash', 'MasterPasswordHash', 'secret', 'Secret']);
+  const token = readBodyString(body, ['token', 'Token', 'code', 'Code']);
+
+  if (!token) {
+    return errorResponse('Verification code is required.', 400);
+  }
+
+  const verified = await verifyUserSecret(auth, user, secret);
+  if (!verified) return errorResponse('User verification failed.', 400);
+
+  const otpCheck = await storage.verifyAndConsumeEmail2faChallenge(user.id, token);
+  if (!otpCheck.valid) {
+    return errorResponse('Invalid or expired verification code.', 400);
+  }
+
+  user.emailTwoFactor = true;
+  user.updatedAt = new Date().toISOString();
+  await storage.saveUser(user);
+  AuthService.invalidateUserCache(user.id);
+  await writeAuditEvent(storage, {
+    actorUserId: user.id,
+    action: 'account.email_2fa.enable',
+    category: 'security',
+    level: 'security',
+    targetType: 'user',
+    targetId: user.id,
+    metadata: auditRequestMetadata(request),
+  });
+
+  return jsonResponse(twoFactorProviderResponse(TWO_FACTOR_PROVIDER_EMAIL, true));
+}
+
+// POST /api/two-factor/send-email-login (Public endpoint called by Bitwarden clients)
+export async function handleSendTwoFactorEmailLogin(request: Request, env: Env): Promise<Response> {
+  const storage = new StorageService(env.DB);
+  const auth = new AuthService(env);
+
+  if (!isResendConfigured(env)) {
+    return errorResponse('Email delivery is not configured on this server.', 400);
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = await readRequestBody(request);
+  } catch {
+    return errorResponse('Invalid JSON', 400);
+  }
+
+  const email = readBodyString(body, ['email', 'Email', 'username', 'Username'])?.toLowerCase();
+  const passwordHash = readBodyString(body, ['masterPasswordHash', 'MasterPasswordHash', 'password', 'Password']);
+
+  if (!email) {
+    return errorResponse('Email is required.', 400);
+  }
+
+  const user = await storage.getUser(email);
+  if (!user || user.status !== 'active') {
+    if (passwordHash) await auth.performDummyPasswordWork(passwordHash);
+    return jsonResponse({});
+  }
+
+  if (passwordHash) {
+    const valid = await auth.verifyPassword(passwordHash, user.masterPasswordHash, user.email);
+    if (!valid) {
+      return errorResponse('Invalid password.', 400);
+    }
+  }
+
+  const code = generate6DigitOtp();
+  const saveResult = await storage.saveEmail2faChallenge(user.id, user.email, code);
+  if (saveResult && saveResult.rateLimited) {
+    return new Response(
+      JSON.stringify({
+        error: 'Too many requests',
+        error_description: `Please wait ${saveResult.retryAfterSeconds || 60} seconds before requesting another code.`,
+      }),
+      {
+        status: 429,
+        headers: {
+          'content-type': 'application/json',
+          'retry-after': String(saveResult.retryAfterSeconds || 60),
+        },
+      }
+    );
+  }
+  await sendTwoFactorOtpEmail(env, user.email, code, 'login');
+
+  return jsonResponse({});
 }
 
 // POST /api/two-factor/get-authenticator
@@ -1223,7 +1389,7 @@ export async function handleDisableTwoFactorProvider(request: Request, env: Env,
 
   const typeRaw = body.type ?? body.Type ?? TWO_FACTOR_PROVIDER_AUTHENTICATOR;
   const type = typeof typeRaw === 'number' ? typeRaw : Number.parseInt(String(typeRaw), 10);
-  if (![TWO_FACTOR_PROVIDER_AUTHENTICATOR, TWO_FACTOR_PROVIDER_YUBIKEY, TWO_FACTOR_PROVIDER_WEBAUTHN].includes(type)) {
+  if (![TWO_FACTOR_PROVIDER_AUTHENTICATOR, TWO_FACTOR_PROVIDER_EMAIL, TWO_FACTOR_PROVIDER_YUBIKEY, TWO_FACTOR_PROVIDER_WEBAUTHN].includes(type)) {
     return errorResponse('Two-factor provider is not supported by this server.', 400);
   }
 
@@ -1233,6 +1399,8 @@ export async function handleDisableTwoFactorProvider(request: Request, env: Env,
 
   if (type === TWO_FACTOR_PROVIDER_AUTHENTICATOR) {
     user.totpSecret = null;
+  } else if (type === TWO_FACTOR_PROVIDER_EMAIL) {
+    user.emailTwoFactor = false;
   } else if (type === TWO_FACTOR_PROVIDER_YUBIKEY) {
     user.yubikeyKey1 = null;
     user.yubikeyKey2 = null;
@@ -1254,9 +1422,11 @@ export async function handleDisableTwoFactorProvider(request: Request, env: Env,
     actorUserId: user.id,
     action: type === TWO_FACTOR_PROVIDER_AUTHENTICATOR
       ? 'account.totp.disable'
-      : type === TWO_FACTOR_PROVIDER_YUBIKEY
-        ? 'account.yubikey.disable'
-        : 'account.webauthn_2fa.disable',
+      : type === TWO_FACTOR_PROVIDER_EMAIL
+        ? 'account.email_2fa.disable'
+        : type === TWO_FACTOR_PROVIDER_YUBIKEY
+          ? 'account.yubikey.disable'
+          : 'account.webauthn_2fa.disable',
     category: 'security',
     level: 'security',
     targetType: 'user',

@@ -18,6 +18,8 @@ export interface Env {
   WEBAUTHN_ALLOWED_ORIGINS?: string;
   YUBICO_VALIDATION_URLS?: string;
   'globalSettings__yubico__validationUrls'?: string;
+  RESEND_API_KEY?: string;
+  RESEND_FROM?: string;
 }
 
 export type UserRole = 'admin' | 'user';
@@ -59,6 +61,7 @@ export interface User {
   yubikeyKey4: string | null;
   yubikeyKey5: string | null;
   yubikeyNfc: boolean;
+  emailTwoFactor?: boolean;
   apiKey: string | null;
   createdAt: string;
   updatedAt: string;

@@ -3,6 +3,9 @@ main = "src/index.ts"
 compatibility_date = "2024-01-01"
 account_id = "379570860738dd1757ba7f67ef2bdffe"
 
+[vars]
+RESEND_FROM = "888warden <no-reply@vip.david888.com>"
+
 [build]
 command = "npm run build"
 

@@ -27,6 +27,9 @@ import {
   saveTwoFactorPasskey,
   saveYubiKeyOtpApiCredentials,
   saveYubiKeyOtpSettings,
+  sendTwoFactorEmailCode,
+  enableTwoFactorEmail,
+  disableTwoFactorEmail,
   setTotp,
   trustAuthorizedDevicePermanently,
   updateAuthorizedDeviceName,
@@ -261,6 +264,31 @@ export default function useAccountSecurityActions(options: UseAccountSecurityAct
         await disableYubiKeyOtp(authedFetch, derived.hash);
         await refetchTwoFactorStatus();
         onNotify('success', t('txt_yubikey_disabled'));
+      },
+
+      async sendTwoFactorEmailCode(): Promise<void> {
+        await sendTwoFactorEmailCode(authedFetch);
+        onNotify('success', `${t('txt_email')} ${t('txt_verification_code')} ${t('txt_sent') || '已發送'}`);
+      },
+
+      async enableTwoFactorEmail(code: string, masterPassword: string): Promise<void> {
+        if (!profile) throw new Error(t('txt_profile_unavailable'));
+        const normalized = String(masterPassword || '');
+        if (!normalized) throw new Error(t('txt_master_password_is_required'));
+        const derived = await deriveLoginHash(profile.email, normalized, defaultKdfIterations);
+        await enableTwoFactorEmail(authedFetch, code, derived.hash);
+        await refetchTwoFactorStatus();
+        onNotify('success', `${t('txt_email')} ${t('txt_two_step_verification')} ${t('txt_enabled')}`);
+      },
+
+      async disableTwoFactorEmail(masterPassword: string): Promise<void> {
+        if (!profile) throw new Error(t('txt_profile_unavailable'));
+        const normalized = String(masterPassword || '');
+        if (!normalized) throw new Error(t('txt_master_password_is_required'));
+        const derived = await deriveLoginHash(profile.email, normalized, defaultKdfIterations);
+        await disableTwoFactorEmail(authedFetch, derived.hash);
+        await refetchTwoFactorStatus();
+        onNotify('success', `${t('txt_email')} ${t('txt_two_step_verification')} ${t('txt_disabled') || '已停用'}`);
       },
 
       async getTwoFactorPasskeySettings(masterPassword: string): Promise<TwoFactorPasskeySettings> {
