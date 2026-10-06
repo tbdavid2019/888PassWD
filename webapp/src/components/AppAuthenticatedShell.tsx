@@ -172,8 +172,11 @@ export default function AppAuthenticatedShell(props: AppAuthenticatedShellProps)
       <div className="app-shell">
         <header className="topbar">
           <div className="brand">
-            <img src="/nodewarden-logo.svg" alt="NodeWarden logo" className="brand-logo" />
-            <span className="brand-wordmark" role="img" aria-label="NodeWarden" />
+            <img src="/nodewarden-logo.svg" alt="888warden logo" className="brand-logo" />
+            <span className="brand-title">
+              <span className="brand-title-number">888</span>
+              <span className="brand-title-word">warden</span>
+            </span>
             <span className="mobile-page-title">{props.currentPageTitle}</span>
           </div>
           <div className="topbar-actions">

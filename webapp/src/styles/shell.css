@@ -17,16 +17,37 @@
 }
 
 .brand {
-  @apply inline-flex items-center gap-2 text-[34px] font-extrabold text-ink;
+  @apply inline-flex items-center gap-2.5 text-ink no-underline select-none;
 }
 
-.brand-wordmark {
-  @apply block max-w-full;
-  width: clamp(168px, 17vw, 224px);
-  aspect-ratio: 862 / 102;
-  background: #116ff9;
-  mask: url('/nodewarden-wordmark.svg') center / contain no-repeat;
-  -webkit-mask: url('/nodewarden-wordmark.svg') center / contain no-repeat;
+.brand-title {
+  @apply inline-flex items-center text-[22px] font-black tracking-tight leading-none select-none;
+}
+
+.brand-title-number {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  @apply font-black tracking-tight mr-[1.5px];
+}
+
+.brand-title-word {
+  color: var(--ink);
+  @apply font-extrabold tracking-tight;
+}
+
+:is(.dark) .brand-title-number {
+  background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+:is(.dark) .brand-title-word {
+  color: #f8fafc;
+}
+
+.standalone-brand-title {
+  @apply inline-flex items-center text-[32px] font-black tracking-tight leading-none select-none mt-1;
 }
 
 .mobile-page-title {
@@ -35,8 +56,8 @@
 }
 
 .brand-logo {
-  @apply h-[42px] w-[53px] object-contain;
-  filter: drop-shadow(0 10px 22px rgba(43, 102, 217, 0.22));
+  @apply h-[38px] w-[38px] object-contain transition-transform duration-200 hover:scale-105;
+  filter: drop-shadow(0 4px 12px rgba(37, 99, 235, 0.28));
 }
 
 .topbar-actions {

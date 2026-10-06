@@ -12,9 +12,10 @@ export default function StandalonePageFrame(props: StandalonePageFrameProps) {
   return (
     <div className="standalone-shell">
       <div className="standalone-brand standalone-brand-outside">
-        <img src="/nodewarden-logo.svg" alt="NodeWarden logo" className="standalone-brand-logo" />
-        <div>
-          <span className="standalone-brand-wordmark" role="img" aria-label="NodeWarden" />
+        <img src="/nodewarden-logo.svg" alt="888warden logo" className="standalone-brand-logo" />
+        <div className="standalone-brand-title">
+          <span className="brand-title-number">888</span>
+          <span className="brand-title-word">warden</span>
         </div>
       </div>
 
@@ -28,12 +29,10 @@ export default function StandalonePageFrame(props: StandalonePageFrameProps) {
       </div>
 
       <div className="standalone-footer">
-        <a href="https://github.com/shuaiplus/NodeWarden" target="_blank" rel="noreferrer">NodeWarden Repository</a>
-        <span> | </span>
-        <a href="https://github.com/shuaiplus" target="_blank" rel="noreferrer">Author: @shuaiplus</a>
+        <a href="https://github.com/tbdavid2019/nodewarden" target="_blank" rel="noreferrer">888warden Repository</a>
         <span> | </span>
         <a
-          href="https://github.com/shuaiplus/NodeWarden/releases/latest"
+          href="https://github.com/tbdavid2019/nodewarden/releases/latest"
           target="_blank"
           rel="noreferrer"
           className="standalone-version"

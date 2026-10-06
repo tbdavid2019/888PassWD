@@ -1,6 +1,6 @@
 {
-  "name": "NodeWarden",
-  "short_name": "NodeWarden",
+  "name": "888warden",
+  "short_name": "888warden",
   "description": "A lightweight Bitwarden-compatible vault for Cloudflare Workers.",
   "id": "/",
   "start_url": "/vault",
