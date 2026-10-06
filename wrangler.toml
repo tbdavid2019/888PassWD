@@ -1,6 +1,7 @@
 name = "nodewarden"
 main = "src/index.ts"
 compatibility_date = "2024-01-01"
+account_id = "379570860738dd1757ba7f67ef2bdffe"
 
 [build]
 command = "npm run build"
@@ -12,12 +13,15 @@ html_handling = "none"
 not_found_handling = "single-page-application"
 run_worker_first = true
 
-[triggers]
-crons = [ "*/5 * * * *" ]
+# Cloudflare Workers Free plan allows up to 5 cron triggers per account.
+# Uncomment if your account has available cron trigger quota for automated backups:
+# [triggers]
+# crons = [ "*/5 * * * *" ]
 
 [[d1_databases]]
 binding = "DB"
 database_name = "nodewarden-db"
+database_id = "decf8d91-238c-45c6-bf32-ce5500b4921a"
 
 [[durable_objects.bindings]]
 name = "NOTIFICATIONS_HUB"
