@@ -5,6 +5,21 @@ All notable changes to **888warden** (formerly NodeWarden) will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.9.1] - 2026-10-08
+
+### Added
+- **Automated Brand Icon Build Pipeline (`npm run icons:build`)**:
+  - Added `scripts/build-icons.mjs` script to automatically compile and distribute high-resolution vector and raster assets across root, webapp, and distribution bundles.
+  - Generates SVG vectors, 512x512 master PNG, 192x192 PWA icon, 180x180 Apple touch icon, 64x64 logo, 32x32 favicon PNG, and multi-resolution `favicon.ico`.
+  - Built-in support for 4 design variants (`a1` Cyber Shield, `a2` Squircle, `b1` Circular ㊙️ Seal, `b2` Dual-Core Shield).
+
+### Changed
+- **New Cyber Orange Brand Icon & Identity Overhaul (888 + 秘)**:
+  - Rebuilt brand icon with vibrant Cyber Orange base (`#FF7A00` ➔ `#F95700` ➔ `#C23600`), specular highlight curve, and luminous bevel rim.
+  - Centered high-contrast typography featuring modern cryptographic `888` and authoritative, balanced `秘` (Vault Secret) glyph.
+  - Harmonized Web Vault header typography and logo drop shadow in `webapp/src/styles/shell.css` to match the radiant amber-orange palette.
+  - Cleaned up gradient text slop in navigation shell per Impeccable craft guidelines for superior contrast and readability.
+
 ---
 
 ## [v1.9.0] - 2026-10-06

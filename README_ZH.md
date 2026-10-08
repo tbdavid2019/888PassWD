@@ -162,6 +162,10 @@ npm run deploy:kv
 # 本地开发
 npm run dev
 npm run dev:kv
+
+# 重建品牌图标（默认：Cyber Shield 防护盾 "888 + 秘"）
+npm run icons:build
+# 或切换款式：node scripts/build-icons.mjs [a1|a2|b1|b2]
 ```
 
 ---

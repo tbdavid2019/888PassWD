@@ -25,9 +25,7 @@
 }
 
 .brand-title-number {
-  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #ea580c;
   @apply font-black tracking-tight mr-[1.5px];
 }
 
@@ -37,9 +35,7 @@
 }
 
 :is(.dark) .brand-title-number {
-  background: linear-gradient(135deg, #38bdf8 0%, #60a5fa 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #fb923c;
 }
 
 :is(.dark) .brand-title-word {
@@ -57,7 +53,7 @@
 
 .brand-logo {
   @apply h-[38px] w-[38px] object-contain transition-transform duration-200 hover:scale-105;
-  filter: drop-shadow(0 4px 12px rgba(37, 99, 235, 0.28));
+  filter: drop-shadow(0 4px 12px rgba(249, 115, 22, 0.32));
 }
 
 .topbar-actions {

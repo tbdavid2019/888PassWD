@@ -21,6 +21,28 @@ Release note writing rules:
 7. The English and Chinese versions should match in content and ordering, not be two different summaries.
 -->
 
+# v1.9.1 - Cyber Orange Brand Icon Overhaul & Automated Asset Pipeline
+
+### Added
+
+1. **Automated Brand Icon Build Pipeline.** Added `scripts/build-icons.mjs` and `npm run icons:build` to compile and distribute production-grade vector and raster assets (`NodeWarden.svg`, `NodeWarden.png`, `nodewarden-logo.svg`, `icon-512.png`, `icon-192.png`, `apple-touch-icon.png`, `logo-64.png`, `favicon-32.png`, and `favicon.ico`) with built-in support for 4 design variants (`a1` Cyber Shield, `a2` Squircle, `b1` Circular ㊙️ Seal, `b2` Dual-Core Shield).
+
+### Improved
+
+1. **Cyber Orange Brand Icon & Shell Theme Harmonization.** Upgraded 888warden icon to a vibrant Cyber Orange base (`#FF7A00` ➔ `#F95700` ➔ `#C23600`) featuring cryptographic `888` and bold `秘` (Vault Secret) typography, matched Web Vault header typography with solid high-contrast amber styling, and updated logo drop shadow per Impeccable craft guidelines.
+
+---
+
+### 新增
+
+1. **自動化品牌圖示建置管線。** 新增 `scripts/build-icons.mjs` 與 `npm run icons:build`，自動編譯並同步全解析度向量與點陣圖示（`NodeWarden.svg`、`NodeWarden.png`、`nodewarden-logo.svg`、`icon-512.png`、`icon-192.png`、`apple-touch-icon.png`、`logo-64.png`、`favicon-32.png` 與 `favicon.ico`），並內建支援 4 款視覺方案（`a1` 經典防護盾、`a2` 圓角方塊、`b1` 圓形 ㊙️ 金庫鋼印、`b2` 雙合一金庫轉盤盾牌）。
+
+### 改進
+
+1. **Cyber Orange 品牌圖示與介面視覺諧調。** 升級 888warden 圖示為活力安全橙漸層底色（`#FF7A00` ➔ `#F95700` ➔ `#C23600`），結合立體科技感 `888` 與厚重大器的「`秘`」字，並同步優化 Web Vault 頂欄標題與 Logo 懸浮琥珀光芒，恪守 Impeccable 頂級前端工藝標準。
+
+---
+
 # v1.9.0 - Resend Email 2FA OTP, 888warden Rebranding, and Traditional Chinese Localization
 
 ### Added

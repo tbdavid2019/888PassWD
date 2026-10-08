@@ -164,6 +164,10 @@ npm run deploy:kv
 # Local development
 npm run dev
 npm run dev:kv
+
+# Rebuild brand icons (Default: Cyber Shield "888 + 秘")
+npm run icons:build
+# Or switch variant: node scripts/build-icons.mjs [a1|a2|b1|b2]
 ```
 
 ---
