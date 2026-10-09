@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import LoadingState from '@/components/LoadingState';
 import VaultDialogs from '@/components/vault/VaultDialogs';
 import VaultDetailView from '@/components/vault/VaultDetailView';
@@ -1162,21 +1162,70 @@ const folderName = useCallback((id: string | null | undefined): string => {
   const handleBulkRestore = useCallback(() => { void confirmBulkRestore(); }, [selectedMap, props.onBulkRestore]);
   const handleBulkArchive = useCallback(() => setBulkArchiveOpen(true), []);
   const handleBulkUnarchive = useCallback(() => { void confirmBulkUnarchive(); }, [selectedMap, props.onBulkUnarchive]);
+  const [selectionAnchorId, setSelectionAnchorId] = useState<string | null>(null);
   const handleOpenMove = useCallback(() => {
     setMoveFolderId('__none__');
     setMoveOpen(true);
   }, []);
-  const handleClearSelection = useCallback(() => setSelectedMap({}), []);
-  const handleToggleSelected = useCallback((cipherId: string, checked: boolean) =>
+  const handleClearSelection = useCallback(() => {
+    setSelectedMap({});
+    setSelectionAnchorId(null);
+  }, []);
+  const handleToggleSelected = useCallback((cipherId: string, checked: boolean, shiftKey = false) => {
+    if (shiftKey) {
+      const anchorId = selectionAnchorId || selectedCipherId || cipherId;
+      const anchorIdx = filteredCiphers.findIndex((c) => c.id === anchorId);
+      const targetIdx = filteredCiphers.findIndex((c) => c.id === cipherId);
+      if (anchorIdx !== -1 && targetIdx !== -1) {
+        const start = Math.min(anchorIdx, targetIdx);
+        const end = Math.max(anchorIdx, targetIdx);
+        const rangeCiphers = filteredCiphers.slice(start, end + 1);
+        setSelectedMap((prev) => {
+          const next = { ...prev };
+          for (const item of rangeCiphers) {
+            if (checked) {
+              next[item.id] = true;
+            } else {
+              delete next[item.id];
+            }
+          }
+          return next;
+        });
+        setSelectionAnchorId(cipherId);
+        return;
+      }
+    }
+    setSelectionAnchorId(cipherId);
     setSelectedMap((prev) => {
       if (checked) return { ...prev, [cipherId]: true };
       if (!prev[cipherId]) return prev;
       const next = { ...prev };
       delete next[cipherId];
       return next;
-    })
-  , []);
-  const handleSelectCipher = useCallback((cipherId: string) => {
+    });
+  }, [selectionAnchorId, selectedCipherId, filteredCiphers]);
+  const handleSelectCipher = useCallback((cipherId: string, event?: { shiftKey?: boolean }) => {
+    if (event?.shiftKey) {
+      const anchorId = selectionAnchorId || selectedCipherId || cipherId;
+      const anchorIdx = filteredCiphers.findIndex((c) => c.id === anchorId);
+      const targetIdx = filteredCiphers.findIndex((c) => c.id === cipherId);
+      if (anchorIdx !== -1 && targetIdx !== -1) {
+        const start = Math.min(anchorIdx, targetIdx);
+        const end = Math.max(anchorIdx, targetIdx);
+        const rangeCiphers = filteredCiphers.slice(start, end + 1);
+        setSelectedMap((prev) => {
+          const next = { ...prev };
+          for (const item of rangeCiphers) {
+            next[item.id] = true;
+          }
+          return next;
+        });
+      }
+      setSelectionAnchorId(cipherId);
+      setSelectedCipherId(cipherId);
+      return;
+    }
+    setSelectionAnchorId(cipherId);
     if (isEditing || isCreating) {
       cancelEdit();
     }
@@ -1186,7 +1235,16 @@ const folderName = useCallback((id: string | null | undefined): string => {
     setHiddenFieldVisibleMap({});
     if (isMobileLayout) setMobilePanel('detail');
     setMobileSidebarOpen(false);
-  }, [isEditing, isCreating, cancelEdit, isMobileLayout]);
+  }, [selectionAnchorId, selectedCipherId, filteredCiphers, isEditing, isCreating, cancelEdit, isMobileLayout]);
+  const handleBatchSelect = useCallback((cipherIds: string[], mode: 'replace' | 'add' = 'add') => {
+    setSelectedMap((prev) => {
+      const next = mode === 'replace' ? {} : { ...prev };
+      for (const id of cipherIds) {
+        next[id] = true;
+      }
+      return next;
+    });
+  }, []);
   const handleCloseMobileSidebar = useCallback(() => setMobileSidebarOpen(false), []);
   const handleOpenDeleteAllFolders = useCallback(() => setDeleteAllFoldersOpen(true), []);
   const handleOpenCreateFolder = useCallback(() => setCreateFolderOpen(true), []);
@@ -1279,6 +1337,7 @@ const folderName = useCallback((id: string | null | undefined): string => {
           onScroll={handleListScroll}
           onToggleSelected={handleToggleSelected}
           onSelectCipher={handleSelectCipher}
+          onBatchSelect={handleBatchSelect}
           listSubtitle={listSubtitle}
         />
 

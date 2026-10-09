@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&family=Noto+Sans+TC:wght@100..900&display=swap');
 @import 'tailwindcss' source(none);
 @import './styles.css';
 
@@ -26,8 +27,8 @@
   --shadow-panel: var(--shadow-md);
   --shadow-elevated: var(--shadow-lg);
 
-  --font-sans: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --font-sans: 'JetBrains Mono', 'Noto Sans TC', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Noto Sans TC', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
 
   /* Preserve utility radii independently of tokens.css's --radius-* names. */
   --radius-xs: 0.125rem;

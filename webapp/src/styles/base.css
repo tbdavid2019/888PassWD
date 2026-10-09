@@ -55,6 +55,13 @@ small {
   line-height: var(--leading-snug);
 }
 
+code,
+kbd,
+samp,
+pre {
+  font-family: var(--font-mono);
+}
+
 ::selection {
   background: color-mix(in srgb, var(--primary) 20%, transparent);
   color: var(--text);

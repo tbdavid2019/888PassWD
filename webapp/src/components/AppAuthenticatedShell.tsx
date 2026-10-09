@@ -8,6 +8,7 @@ import ThemeSwitch from '@/components/ThemeSwitch';
 import type { AppMainRoutesProps } from '@/components/AppMainRoutes';
 import { t } from '@/lib/i18n';
 import type { Profile } from '@/lib/types';
+import { APP_VERSION } from '@shared/app-version';
 
 interface AppAuthenticatedShellProps {
   profile: Profile | null;
@@ -216,6 +217,17 @@ export default function AppAuthenticatedShell(props: AppAuthenticatedShellProps)
           <aside className="app-side">
             <div className="side-nav-main">
               {groupedNav}
+            </div>
+            <div className="side-footer">
+              <a
+                href="https://github.com/tbdavid2019/nodewarden/releases/latest"
+                target="_blank"
+                rel="noreferrer"
+                className="side-version"
+                title={`888warden v${APP_VERSION}`}
+              >
+                v{APP_VERSION}
+              </a>
             </div>
           </aside>
           <main className="content">

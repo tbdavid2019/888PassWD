@@ -1,5 +1,5 @@
 import type { ComponentChildren, RefObject } from 'preact';
-import { useEffect, useRef, useState } from 'preact/hooks';
+import { useCallback, useEffect, useRef, useState } from 'preact/hooks';
 import { memo } from 'preact/compat';
 import { createPortal } from 'preact/compat';
 import {
@@ -91,8 +91,9 @@ interface VaultListPanelProps {
   onOpenMove: () => void;
   onClearSelection: () => void;
   onScroll: (top: number) => void;
-  onToggleSelected: (cipherId: string, checked: boolean) => void;
-  onSelectCipher: (cipherId: string) => void;
+  onToggleSelected: (cipherId: string, checked: boolean, shiftKey?: boolean) => void;
+  onSelectCipher: (cipherId: string, event?: { shiftKey?: boolean }) => void;
+  onBatchSelect?: (cipherIds: string[], mode?: 'replace' | 'add') => void;
   listSubtitle: (cipher: Cipher) => string;
 }
 
@@ -102,8 +103,8 @@ interface CipherListItemProps {
   checked: boolean;
   duplicateGroupIndex: number | null;
   subtitle: string;
-  onToggleSelected: (cipherId: string, checked: boolean) => void;
-  onSelectCipher: (cipherId: string) => void;
+  onToggleSelected: (cipherId: string, checked: boolean, shiftKey?: boolean) => void;
+  onSelectCipher: (cipherId: string, event?: { shiftKey?: boolean }) => void;
 }
 
 type MobileFilterMenuKey = 'duplicate' | 'menu' | 'type' | 'folder';
@@ -121,21 +122,32 @@ const CipherListItem = memo(function CipherListItem(props: CipherListItemProps) 
   return (
     <div
       className={`list-item ${props.selected ? 'active' : ''} ${duplicateGroupHue === null ? '' : 'duplicate-group-item'}`}
+      data-cipher-id={props.cipher.id}
       style={duplicateGroupHue === null ? undefined : { '--duplicate-group-hue': `${duplicateGroupHue}deg` }}
       onClick={(event) => {
         const target = event.target as HTMLElement;
         if (target.closest('.row-check')) return;
-        props.onSelectCipher(props.cipher.id);
+        props.onSelectCipher(props.cipher.id, { shiftKey: event.shiftKey });
       }}
     >
       <input
         type="checkbox"
         className="row-check"
         checked={props.checked}
-        onClick={(event) => event.stopPropagation()}
-        onInput={(e) => props.onToggleSelected(props.cipher.id, (e.currentTarget as HTMLInputElement).checked)}
+        onClick={(event) => {
+          event.stopPropagation();
+          props.onToggleSelected(props.cipher.id, (event.currentTarget as HTMLInputElement).checked, event.shiftKey);
+        }}
+        onChange={(event) => event.stopPropagation()}
       />
-      <button type="button" className="row-main" onClick={() => props.onSelectCipher(props.cipher.id)}>
+      <button
+        type="button"
+        className="row-main"
+        onClick={(event) => {
+          event.stopPropagation();
+          props.onSelectCipher(props.cipher.id, { shiftKey: event.shiftKey });
+        }}
+      >
         <div className={`list-icon-wrap ${Number(props.cipher.type || 1) === 3 ? 'card-list-icon-wrap' : ''}`}>
           <VaultListIcon cipher={props.cipher} />
         </div>
@@ -153,6 +165,88 @@ const CipherListItem = memo(function CipherListItem(props: CipherListItemProps) 
 export default function VaultListPanel(props: VaultListPanelProps) {
   const [mobileFilterOpen, setMobileFilterOpen] = useState<MobileFilterMenuKey | null>(null);
   const mobileFilterRef = useRef<HTMLDivElement | null>(null);
+
+  // Marquee box selection (Shift + Left mouse drag)
+  const [marqueeBox, setMarqueeBox] = useState<{ left: number; top: number; width: number; height: number } | null>(null);
+  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
+  const isDraggingRef = useRef<boolean>(false);
+  const initialSelectedRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    return () => {
+      document.body.style.userSelect = '';
+    };
+  }, []);
+
+  const handlePanelPointerDown = useCallback((e: MouseEvent) => {
+    if (e.button !== 0) return;
+    if (!e.shiftKey) return;
+
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    isDraggingRef.current = false;
+    initialSelectedRef.current = new Set(Object.keys(props.selectedMap).filter((id) => props.selectedMap[id]));
+
+    const onPointerMove = (ev: MouseEvent) => {
+      if (!dragStartRef.current) return;
+      const dx = ev.clientX - dragStartRef.current.x;
+      const dy = ev.clientY - dragStartRef.current.y;
+      if (!isDraggingRef.current) {
+        if (Math.hypot(dx, dy) > 4) {
+          isDraggingRef.current = true;
+          document.body.style.userSelect = 'none';
+        } else {
+          return;
+        }
+      }
+      const x1 = dragStartRef.current.x;
+      const y1 = dragStartRef.current.y;
+      const x2 = ev.clientX;
+      const y2 = ev.clientY;
+      const left = Math.min(x1, x2);
+      const top = Math.min(y1, y2);
+      const width = Math.abs(x2 - x1);
+      const height = Math.abs(y2 - y1);
+      setMarqueeBox({ left, top, width, height });
+
+      if (props.listPanelRef.current) {
+        const boxR = left + width;
+        const boxB = top + height;
+        const itemEls = props.listPanelRef.current.querySelectorAll('.list-item[data-cipher-id]');
+        const newlySelected = new Set<string>();
+        itemEls.forEach((el) => {
+          const r = el.getBoundingClientRect();
+          const hit = !(r.right < left || r.left > boxR || r.bottom < top || r.top > boxB);
+          const id = (el as HTMLElement).dataset.cipherId;
+          if (hit && id) newlySelected.add(id);
+        });
+        if (props.onBatchSelect) {
+          const combined = Array.from(new Set([...initialSelectedRef.current, ...newlySelected]));
+          props.onBatchSelect(combined, 'replace');
+        }
+      }
+    };
+
+    const onPointerUp = () => {
+      window.removeEventListener('mousemove', onPointerMove);
+      window.removeEventListener('mouseup', onPointerUp);
+      document.body.style.userSelect = '';
+      if (isDraggingRef.current) {
+        const blockClick = (ev: MouseEvent) => {
+          ev.stopPropagation();
+          ev.preventDefault();
+          window.removeEventListener('click', blockClick, true);
+        };
+        window.addEventListener('click', blockClick, true);
+      }
+      dragStartRef.current = null;
+      isDraggingRef.current = false;
+      setMarqueeBox(null);
+    };
+
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerUp);
+  }, [props.selectedMap, props.listPanelRef, props.onBatchSelect]);
+
   const createTypeOptions = getCreateTypeOptions();
   const duplicateDetectionOptions = getDuplicateDetectionOptions();
   const vaultSortOptions = getVaultSortOptions();
@@ -412,7 +506,7 @@ export default function VaultListPanel(props: VaultListPanelProps) {
       {!props.selectedCount && props.isMobileLayout && props.sidebarFilter.kind !== 'duplicates' && typeof document !== 'undefined' && props.mobileFabVisible
         ? createPortal(createMenu, document.body)
         : null}
-      <div className="list-panel" ref={props.listPanelRef} onScroll={(event) => props.onScroll((event.currentTarget as HTMLDivElement).scrollTop)}>
+      <div className="list-panel" ref={props.listPanelRef} onMouseDown={handlePanelPointerDown} onScroll={(event) => props.onScroll((event.currentTarget as HTMLDivElement).scrollTop)}>
         {props.loading && !props.filteredCiphers.length && <LoadingState lines={7} compact />}
         {!props.loading && !!props.error && !props.filteredCiphers.length && (
           <div className="empty vault-error-state">
@@ -440,6 +534,24 @@ export default function VaultListPanel(props: VaultListPanelProps) {
         )}
         {!props.loading && !props.error && !props.filteredCiphers.length && <div className="empty">{t('txt_no_items')}</div>}
       </div>
+      {marqueeBox && (
+        <div
+          className="vault-marquee-selection-box"
+          style={{
+            position: 'fixed',
+            left: `${marqueeBox.left}px`,
+            top: `${marqueeBox.top}px`,
+            width: `${marqueeBox.width}px`,
+            height: `${marqueeBox.height}px`,
+            pointerEvents: 'none',
+            border: '1.5px solid rgba(249, 87, 0, 0.9)',
+            backgroundColor: 'rgba(249, 87, 0, 0.16)',
+            borderRadius: '4px',
+            boxShadow: '0 0 12px rgba(249, 87, 0, 0.25)',
+            zIndex: 9999,
+          }}
+        />
+      )}
     </section>
   );
 }

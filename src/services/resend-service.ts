@@ -106,7 +106,7 @@ export async function sendTwoFactorOtpEmail(
       margin: 0;
       padding: 0;
       background-color: #0b0f19;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: 'JetBrains Mono', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       color: #e2e8f0;
       -webkit-font-smoothing: antialiased;
     }
@@ -164,7 +164,7 @@ export async function sendTwoFactorOtpEmail(
       margin: 28px 0;
     }
     .otp-code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-family: 'JetBrains Mono', 'Noto Sans TC', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 38px;
       font-weight: 800;
       letter-spacing: 0.25em;

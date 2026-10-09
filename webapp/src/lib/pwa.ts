@@ -4,8 +4,19 @@ export function registerNodeWardenServiceWorker(): void {
   if (import.meta.env.DEV) return;
 
   const register = () => {
-    void navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {
+    const hadController = Boolean(navigator.serviceWorker.controller);
+    void navigator.serviceWorker.register('/sw.js', { scope: '/' }).then((reg) => {
+      void reg.update();
+    }).catch(() => {
       // PWA support is progressive enhancement; the vault still works without it.
+    });
+
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (hadController && !refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
     });
   };
 

@@ -208,6 +208,15 @@
   @apply flex min-h-0 flex-1 flex-col gap-2;
 }
 
+.side-footer {
+  @apply mt-auto flex items-center justify-between border-t px-2 pt-3;
+  border-color: var(--line-soft);
+}
+
+.side-version {
+  @apply font-mono text-[11px] font-semibold text-slate-400 no-underline transition hover:text-orange-500;
+}
+
 .side-link {
   @apply flex items-center rounded-xl border border-transparent px-3 py-2.5 no-underline transition;
   gap: var(--space-2);
@@ -467,7 +476,7 @@
 .auth-request-fingerprint strong,
 .auth-request-fingerprint-inline {
   overflow-wrap: anywhere;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-family: var(--font-mono);
   font-size: var(--font-sm);
   line-height: 1.45;
 }
