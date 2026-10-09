@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 支援按住 `Shift` 搭配滑鼠左鍵拖曳畫框，產生專屬 Cyber Orange 科技感半透明框選矩形（Marquee Selection），即時圈選框內接觸到的所有密碼項目。
 
 ### Changed
+- **全面升級極簡素色 Cyber Orange 品牌圖示 (888 / PassWD)**:
+  - 捨棄任何複雜盾牌、鑰匙與剪貼畫元素，全面回歸純粹極簡設計美學。
+  - 採用純素色 Cyber Orange 圓角磚（`#F95700`），文字純淨白底高對比置中排列（第一行 `888`，第二行 `PassWD`）。
+  - 完整重構 `scripts/build-icons.mjs` 並自動化重新產生高精度 512px、192px、180px、64px、32px 及 `favicon.ico` 圖示，確保各種縮圖與視角皆清晰無白底。
 - **全面改用日期版本號 (CalVer: `v2026.10.09`) 徹底對齊前後端與中繼資料**:
   - 將專案版本號全面改用日期命名法（CalVer: `2026.10.09`），徹底解決前端登入頁與側邊欄顯示（原殘留 `1.8.1`）與 `package.json`（原 `1.9.2`）版本不對應的問題。
   - 同步更新 `package.json`、`package-lock.json`、`shared/app-version.ts` 及備份封存中繼資料。
