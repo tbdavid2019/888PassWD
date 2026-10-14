@@ -173,10 +173,10 @@ export default function AppAuthenticatedShell(props: AppAuthenticatedShellProps)
       <div className="app-shell">
         <header className="topbar">
           <div className="brand">
-            <img src="/nodewarden-logo.svg" alt="888warden logo" className="brand-logo" />
+            <img src="/nodewarden-logo.svg" alt="888 PassWD logo" className="brand-logo" />
             <span className="brand-title">
               <span className="brand-title-number">888</span>
-              <span className="brand-title-word">warden</span>
+              <span className="brand-title-word">PassWD</span>
             </span>
             <span className="mobile-page-title">{props.currentPageTitle}</span>
           </div>
@@ -220,11 +220,11 @@ export default function AppAuthenticatedShell(props: AppAuthenticatedShellProps)
             </div>
             <div className="side-footer">
               <a
-                href="https://github.com/tbdavid2019/nodewarden/releases/latest"
+                href="https://github.com/tbdavid2019/nodewarden/blob/main/CHANGELOG.md"
                 target="_blank"
                 rel="noreferrer"
                 className="side-version"
-                title={`888warden v${APP_VERSION}`}
+                title={`888 PassWD v${APP_VERSION}`}
               >
                 v{APP_VERSION}
               </a>

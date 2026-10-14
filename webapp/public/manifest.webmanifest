@@ -1,6 +1,6 @@
 {
-  "name": "888warden",
-  "short_name": "888warden",
+  "name": "888 PassWD",
+  "short_name": "888 PassWD",
   "description": "A lightweight Bitwarden-compatible vault for Cloudflare Workers.",
   "id": "/",
   "start_url": "/vault",
