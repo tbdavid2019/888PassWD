@@ -1479,6 +1479,7 @@ Object.assign(de, {
   "txt_email_otp_security_notice": "Zero-Knowledge: Passwort entschlüsselt Tresor nur lokal; vor Browser-Speicherung geschützt.",
   "txt_please_send_otp_first": "Bitte zuerst Bestätigungscode senden",
   "txt_please_enter_email_and_otp": "Bitte geben Sie E-Mail, OTP-Code und Master-Passwort ein",
+  "txt_traditional_password_login": "Klassische Passwort-Anmeldung",
   "txt_send_verification_code_failed": "Fehler beim Senden des Bestätigungscodes"
 });
 

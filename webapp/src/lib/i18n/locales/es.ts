@@ -1479,6 +1479,7 @@ Object.assign(es, {
   "txt_email_otp_security_notice": "Conocimiento cero: La contraseña descifra la bóveda localmente; protegida de autoguardado.",
   "txt_please_send_otp_first": "Por favor envíe el código de verificación primero",
   "txt_please_enter_email_and_otp": "Por favor ingrese correo, código OTP y contraseña maestra",
+  "txt_traditional_password_login": "Inicio con contraseña tradicional",
   "txt_send_verification_code_failed": "Error al enviar el código de verificación"
 });
 
