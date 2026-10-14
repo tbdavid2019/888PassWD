@@ -220,7 +220,7 @@ export default function AppAuthenticatedShell(props: AppAuthenticatedShellProps)
             </div>
             <div className="side-footer">
               <a
-                href="https://github.com/tbdavid2019/nodewarden/blob/main/CHANGELOG.md"
+                href="https://github.com/tbdavid2019/888PassWD/blob/main/CHANGELOG.md"
                 target="_blank"
                 rel="noreferrer"
                 className="side-version"
