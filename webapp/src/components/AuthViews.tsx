@@ -157,18 +157,18 @@ export default function AuthViews(props: AuthViewsProps) {
                 disabled={unlockBusy || passkeyBusy || props.unlockPreparing || !props.unlockReady}
                 aria-label={t('txt_unlock_with_passkey')}
               >
-                <div className="passkey-hero-left">
-                  <div className="passkey-hero-icon-tile">
-                    <KeyRound size={20} />
-                  </div>
-                  <div>
+                <div className="passkey-hero-icon-tile">
+                  <KeyRound size={22} />
+                </div>
+                <div className="passkey-hero-body">
+                  <div className="passkey-hero-title-row">
                     <span className="passkey-hero-title">
                       {passkeyBusy ? t('txt_unlocking') : t('txt_unlock_with_passkey')}
                     </span>
-                    <span className="passkey-hero-sub">Touch ID / 安全金鑰免密快速解鎖</span>
+                    <span className="passkey-hero-badge">推薦 (Fast)</span>
                   </div>
+                  <span className="passkey-hero-sub">Touch ID · Face ID · 實體安全金鑰免密快速解鎖</span>
                 </div>
-                <span className="passkey-hero-badge">推薦 (Fast)</span>
               </button>
             </div>
 
@@ -373,18 +373,18 @@ export default function AuthViews(props: AuthViewsProps) {
                   disabled={loginBusy || passkeyBusy}
                   aria-label={t('txt_login_with_passkey')}
                 >
-                  <div className="passkey-hero-left">
-                    <div className="passkey-hero-icon-tile">
-                      <KeyRound size={20} />
-                    </div>
-                    <div>
+                  <div className="passkey-hero-icon-tile">
+                    <KeyRound size={22} />
+                  </div>
+                  <div className="passkey-hero-body">
+                    <div className="passkey-hero-title-row">
                       <span className="passkey-hero-title">
                         {passkeyBusy ? t('txt_logging_in') : t('txt_login_with_passkey')}
                       </span>
-                      <span className="passkey-hero-sub">Touch ID / Face ID / 安全金鑰免密快速登入</span>
+                      <span className="passkey-hero-badge">推薦 (Fast)</span>
                     </div>
+                    <span className="passkey-hero-sub">Touch ID · Face ID · 實體安全金鑰免密快速登入</span>
                   </div>
-                  <span className="passkey-hero-badge">推薦 (Fast)</span>
                 </button>
               </div>
 

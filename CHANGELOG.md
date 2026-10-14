@@ -8,11 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v2026.10.14] - 2026-10-14
 
 ### Added
+- **登入頁與獨立頁面語言切換器 (Standalone Language Picker)**:
+  - 在登入、註冊、解鎖與獨立頁面右上角新增浮動多國語言切換器（`StandaloneLanguagePicker`），支援繁體中文、簡體中文、英文等 10 種語言 1 秒即時切換。
 - **通行密鑰（Passkey / WebAuthn）置頂優先快捷登入 (Passwordless First)**:
   - 登入頁與密碼庫解鎖頁將「使用通行密鑰登入 (Passkey)」提升為頂部首選 Hero 操作卡片，標註 Touch ID / Face ID / 實體安全金鑰免密快速登入。
   - 支援 WebAuthn 一鍵秒登入，徹底擺脫傳統密碼管理器繁瑣的輸入流程與記密碼負擔。
 
 ### Changed
+- **介面視覺風格全站深度統一與中文字體工藝底線 (Craft Floor)**:
+  - 嚴格落實中文字型最低字級規範（全面淘汰 11px~12px 微型字），副標題提升至 14px、欄位標籤 15px、按鈕與主標題 16px~17px，確保繁體中文字體筆畫清晰大氣。
+  - 重構 Passkey Hero 卡片排版，標題與推薦標籤並列、副標題全寬平鋪，徹底消除中文字句折行斷截問題。
+  - 統一介面視覺色調為 **888 PassWD** 專屬 Cyber Orange 與黑曜石深冷極簡美學，移除雜亂桃粉底色，主登入按鈕全數對齊 Cyber Orange 質感漸層。
 - **全面升級品牌識別名稱為 888 PassWD**:
   - 將未登入頁（Standalone Frame）、已登入頂欄（Topbar）、404 頁面、PWA 清單（manifest）與通知信發送主體統一升級為 **888 PassWD**。
   - 優化品牌標題字距與排版（`888` 橘色與 `PassWD` 之間設定舒適間隔），確保在淺色與深色模式下均具備清晰辨識度與頂級工藝質感。

@@ -1,5 +1,6 @@
 import type { ComponentChildren } from 'preact';
 import { APP_VERSION } from '@shared/app-version';
+import StandaloneLanguagePicker from './StandaloneLanguagePicker';
 
 interface StandalonePageFrameProps {
   title: string;
@@ -11,6 +12,10 @@ interface StandalonePageFrameProps {
 export default function StandalonePageFrame(props: StandalonePageFrameProps) {
   return (
     <div className="standalone-shell">
+      <div className="standalone-top-bar">
+        <StandaloneLanguagePicker />
+      </div>
+
       <div className="standalone-brand standalone-brand-outside">
         <img src="/nodewarden-logo.svg" alt="888 PassWD logo" className="standalone-brand-logo" />
         <div className="standalone-brand-title">
