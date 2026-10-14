@@ -1479,6 +1479,7 @@ Object.assign(ru, {
   "txt_email_otp_security_notice": "Нулевое разглашение: Пароль расшифровывает хранилище локально; защищено от автосохранения.",
   "txt_please_send_otp_first": "Сначала отправьте код подтверждения",
   "txt_please_enter_email_and_otp": "Введите адрес почты, код OTP и мастер-пароль",
+  "txt_traditional_password_login": "Традиционный вход по паролю",
   "txt_send_verification_code_failed": "Не удалось отправить код подтверждения"
 });
 

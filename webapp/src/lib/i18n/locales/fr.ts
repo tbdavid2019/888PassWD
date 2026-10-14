@@ -1479,6 +1479,7 @@ Object.assign(fr, {
   "txt_email_otp_security_notice": "Zero-Knowledge: Le mot de passe déchiffre le coffre localement; protégé de l'enregistrement.",
   "txt_please_send_otp_first": "Veuillez d'abord envoyer le code de vérification",
   "txt_please_enter_email_and_otp": "Veuillez saisir votre e-mail, code OTP et mot de passe maître",
+  "txt_traditional_password_login": "Connexion par mot de passe traditionnel",
   "txt_send_verification_code_failed": "Échec de l'envoi du code de vérification"
 });
 

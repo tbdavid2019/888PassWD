@@ -1479,6 +1479,7 @@ Object.assign(it, {
   "txt_email_otp_security_notice": "Zero-Knowledge: La password decrittografa la cassaforte solo localmente; protetta dal salvataggio.",
   "txt_please_send_otp_first": "Invia prima il codice di verifica",
   "txt_please_enter_email_and_otp": "Inserisci email, codice OTP e master password",
+  "txt_traditional_password_login": "Accesso con password tradizionale",
   "txt_send_verification_code_failed": "Invio del codice di verifica non riuscito"
 });
 

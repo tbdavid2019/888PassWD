@@ -1479,6 +1479,7 @@ Object.assign(fi, {
   "txt_email_otp_security_notice": "Nollatieto: Salasana purkaa holvin vain paikallisesti; suojattu selaimen tallennukselta.",
   "txt_please_send_otp_first": "Lähetä vahvistuskoodi ensin",
   "txt_please_enter_email_and_otp": "Syötä sähköposti, OTP-koodi ja pääsalasana",
+  "txt_traditional_password_login": "Perinteinen salasanakirjautuminen",
   "txt_send_verification_code_failed": "Vahvistuskoodin lähetys epäonnistui"
 });
 

@@ -1479,6 +1479,7 @@ Object.assign(sv, {
   "txt_email_otp_security_notice": "Nollkunskap: Lösenordet dekrypterar endast valvet lokalt; skyddat från webbläsarlagring.",
   "txt_please_send_otp_first": "Skicka verifieringskod först",
   "txt_please_enter_email_and_otp": "Ange e-post, OTP-kod och huvudlösenord",
+  "txt_traditional_password_login": "Traditionell lösenordsinloggning",
   "txt_send_verification_code_failed": "Kunde inte skicka verifieringskod"
 });
 

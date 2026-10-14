@@ -1559,6 +1559,7 @@ Object.assign(en, {
   "txt_email_otp_security_notice": "Zero-Knowledge: Password decrypts vault locally only; protected from browser auto-save.",
   "txt_please_send_otp_first": "Please click Send Code first",
   "txt_please_enter_email_and_otp": "Please enter your email, OTP code, and master password",
+  "txt_traditional_password_login": "Traditional Password Login",
   "txt_send_verification_code_failed": "Failed to send verification code"
 });
 

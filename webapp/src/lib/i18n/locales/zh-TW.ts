@@ -1556,6 +1556,7 @@ Object.assign(zhTW, {
   "txt_email_otp_security_notice": "零知識安全：密碼僅在瀏覽器本地解密保險箱，已啟用防瀏覽器記憶隔離",
   "txt_please_send_otp_first": "請先點擊發送驗證碼",
   "txt_please_enter_email_and_otp": "請輸入電子郵件、驗證碼與主密碼",
+  "txt_traditional_password_login": "傳統帳號密碼登入",
   "txt_send_verification_code_failed": "發送驗證碼失敗"
 });
 

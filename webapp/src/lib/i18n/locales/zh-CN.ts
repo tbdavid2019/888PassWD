@@ -1509,6 +1509,7 @@ Object.assign(zhCN, {
   "txt_email_otp_security_notice": "零知识安全：密码仅在浏览器本地解密密码库，已启用防浏览器记忆隔离",
   "txt_please_send_otp_first": "请先点击发送验证码",
   "txt_please_enter_email_and_otp": "请输入电子邮箱、验证码与主密码",
+  "txt_traditional_password_login": "传统账号密码登录",
   "txt_send_verification_code_failed": "发送验证码失败"
 });
 
