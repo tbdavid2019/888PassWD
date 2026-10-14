@@ -12,10 +12,10 @@ export default function StandalonePageFrame(props: StandalonePageFrameProps) {
   return (
     <div className="standalone-shell">
       <div className="standalone-brand standalone-brand-outside">
-        <img src="/nodewarden-logo.svg" alt="888warden logo" className="standalone-brand-logo" />
+        <img src="/nodewarden-logo.svg" alt="888 PassWD logo" className="standalone-brand-logo" />
         <div className="standalone-brand-title">
           <span className="brand-title-number">888</span>
-          <span className="brand-title-word">warden</span>
+          <span className="brand-title-word">PassWD</span>
         </div>
       </div>
 
@@ -29,10 +29,10 @@ export default function StandalonePageFrame(props: StandalonePageFrameProps) {
       </div>
 
       <div className="standalone-footer">
-        <a href="https://github.com/tbdavid2019/nodewarden" target="_blank" rel="noreferrer">888warden Repository</a>
+        <a href="https://github.com/tbdavid2019/nodewarden" target="_blank" rel="noreferrer">888 PassWD Repository</a>
         <span> | </span>
         <a
-          href="https://github.com/tbdavid2019/nodewarden/releases/latest"
+          href="https://github.com/tbdavid2019/nodewarden/blob/main/CHANGELOG.md"
           target="_blank"
           rel="noreferrer"
           className="standalone-version"

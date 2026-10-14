@@ -5,6 +5,14 @@ All notable changes to **888warden** (formerly NodeWarden) will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2026.10.14] - 2026-10-14
+
+### Changed
+- **全面升級品牌識別名稱為 888 PassWD**:
+  - 將未登入頁（Standalone Frame）、已登入頂欄（Topbar）、404 頁面、PWA 清單（manifest）與通知信發送主體統一升級為 **888 PassWD**。
+  - 優化品牌標題字距與排版（`888` 橘色與 `PassWD` 之間設定舒適間隔），確保在淺色與深色模式下均具備清晰辨識度與頂級工藝質感。
+  - 將頁尾版本連結由原本不存在且 404 的 GitHub Releases（因尚未設定自動化 Releases 機制）修復並直連至官方程式庫之 `CHANGELOG.md`，提供完整清晰之更新履歷。
+
 ## [v2026.10.09] - 2026-10-09
 
 ### Added

@@ -21,12 +21,12 @@
 }
 
 .brand-title {
-  @apply inline-flex items-center text-[22px] font-black tracking-tight leading-none select-none;
+  @apply inline-flex items-center gap-1.5 text-[22px] font-black tracking-tight leading-none select-none;
 }
 
 .brand-title-number {
   color: #ea580c;
-  @apply font-black tracking-tight mr-[1.5px];
+  @apply font-black tracking-tight;
 }
 
 .brand-title-word {
@@ -43,7 +43,7 @@
 }
 
 .standalone-brand-title {
-  @apply inline-flex items-center text-[32px] font-black tracking-tight leading-none select-none mt-1;
+  @apply inline-flex items-center gap-2 text-[32px] font-black tracking-tight leading-none select-none mt-1;
 }
 
 .mobile-page-title {

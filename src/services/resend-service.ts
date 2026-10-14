@@ -21,9 +21,9 @@ export function getResendFromAddress(env: Env): string {
   const from = env.RESEND_FROM ? env.RESEND_FROM.trim() : '';
   if (from) {
     if (from.includes('<') && from.includes('>')) return from;
-    return `888warden <${from}>`;
+    return `888 PassWD <${from}>`;
   }
-  return '888warden <no-reply@vip.david888.com>';
+  return '888 PassWD <no-reply@vip.david888.com>';
 }
 
 export async function sendEmailViaResend(
@@ -82,8 +82,8 @@ export async function sendTwoFactorOtpEmail(
 ): Promise<ResendSendResult> {
   const subject =
     purpose === 'setup'
-      ? '888warden 啟用電子郵件兩步驟驗證碼'
-      : '888warden 登入安全驗證碼';
+      ? '888 PassWD 啟用電子郵件兩步驟驗證碼'
+      : '888 PassWD 登入安全驗證碼';
 
   const title =
     purpose === 'setup'
@@ -92,8 +92,8 @@ export async function sendTwoFactorOtpEmail(
 
   const description =
     purpose === 'setup'
-      ? '您正在設定 888warden 電子郵件兩步驟登入保護，請在驗證視窗中輸入以下 6 位數驗證碼：'
-      : '您正在嘗試登入 888warden 密碼保險庫。為保護您的帳號安全，請輸入以下 6 位數驗證碼：';
+      ? '您正在設定 888 PassWD 電子郵件兩步驟登入保護，請在驗證視窗中輸入以下 6 位數驗證碼：'
+      : '您正在嘗試登入 888 PassWD 密碼保險庫。為保護您的帳號安全，請輸入以下 6 位數驗證碼：';
 
   const html = `<!DOCTYPE html>
 <html lang="zh-TW">
@@ -202,7 +202,7 @@ export async function sendTwoFactorOtpEmail(
     <div class="container">
       <div class="brand">
         <div class="brand-title">
-          <span class="brand-accent">888</span><span class="brand-sub">warden</span>
+          <span class="brand-accent">888</span> <span class="brand-sub">PassWD</span>
         </div>
       </div>
       <h1>${title}</h1>
@@ -212,10 +212,10 @@ export async function sendTwoFactorOtpEmail(
         <div class="expiry-note">⏱️ 此驗證碼有效時間為 <strong>10 分鐘</strong>，且僅可使用一次。</div>
       </div>
       <div class="warning">
-        🛡️ <strong>安全提醒</strong>：888warden 團隊絕對不會主動向您索取此驗證碼。若非您本人操作，可能有人正在嘗試登入您的帳號，請立即檢查並更換主密碼。
+        🛡️ <strong>安全提醒</strong>：888 PassWD 團隊絕對不會主動向您索取此驗證碼。若非您本人操作，可能有人正在嘗試登入您的帳號，請立即檢查並更換主密碼。
       </div>
       <div class="footer">
-        此郵件由 888warden 自動發送，請勿直接回覆。
+        此郵件由 888 PassWD 自動發送，請勿直接回覆。
       </div>
     </div>
   </div>
