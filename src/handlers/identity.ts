@@ -469,15 +469,18 @@ export async function handleToken(request: Request, env: Env): Promise<Response>
       );
     }
 
-    // Optional 2FA: enabled by any supported per-user provider.
+    // Optional 2FA: enabled by any supported per-user provider, or requested via client-supplied Email OTP.
     let trustedTwoFactorTokenToReturn: string | undefined;
     const effectiveTotpSecret = resolveTotpSecret(user.totpSecret);
     const effectiveYubiKeyPublicIds = userYubiKeyPublicIds(user);
     const effectiveWebAuthnCredentials = await storage.getAccountPasskeyCredentialsByUserId(user.id, 'twoFactor');
     const effectiveEmailTwoFactor = !!(user.emailTwoFactor && isResendConfigured(env));
-    if (effectiveTotpSecret || effectiveEmailTwoFactor || effectiveYubiKeyPublicIds.length > 0 || effectiveWebAuthnCredentials.length > 0) {
-      const normalizedTwoFactorProvider = String(twoFactorProvider ?? '').trim();
-      const normalizedTwoFactorToken = String(twoFactorToken ?? '').trim();
+    const normalizedTwoFactorProvider = String(twoFactorProvider ?? '').trim();
+    const normalizedTwoFactorToken = String(twoFactorToken ?? '').trim();
+    const isClientEmailOtpSubmission = normalizedTwoFactorProvider === String(TWO_FACTOR_PROVIDER_EMAIL) && normalizedTwoFactorToken.length > 0;
+    const isTwoFactorEnforced = effectiveTotpSecret || effectiveEmailTwoFactor || effectiveYubiKeyPublicIds.length > 0 || effectiveWebAuthnCredentials.length > 0;
+
+    if (isTwoFactorEnforced || isClientEmailOtpSubmission) {
       let rememberRequested = ['1', 'true', 'True', 'TRUE', 'on', 'yes', 'Yes', 'YES'].includes(String(twoFactorRemember || '').trim());
       const hasProvider = normalizedTwoFactorProvider.length > 0;
       const hasToken = normalizedTwoFactorToken.length > 0;
@@ -515,7 +518,7 @@ export async function handleToken(request: Request, env: Env): Promise<Response>
           return recordFailedTwoFactorAndBuildResponse(rateLimit, loginIdentifier);
         }
       } else if (normalizedTwoFactorProvider === String(TWO_FACTOR_PROVIDER_EMAIL)) {
-        if (!effectiveEmailTwoFactor) {
+        if (!isResendConfigured(env)) {
           return recordFailedTwoFactorAndBuildResponse(rateLimit, loginIdentifier);
         }
         const otpCheck = await storage.verifyAndConsumeEmail2faChallenge(user.id, normalizedTwoFactorToken);

@@ -1545,4 +1545,21 @@ Object.assign(en, {
   "txt_password_security_check_failed": "The breach check could not be completed."
 });
 
+
+Object.assign(en, {
+  "txt_login_tab_email_otp": "Email OTP Login",
+  "txt_login_tab_password": "Master Password",
+  "txt_send_verification_code": "Send Code",
+  "txt_resend_code_cooldown": "Resend ({seconds}s)",
+  "txt_email_otp_sent_success": "Verification code sent to your email. Valid for 10 minutes.",
+  "txt_email_otp_code_label": "6-digit Email Verification Code (OTP)",
+  "txt_email_otp_code_placeholder": "Enter 6-digit code",
+  "txt_email_otp_login_button": "Verify OTP & Log In",
+  "txt_master_password_vault_decrypt": "Master Password (Local Vault Decryption)",
+  "txt_email_otp_security_notice": "Zero-Knowledge: Password decrypts vault locally only; protected from browser auto-save.",
+  "txt_please_send_otp_first": "Please click Send Code first",
+  "txt_please_enter_email_and_otp": "Please enter your email, OTP code, and master password",
+  "txt_send_verification_code_failed": "Failed to send verification code"
+});
+
 export default en;

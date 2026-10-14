@@ -1465,4 +1465,21 @@ Object.assign(ru, { "txt_password_security_last_checked": "Последняя п
 Object.assign(ru, { "txt_no_password_risks_in_filter": "В этой категории нет рисков для паролей" });
 Object.assign(ru, { "txt_password_security_show_all": "Show all", "txt_password_security_hide_all": "Hide all", "txt_password_security_jump": "Go to item", "txt_password_security_exposed_short": "Exposed {count} times", "txt_password_security_weak_short": "Weak password", "txt_password_security_reused_short": "Reused" });
 
+
+Object.assign(ru, {
+  "txt_login_tab_email_otp": "Вход по OTP из почты",
+  "txt_login_tab_password": "Мастер-пароль",
+  "txt_send_verification_code": "Отправить код",
+  "txt_resend_code_cooldown": "Отправить повторно ({seconds}s)",
+  "txt_email_otp_sent_success": "Код подтверждения отправлен на вашу почту. Действителен 10 минут.",
+  "txt_email_otp_code_label": "6-значный проверочный код из почты (OTP)",
+  "txt_email_otp_code_placeholder": "Введите 6-значный код",
+  "txt_email_otp_login_button": "Подтвердить OTP и войти",
+  "txt_master_password_vault_decrypt": "Мастер-пароль (Локальная расшифровка хранилища)",
+  "txt_email_otp_security_notice": "Нулевое разглашение: Пароль расшифровывает хранилище локально; защищено от автосохранения.",
+  "txt_please_send_otp_first": "Сначала отправьте код подтверждения",
+  "txt_please_enter_email_and_otp": "Введите адрес почты, код OTP и мастер-пароль",
+  "txt_send_verification_code_failed": "Не удалось отправить код подтверждения"
+});
+
 export default ru;

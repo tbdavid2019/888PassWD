@@ -1238,3 +1238,35 @@ export async function rotateApiKey(authedFetch: AuthedFetch, masterPasswordHash:
   const body = (await parseJson<{ apiKey?: string }>(resp)) || {};
   return String(body.apiKey || '');
 }
+
+export async function sendEmailLoginOtp(email: string): Promise<{ ok: boolean; retryAfter?: number; error?: string }> {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return { ok: false, error: 'Email is required' };
+  try {
+    const res = await fetch('/api/two-factor/send-email-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: normalized }),
+    });
+    if (res.status === 429) {
+      const data = await parseJson<{ error?: string; error_description?: string; retryAfterSeconds?: number }>(res);
+      const retryAfter = Number(res.headers.get('retry-after') || data?.retryAfterSeconds || 60);
+      return {
+        ok: false,
+        retryAfter,
+        error: translateServerError(data?.error_description || data?.error, `Please wait ${retryAfter} seconds.`),
+      };
+    }
+    if (!res.ok) {
+      const data = await parseJson<TokenError>(res);
+      return {
+        ok: false,
+        error: translateServerError(data?.error_description || data?.error, 'Failed to send verification code'),
+      };
+    }
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'Network error' };
+  }
+}
+

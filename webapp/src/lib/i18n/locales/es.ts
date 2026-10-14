@@ -1465,4 +1465,21 @@ Object.assign(es, { "txt_password_security_last_checked": "Última comprobación
 Object.assign(es, { "txt_no_password_risks_in_filter": "No hay riesgos de contraseña en esta categoría" });
 Object.assign(es, { "txt_password_security_show_all": "Show all", "txt_password_security_hide_all": "Hide all", "txt_password_security_jump": "Go to item", "txt_password_security_exposed_short": "Exposed {count} times", "txt_password_security_weak_short": "Weak password", "txt_password_security_reused_short": "Reused" });
 
+
+Object.assign(es, {
+  "txt_login_tab_email_otp": "Inicio con OTP por correo",
+  "txt_login_tab_password": "Contraseña maestra",
+  "txt_send_verification_code": "Enviar código",
+  "txt_resend_code_cooldown": "Reenviar ({seconds}s)",
+  "txt_email_otp_sent_success": "Código de verificación enviado a su correo. Válido por 10 minutos.",
+  "txt_email_otp_code_label": "Código de verificación de 6 dígitos (OTP)",
+  "txt_email_otp_code_placeholder": "Ingrese el código de 6 dígitos",
+  "txt_email_otp_login_button": "Verificar OTP e iniciar sesión",
+  "txt_master_password_vault_decrypt": "Contraseña maestra (Descifrado local de bóveda)",
+  "txt_email_otp_security_notice": "Conocimiento cero: La contraseña descifra la bóveda localmente; protegida de autoguardado.",
+  "txt_please_send_otp_first": "Por favor envíe el código de verificación primero",
+  "txt_please_enter_email_and_otp": "Por favor ingrese correo, código OTP y contraseña maestra",
+  "txt_send_verification_code_failed": "Error al enviar el código de verificación"
+});
+
 export default es;

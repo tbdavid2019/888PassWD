@@ -23,6 +23,7 @@ import {
   getTwoFactorProviderStatus,
   getVaultRevisionDate,
   saveSession,
+  sendEmailLoginOtp,
   stripProfileSecrets,
 } from '@/lib/api/auth';
 import {
@@ -48,6 +49,7 @@ import {
   readInitialAppBootstrapState,
   completePasskeyPasswordLogin,
   performPasswordLogin,
+  performEmailOtpLogin,
   performPasskeyLogin,
   performRecoverTwoFactorLogin,
   performRegistration,
@@ -622,6 +624,50 @@ export default function App() {
         setPendingTotpMode('login');
         setTotpCode('');
         setRememberDevice(true);
+        return;
+      }
+      pushToast('error', result.message || t('txt_login_failed'));
+    } catch (error) {
+      pushToast('error', error instanceof Error ? error.message : t('txt_login_failed'));
+    } finally {
+      setPendingAuthAction(null);
+    }
+  }
+
+  async function handleSendEmailLoginOtp(email: string) {
+    if (IS_DEMO_MODE) {
+      pushToast('info', t('txt_email_otp_sent_success'));
+      return { ok: true };
+    }
+    const result = await sendEmailLoginOtp(email);
+    if (result.ok) {
+      pushToast('success', t('txt_email_otp_sent_success'));
+    } else {
+      pushToast('error', result.error || t('txt_send_verification_code_failed'));
+    }
+    return result;
+  }
+
+  async function handleEmailOtpLogin(email: string, otpCode: string, password: string) {
+    if (pendingAuthAction) return;
+    if (IS_DEMO_MODE) {
+      setPendingAuthAction('login');
+      try {
+        await finalizeLogin(createDemoCompletedLogin(email));
+      } finally {
+        setPendingAuthAction(null);
+      }
+      return;
+    }
+    if (!email.trim() || !otpCode.trim() || !password) {
+      pushToast('error', t('txt_please_enter_email_and_otp'));
+      return;
+    }
+    setPendingAuthAction('login');
+    try {
+      const result = await performEmailOtpLogin(email, otpCode, password, defaultKdfIterations);
+      if (result.kind === 'success') {
+        await finalizeLogin(result.login);
         return;
       }
       pushToast('error', result.message || t('txt_login_failed'));
@@ -2286,6 +2332,8 @@ export default function App() {
           onChangeRegister={setRegisterValues}
           onChangeUnlock={setUnlockPassword}
           onSubmitLogin={() => void handleLogin()}
+          onSubmitEmailOtpLogin={(email, otp, pass) => void handleEmailOtpLogin(email, otp, pass)}
+          onSendOtp={handleSendEmailLoginOtp}
           onSubmitPasskey={() => void handlePasskeyLogin()}
           onSubmitPasskeyUnlock={() => void handlePasskeyUnlock()}
           onSubmitPasskeyPassword={() => void handlePasskeyPasswordLogin()}

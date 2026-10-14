@@ -1495,4 +1495,21 @@ Object.assign(zhCN, {
   "txt_password_security_check_failed": "无法完成泄露检查。"
 });
 
+
+Object.assign(zhCN, {
+  "txt_login_tab_email_otp": "Email 验证码登录",
+  "txt_login_tab_password": "账号密码登录",
+  "txt_send_verification_code": "发送验证码",
+  "txt_resend_code_cooldown": "重新发送 ({seconds}s)",
+  "txt_email_otp_sent_success": "验证码已发送至您的邮箱，请于 10 分钟内输入",
+  "txt_email_otp_code_label": "邮箱 6 位数安全验证码 (OTP)",
+  "txt_email_otp_code_placeholder": "输入 6 位数验证码",
+  "txt_email_otp_login_button": "验证 OTP 并登录",
+  "txt_master_password_vault_decrypt": "主密码 (本地解密密码库)",
+  "txt_email_otp_security_notice": "零知识安全：密码仅在浏览器本地解密密码库，已启用防浏览器记忆隔离",
+  "txt_please_send_otp_first": "请先点击发送验证码",
+  "txt_please_enter_email_and_otp": "请输入电子邮箱、验证码与主密码",
+  "txt_send_verification_code_failed": "发送验证码失败"
+});
+
 export default zhCN;

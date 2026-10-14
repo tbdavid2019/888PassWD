@@ -587,6 +587,35 @@ export async function performPasswordLogin(
   };
 }
 
+export async function performEmailOtpLogin(
+  email: string,
+  otpCode: string,
+  password: string,
+  fallbackIterations: number
+): Promise<PasswordLoginResult> {
+  const normalizedEmail = email.trim().toLowerCase();
+  const normalizedOtp = otpCode.trim();
+  const derived = await deriveLoginHashLocally(normalizedEmail, password, fallbackIterations);
+  const token = await loginWithPassword(normalizedEmail, derived.hash, {
+    totpCode: normalizedOtp,
+    twoFactorProvider: TWO_FACTOR_PROVIDER_EMAIL,
+    useRememberToken: false,
+  });
+
+  if ('access_token' in token && token.access_token) {
+    return {
+      kind: 'success',
+      login: await completeLogin(token, normalizedEmail, derived.masterKey, derived.kdfIterations, derived.hash),
+    };
+  }
+
+  const tokenError = token as TwoFactorTokenError;
+  return {
+    kind: 'error',
+    message: translateServerError(tokenError.error_description || tokenError.error, t('txt_login_failed')),
+  };
+}
+
 export async function performPasskeyLogin(fallbackIterations: number, expectedEmail?: string): Promise<PasskeyLoginResult> {
   try {
     const options = await getAccountPasskeyAssertionOptions();
