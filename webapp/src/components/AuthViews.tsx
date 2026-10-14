@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
-import { AlertTriangle, ArrowLeft, Eye, EyeOff, KeyRound, LogIn, LogOut, Unlock, UserPlus } from 'lucide-preact';
+import { AlertTriangle, ArrowLeft, Eye, EyeOff, KeyRound, LogIn, LogOut, ShieldCheck, Unlock, UserPlus } from 'lucide-preact';
 import NetworkStatusBadge from '@/components/NetworkStatusBadge';
 import StandalonePageFrame from '@/components/StandalonePageFrame';
 import { t } from '@/lib/i18n';
@@ -73,7 +73,14 @@ function PasswordField(props: {
           value={props.value}
           onInput={(e) => props.onInput((e.currentTarget as HTMLInputElement).value)}
           autoFocus={props.autoFocus}
-          autoComplete={props.autoComplete}
+          autoComplete={props.autoComplete || 'new-password'}
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
           placeholder={props.placeholder}
         />
         <button type="button" className="eye-btn" onClick={() => setShow((v) => !v)}>
@@ -127,6 +134,11 @@ export default function AuthViews(props: AuthViewsProps) {
       <div className="auth-page">
         <StandalonePageFrame title={t('txt_unlock_vault')} titleAccessory={<NetworkStatusBadge />}>
           <form
+            autoComplete="off"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
             onSubmit={(e) => {
               e.preventDefault();
               props.onSubmitUnlock();
@@ -134,17 +146,51 @@ export default function AuthViews(props: AuthViewsProps) {
           >
             <OfflineModeNotice />
             <p className="muted standalone-muted">{props.emailForLock}</p>
-            <input type="text" value={props.emailForLock} autoComplete="username" readOnly hidden tabIndex={-1} aria-hidden="true" />
+            <input type="text" value={props.emailForLock} autoComplete="off" readOnly hidden tabIndex={-1} aria-hidden="true" />
+
+            {/* === 方案 A：通行密鑰解鎖置頂優先 === */}
+            <div className="passkey-hero-section">
+              <button
+                type="button"
+                className="btn-passkey-hero"
+                onClick={props.onSubmitPasskeyUnlock}
+                disabled={unlockBusy || passkeyBusy || props.unlockPreparing || !props.unlockReady}
+                aria-label={t('txt_unlock_with_passkey')}
+              >
+                <div className="passkey-hero-left">
+                  <div className="passkey-hero-icon-tile">
+                    <KeyRound size={20} />
+                  </div>
+                  <div>
+                    <span className="passkey-hero-title">
+                      {passkeyBusy ? t('txt_unlocking') : t('txt_unlock_with_passkey')}
+                    </span>
+                    <span className="passkey-hero-sub">Touch ID / 安全金鑰免密快速解鎖</span>
+                  </div>
+                </div>
+                <span className="passkey-hero-badge">推薦 (Fast)</span>
+              </button>
+            </div>
+
+            <div className="auth-divider">
+              <span className="auth-divider-line" />
+              <span className="auth-divider-text">{t('txt_or')}</span>
+              <span className="auth-divider-line" />
+            </div>
+
             <PasswordField
               label={t('txt_master_password')}
               value={props.unlockPassword}
               autoFocus
-              autoComplete="current-password"
+              autoComplete="new-password"
               placeholder={props.unlockPlaceholder}
               onInput={props.onChangeUnlock}
             />
             <div className="auth-support-row">
-              <span />
+              <span className="browser-defense-hint">
+                <ShieldCheck size={13} className="text-emerald-500 shrink-0" />
+                <span>防瀏覽器儲存隔離</span>
+              </span>
               <button
                 type="button"
                 className="auth-link-btn"
@@ -170,18 +216,9 @@ export default function AuthViews(props: AuthViewsProps) {
                 </div>
               </div>
             ) : null}
-            <button type="submit" className="btn btn-primary full" disabled={unlockBusy || passkeyBusy || props.unlockPreparing || !props.unlockReady}>
+            <button type="submit" className="btn btn-secondary full" disabled={unlockBusy || passkeyBusy || props.unlockPreparing || !props.unlockReady}>
               <Unlock size={16} className="btn-icon" />
               {unlockBusy ? t('txt_unlocking') : props.unlockPreparing ? t('txt_loading') : t('txt_unlock')}
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary full"
-              onClick={props.onSubmitPasskeyUnlock}
-              disabled={unlockBusy || passkeyBusy || props.unlockPreparing || !props.unlockReady}
-            >
-              <KeyRound size={16} className="btn-icon" />
-              {passkeyBusy ? t('txt_unlocking') : t('txt_unlock_with_passkey')}
             </button>
             <div className="or">{t('txt_or')}</div>
             <button type="button" className="btn btn-secondary full" onClick={props.onLogout} disabled={unlockBusy || passkeyBusy}>
@@ -199,6 +236,11 @@ export default function AuthViews(props: AuthViewsProps) {
       <div className="auth-page">
         <StandalonePageFrame title={t('txt_create_account')} titleAccessory={<NetworkStatusBadge />}>
           <form
+            autoComplete="off"
+            data-1p-ignore="true"
+            data-lpignore="true"
+            data-bwignore="true"
+            data-form-type="other"
             onSubmit={(e) => {
               e.preventDefault();
               props.onSubmitRegister();
@@ -283,6 +325,11 @@ export default function AuthViews(props: AuthViewsProps) {
     <div className="auth-page">
       <StandalonePageFrame title={t('txt_log_in')} titleAccessory={<NetworkStatusBadge />}>
         <form
+          autoComplete="off"
+          data-1p-ignore="true"
+          data-lpignore="true"
+          data-bwignore="true"
+          data-form-type="other"
           onSubmit={(e) => {
             e.preventDefault();
             if (passkeyPasswordPending) {
@@ -296,12 +343,12 @@ export default function AuthViews(props: AuthViewsProps) {
           {passkeyPasswordPending ? (
             <>
               <p className="muted standalone-muted">{props.pendingPasskeyPasswordEmail}</p>
-              <input type="text" value={props.pendingPasskeyPasswordEmail || ''} autoComplete="username" readOnly hidden tabIndex={-1} aria-hidden="true" />
+              <input type="text" value={props.pendingPasskeyPasswordEmail || ''} autoComplete="off" readOnly hidden tabIndex={-1} aria-hidden="true" />
               <PasswordField
                 label={t('txt_master_password')}
                 value={props.passkeyPassword}
                 autoFocus
-                autoComplete="current-password"
+                autoComplete="new-password"
                 placeholder={props.authPlaceholder}
                 onInput={props.onChangePasskeyPassword}
               />
@@ -317,51 +364,88 @@ export default function AuthViews(props: AuthViewsProps) {
             </>
           ) : (
             <>
-          <label className="field">
-            <span>{t('txt_email')}</span>
-            <input
-              className="input"
-              type={props.relaxedLoginInput ? 'text' : 'email'}
-              value={props.loginValues.email}
-              autoComplete="username"
-              placeholder={props.authPlaceholder}
-              autoFocus
-              onInput={(e) => props.onChangeLogin({ ...props.loginValues, email: (e.currentTarget as HTMLInputElement).value })}
-            />
-          </label>
-          <PasswordField
-            label={t('txt_master_password')}
-            value={props.loginValues.password}
-            autoComplete="current-password"
-            placeholder={props.authPlaceholder}
-            onInput={(v) => props.onChangeLogin({ ...props.loginValues, password: v })}
-          />
-          <div className="auth-support-row">
-            <span />
-            <button
-              type="button"
-              className="auth-link-btn"
-              onClick={props.onTogglePasswordHint}
-              disabled={loginBusy || props.loginHintLoading || !props.loginValues.email.trim()}
-            >
-              {props.loginHintLoading
-                ? t('txt_loading_password_hint')
-                : t('txt_show_password_hint')}
-            </button>
-          </div>
-          <button type="submit" className="btn btn-primary full" disabled={loginBusy || passkeyBusy}>
-            <LogIn size={16} className="btn-icon" />
-            {loginBusy ? t('txt_logging_in') : t('txt_log_in')}
-          </button>
-          <button type="button" className="btn btn-secondary full" onClick={props.onSubmitPasskey} disabled={loginBusy || passkeyBusy}>
-            <KeyRound size={16} className="btn-icon" />
-            {passkeyBusy ? t('txt_logging_in') : t('txt_login_with_passkey')}
-          </button>
-          <div className="or">{t('txt_or')}</div>
-          <button type="button" className="btn btn-secondary full" onClick={props.onGotoRegister} disabled={loginBusy || passkeyBusy}>
-            <UserPlus size={16} className="btn-icon" />
-            {t('txt_create_account')}
-          </button>
+              {/* === 方案 A：通行密鑰優先 (Passkey Hero Section) === */}
+              <div className="passkey-hero-section">
+                <button
+                  type="button"
+                  className="btn-passkey-hero"
+                  onClick={props.onSubmitPasskey}
+                  disabled={loginBusy || passkeyBusy}
+                  aria-label={t('txt_login_with_passkey')}
+                >
+                  <div className="passkey-hero-left">
+                    <div className="passkey-hero-icon-tile">
+                      <KeyRound size={20} />
+                    </div>
+                    <div>
+                      <span className="passkey-hero-title">
+                        {passkeyBusy ? t('txt_logging_in') : t('txt_login_with_passkey')}
+                      </span>
+                      <span className="passkey-hero-sub">Touch ID / Face ID / 安全金鑰免密快速登入</span>
+                    </div>
+                  </div>
+                  <span className="passkey-hero-badge">推薦 (Fast)</span>
+                </button>
+              </div>
+
+              <div className="auth-divider">
+                <span className="auth-divider-line" />
+                <span className="auth-divider-text">{t('txt_or')}</span>
+                <span className="auth-divider-line" />
+              </div>
+
+              {/* === 方案 C：表單防禦（防止瀏覽器記憶與儲存密碼提示） === */}
+              <label className="field">
+                <span>{t('txt_email')}</span>
+                <input
+                  className="input"
+                  type={props.relaxedLoginInput ? 'text' : 'email'}
+                  value={props.loginValues.email}
+                  autoComplete="off"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
+                  data-bwignore="true"
+                  data-form-type="other"
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  placeholder={props.authPlaceholder}
+                  autoFocus
+                  onInput={(e) => props.onChangeLogin({ ...props.loginValues, email: (e.currentTarget as HTMLInputElement).value })}
+                />
+              </label>
+              <PasswordField
+                label={t('txt_master_password')}
+                value={props.loginValues.password}
+                autoComplete="new-password"
+                placeholder={props.authPlaceholder}
+                onInput={(v) => props.onChangeLogin({ ...props.loginValues, password: v })}
+              />
+              <div className="auth-support-row">
+                <span className="browser-defense-hint">
+                  <ShieldCheck size={13} className="text-emerald-500 shrink-0" />
+                  <span>防瀏覽器儲存隔離</span>
+                </span>
+                <button
+                  type="button"
+                  className="auth-link-btn"
+                  onClick={props.onTogglePasswordHint}
+                  disabled={loginBusy || props.loginHintLoading || !props.loginValues.email.trim()}
+                >
+                  {props.loginHintLoading
+                    ? t('txt_loading_password_hint')
+                    : t('txt_show_password_hint')}
+                </button>
+              </div>
+              <button type="submit" className="btn btn-primary full" disabled={loginBusy || passkeyBusy}>
+                <LogIn size={16} className="btn-icon" />
+                {loginBusy ? t('txt_logging_in') : t('txt_log_in')}
+              </button>
+              <div className="or">{t('txt_or')}</div>
+              <button type="button" className="btn btn-secondary full" onClick={props.onGotoRegister} disabled={loginBusy || passkeyBusy}>
+                <UserPlus size={16} className="btn-icon" />
+                {t('txt_create_account')}
+              </button>
             </>
           )}
         </form>

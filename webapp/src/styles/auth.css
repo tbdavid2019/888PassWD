@@ -624,3 +624,92 @@
   @apply font-bold;
   color: var(--primary-hover);
 }
+
+/* === Passkey Hero Button & Form Defense === */
+.passkey-hero-section {
+  @apply mb-3.5;
+}
+
+.btn-passkey-hero {
+  @apply relative flex items-center justify-between gap-3 w-full px-4 py-3.5 rounded-xl transition-all duration-200 select-none cursor-pointer;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.08) 0%, rgba(234, 88, 12, 0.16) 100%);
+  border: 1.5px solid rgba(249, 115, 22, 0.38);
+  box-shadow: 0 4px 14px rgba(249, 115, 22, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  color: var(--ink);
+}
+
+.btn-passkey-hero:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.14) 0%, rgba(234, 88, 12, 0.24) 100%);
+  border-color: rgba(249, 115, 22, 0.65);
+  box-shadow: 0 6px 20px rgba(249, 115, 22, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transform: translateY(-1.5px);
+}
+
+.btn-passkey-hero:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+
+.btn-passkey-hero:disabled {
+  @apply opacity-60 cursor-not-allowed transform-none;
+}
+
+:is(.dark) .btn-passkey-hero {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.14) 0%, rgba(194, 65, 12, 0.24) 100%);
+  border-color: rgba(249, 115, 22, 0.45);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+}
+
+:is(.dark) .btn-passkey-hero:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.22) 0%, rgba(194, 65, 12, 0.35) 100%);
+  border-color: rgba(251, 146, 60, 0.7);
+  box-shadow: 0 6px 24px rgba(249, 115, 22, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.passkey-hero-left {
+  @apply flex items-center gap-3 text-left min-w-0;
+}
+
+.passkey-hero-icon-tile {
+  @apply flex items-center justify-center w-10 h-10 rounded-lg shrink-0;
+  background: #f95700;
+  color: #ffffff;
+  box-shadow: 0 3px 10px rgba(249, 115, 22, 0.4);
+}
+
+.passkey-hero-title {
+  @apply block text-[15px] font-extrabold leading-tight text-slate-900 dark:text-white;
+}
+
+.passkey-hero-sub {
+  @apply block text-[11px] font-semibold tracking-tight text-slate-500 dark:text-slate-400 mt-0.5;
+}
+
+.passkey-hero-badge {
+  @apply text-[11px] font-extrabold px-2.5 py-0.5 rounded-full shrink-0 tracking-wide;
+  background: rgba(249, 115, 22, 0.15);
+  color: #ea580c;
+  border: 1px solid rgba(249, 115, 22, 0.35);
+}
+
+:is(.dark) .passkey-hero-badge {
+  background: rgba(249, 115, 22, 0.25);
+  color: #fb923c;
+  border-color: rgba(249, 115, 22, 0.45);
+}
+
+.auth-divider {
+  @apply relative flex items-center justify-center my-3.5;
+}
+
+.auth-divider-line {
+  @apply flex-grow h-[1px] bg-slate-200 dark:bg-slate-800;
+}
+
+.auth-divider-text {
+  @apply px-3 text-[12px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider;
+}
+
+.browser-defense-hint {
+  @apply flex items-center gap-1.5 text-[11px] font-medium text-slate-400 dark:text-slate-500 select-none;
+}

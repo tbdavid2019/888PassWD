@@ -7,11 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v2026.10.14] - 2026-10-14
 
+### Added
+- **通行密鑰（Passkey / WebAuthn）置頂優先快捷登入 (Passwordless First)**:
+  - 登入頁與密碼庫解鎖頁將「使用通行密鑰登入 (Passkey)」提升為頂部首選 Hero 操作卡片，標註 Touch ID / Face ID / 實體安全金鑰免密快速登入。
+  - 支援 WebAuthn 一鍵秒登入，徹底擺脫傳統密碼管理器繁瑣的輸入流程與記密碼負擔。
+
 ### Changed
 - **全面升級品牌識別名稱為 888 PassWD**:
   - 將未登入頁（Standalone Frame）、已登入頂欄（Topbar）、404 頁面、PWA 清單（manifest）與通知信發送主體統一升級為 **888 PassWD**。
   - 優化品牌標題字距與排版（`888` 橘色與 `PassWD` 之間設定舒適間隔），確保在淺色與深色模式下均具備清晰辨識度與頂級工藝質感。
   - 將頁尾版本連結由原本不存在且 404 的 GitHub Releases（因尚未設定自動化 Releases 機制）修復並直連至官方程式庫之 `CHANGELOG.md`，提供完整清晰之更新履歷。
+
+### Security
+- **零知識表單防禦隔離（阻斷瀏覽器儲存主密碼提示）**:
+  - 在登入、解鎖與註冊表單全面導入防瀏覽器嗅探屬性（`data-1p-ignore`, `data-lpignore`, `data-bwignore`, `data-form-type="other"` 及 `autoComplete="new-password"`）。
+  - 徹底解決 Chrome、Safari、Edge 等瀏覽器在輸入主密碼時頻繁彈出「是否儲存此密碼」的干擾與資安隱患。
 
 ## [v2026.10.09] - 2026-10-09
 
