@@ -29,10 +29,10 @@ export default function StandalonePageFrame(props: StandalonePageFrameProps) {
       </div>
 
       <div className="standalone-footer">
-        <a href="https://github.com/tbdavid2019/nodewarden" target="_blank" rel="noreferrer">888 PassWD Repository</a>
+        <a href="https://github.com/tbdavid2019/888PassWD" target="_blank" rel="noreferrer">888 PassWD Repository</a>
         <span> | </span>
         <a
-          href="https://github.com/tbdavid2019/nodewarden/blob/main/CHANGELOG.md"
+          href="https://github.com/tbdavid2019/888PassWD/blob/main/CHANGELOG.md"
           target="_blank"
           rel="noreferrer"
           className="standalone-version"
