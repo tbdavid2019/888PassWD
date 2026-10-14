@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 將專案版本號全面改用日期命名法（CalVer: `2026.10.09`），徹底解決前端登入頁與側邊欄顯示（原殘留 `1.8.1`）與 `package.json`（原 `1.9.2`）版本不對應的問題。
   - 同步更新 `package.json`、`package-lock.json`、`shared/app-version.ts` 及備份封存中繼資料。
   - 在 Web Vault 側邊欄底部新增版本標籤連結（`side-footer`），登入與未登入狀態皆可明確檢視當前版本。
+- **全站字型升級 JetBrains Mono 與 Google Fonts Noto Sans TC**:
+  - 英文、數字、程式碼、密碼強度與認證指紋全面採用 JetBrains Mono。
+  - 中文對應 Google Fonts Noto Sans TC，兼顧極客程式碼美感與繁體中文可讀性。
+  - 調整 CSP 安全策略與 Tailwind / Design Tokens，支援 PWA 自動升級與字型預載。
 - **全面升級開源頂級圖示庫向量 (Remix / Lucide / Tabler / Heroicons / Phosphor / Iconoir / Eva)**:
   - 捨棄任何粗糙手繪與文字拼貼，全面引進世界級開源 UI 圖示庫之標準向量圖形：
     - **預設方案 (Remix)**：採用 **Remix Icon** 經典極客密鑰盾牌 (`shield-keyhole-fill`)，結合 Cyber Orange 能量漸層與雙重光暈。
