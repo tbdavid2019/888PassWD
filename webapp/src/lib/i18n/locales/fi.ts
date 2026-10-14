@@ -1465,4 +1465,21 @@ Object.assign(fi, { "txt_password_security_last_checked": "Tarkistettu viimeksi:
 Object.assign(fi, { "txt_no_password_risks_in_filter": "Tässä luokassa ei ole salasanojen riskejä" });
 Object.assign(fi, { "txt_password_security_show_all": "Show all", "txt_password_security_hide_all": "Hide all", "txt_password_security_jump": "Go to item", "txt_password_security_exposed_short": "Exposed {count} times", "txt_password_security_weak_short": "Weak password", "txt_password_security_reused_short": "Reused" });
 
+
+Object.assign(fi, {
+  "txt_login_tab_email_otp": "Sähköposti-OTP-kirjautuminen",
+  "txt_login_tab_password": "Pääsalasana",
+  "txt_send_verification_code": "Lähetä koodi",
+  "txt_resend_code_cooldown": "Lähetä uudelleen ({seconds}s)",
+  "txt_email_otp_sent_success": "Vahvistuskoodi lähetetty sähköpostiisi. Voimassa 10 minuuttia.",
+  "txt_email_otp_code_label": "6-numeroinen sähköpostin vahvistuskoodi (OTP)",
+  "txt_email_otp_code_placeholder": "Syötä 6-numeroinen koodi",
+  "txt_email_otp_login_button": "Vahvista OTP ja kirjaudu",
+  "txt_master_password_vault_decrypt": "Pääsalasana (Paikallinen holvin purku)",
+  "txt_email_otp_security_notice": "Nollatieto: Salasana purkaa holvin vain paikallisesti; suojattu selaimen tallennukselta.",
+  "txt_please_send_otp_first": "Lähetä vahvistuskoodi ensin",
+  "txt_please_enter_email_and_otp": "Syötä sähköposti, OTP-koodi ja pääsalasana",
+  "txt_send_verification_code_failed": "Vahvistuskoodin lähetys epäonnistui"
+});
+
 export default fi;

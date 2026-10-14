@@ -797,3 +797,72 @@
 .standalone-footer {
   @apply text-[14px] font-medium text-slate-500;
 }
+
+/* === Email OTP vs Password Mode Tabs === */
+.auth-mode-tabs {
+  @apply grid grid-cols-2 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 mb-4 gap-1;
+}
+
+.auth-mode-tab {
+  @apply flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-[15px] font-bold transition-all text-slate-500 dark:text-slate-400 cursor-pointer border-none bg-transparent select-none;
+}
+
+.auth-mode-tab:hover:not(.active) {
+  @apply text-slate-800 dark:text-slate-200 bg-slate-200/50 dark:bg-slate-700/40;
+}
+
+.auth-mode-tab.active {
+  @apply bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm;
+  border-bottom: 2.5px solid #f95700;
+}
+
+/* === Send OTP Button & Input Row === */
+.send-otp-row {
+  @apply flex gap-2 items-stretch;
+}
+
+.btn-send-otp {
+  @apply shrink-0 px-4 h-12 rounded-xl text-[14px] font-bold transition-all flex items-center justify-center gap-1.5 border select-none cursor-pointer;
+  background: rgba(249, 115, 22, 0.08);
+  border-color: rgba(249, 115, 22, 0.35);
+  color: #ea580c;
+}
+
+.btn-send-otp:hover:not(:disabled) {
+  background: rgba(249, 115, 22, 0.16);
+  border-color: #f95700;
+}
+
+:is(.dark) .btn-send-otp {
+  background: rgba(249, 115, 22, 0.15);
+  border-color: rgba(249, 115, 22, 0.4);
+  color: #fb923c;
+}
+
+:is(.dark) .btn-send-otp:hover:not(:disabled) {
+  background: rgba(249, 115, 22, 0.25);
+  border-color: #f95700;
+}
+
+.btn-send-otp:disabled {
+  @apply opacity-60 cursor-not-allowed bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700;
+}
+
+/* === 6-digit OTP Code Field === */
+.auth-card .otp-input {
+  @apply text-[22px] font-mono font-bold tracking-[0.35em] text-center h-13;
+}
+
+/* === Security Notice Info Banner === */
+.auth-info-banner {
+  @apply flex items-start gap-2.5 p-3 rounded-xl text-[14px] font-medium leading-relaxed mb-4 text-slate-700 dark:text-slate-300;
+  background: rgba(249, 115, 22, 0.07);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+}
+
+:is(.dark) .auth-info-banner {
+  background: rgba(249, 115, 22, 0.12);
+  border-color: rgba(249, 115, 22, 0.3);
+  color: #fed7aa;
+}
+

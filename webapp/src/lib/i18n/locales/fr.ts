@@ -1465,4 +1465,21 @@ Object.assign(fr, { "txt_password_security_last_checked": "Dernière vérificati
 Object.assign(fr, { "txt_no_password_risks_in_filter": "Aucun risque de mot de passe dans cette catégorie" });
 Object.assign(fr, { "txt_password_security_show_all": "Tout afficher", "txt_password_security_hide_all": "Tout masquer", "txt_password_security_jump": "Ouvrir", "txt_password_security_exposed_short": "Exposé {count} fois", "txt_password_security_weak_short": "Mot de passe faible", "txt_password_security_reused_short": "Réutilisé" });
 
+
+Object.assign(fr, {
+  "txt_login_tab_email_otp": "Connexion par OTP e-mail",
+  "txt_login_tab_password": "Mot de passe maître",
+  "txt_send_verification_code": "Envoyer le code",
+  "txt_resend_code_cooldown": "Renvoyer ({seconds}s)",
+  "txt_email_otp_sent_success": "Code de vérification envoyé à votre adresse e-mail. Valable 10 minutes.",
+  "txt_email_otp_code_label": "Code de vérification e-mail à 6 chiffres (OTP)",
+  "txt_email_otp_code_placeholder": "Entrez le code à 6 chiffres",
+  "txt_email_otp_login_button": "Vérifier l'OTP et se connecter",
+  "txt_master_password_vault_decrypt": "Mot de passe maître (Déchiffrement local du coffre)",
+  "txt_email_otp_security_notice": "Zero-Knowledge: Le mot de passe déchiffre le coffre localement; protégé de l'enregistrement.",
+  "txt_please_send_otp_first": "Veuillez d'abord envoyer le code de vérification",
+  "txt_please_enter_email_and_otp": "Veuillez saisir votre e-mail, code OTP et mot de passe maître",
+  "txt_send_verification_code_failed": "Échec de l'envoi du code de vérification"
+});
+
 export default fr;

@@ -1465,4 +1465,21 @@ Object.assign(it, { "txt_password_security_last_checked": "Ultimo controllo: {va
 Object.assign(it, { "txt_no_password_risks_in_filter": "Nessun rischio password in questa categoria" });
 Object.assign(it, { "txt_password_security_show_all": "Show all", "txt_password_security_hide_all": "Hide all", "txt_password_security_jump": "Go to item", "txt_password_security_exposed_short": "Exposed {count} times", "txt_password_security_weak_short": "Weak password", "txt_password_security_reused_short": "Reused" });
 
+
+Object.assign(it, {
+  "txt_login_tab_email_otp": "Accesso con OTP via email",
+  "txt_login_tab_password": "Password principale",
+  "txt_send_verification_code": "Invia codice",
+  "txt_resend_code_cooldown": "Reinvia ({seconds}s)",
+  "txt_email_otp_sent_success": "Codice di verifica inviato alla tua email. Valido per 10 minuti.",
+  "txt_email_otp_code_label": "Codice di verifica email a 6 cifre (OTP)",
+  "txt_email_otp_code_placeholder": "Inserisci il codice a 6 cifre",
+  "txt_email_otp_login_button": "Verifica OTP e accedi",
+  "txt_master_password_vault_decrypt": "Master Password (Decrittografia locale cassaforte)",
+  "txt_email_otp_security_notice": "Zero-Knowledge: La password decrittografa la cassaforte solo localmente; protetta dal salvataggio.",
+  "txt_please_send_otp_first": "Invia prima il codice di verifica",
+  "txt_please_enter_email_and_otp": "Inserisci email, codice OTP e master password",
+  "txt_send_verification_code_failed": "Invio del codice di verifica non riuscito"
+});
+
 export default it;

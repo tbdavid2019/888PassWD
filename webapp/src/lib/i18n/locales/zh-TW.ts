@@ -1542,4 +1542,21 @@ const zhTW: Record<string, string> = {
   "txt_password_security_check_failed": "無法完成外洩檢查。"
 };
 
+
+Object.assign(zhTW, {
+  "txt_login_tab_email_otp": "Email 驗證碼登入",
+  "txt_login_tab_password": "帳號密碼登入",
+  "txt_send_verification_code": "發送驗證碼",
+  "txt_resend_code_cooldown": "重新發送 ({seconds}s)",
+  "txt_email_otp_sent_success": "驗證碼已發送至您的信箱，請於 10 分鐘內輸入",
+  "txt_email_otp_code_label": "信箱 6 位數安全驗證碼 (OTP)",
+  "txt_email_otp_code_placeholder": "輸入 6 位數驗證碼",
+  "txt_email_otp_login_button": "驗證 OTP 並登入",
+  "txt_master_password_vault_decrypt": "主密碼 (本機解密保險箱)",
+  "txt_email_otp_security_notice": "零知識安全：密碼僅在瀏覽器本地解密保險箱，已啟用防瀏覽器記憶隔離",
+  "txt_please_send_otp_first": "請先點擊發送驗證碼",
+  "txt_please_enter_email_and_otp": "請輸入電子郵件、驗證碼與主密碼",
+  "txt_send_verification_code_failed": "發送驗證碼失敗"
+});
+
 export default zhTW;

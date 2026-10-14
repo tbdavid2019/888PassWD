@@ -1465,4 +1465,21 @@ Object.assign(sv, { "txt_password_security_last_checked": "Senast kontrollerad: 
 Object.assign(sv, { "txt_no_password_risks_in_filter": "Inga lösenordsrisker i denna kategori" });
 Object.assign(sv, { "txt_password_security_show_all": "Show all", "txt_password_security_hide_all": "Hide all", "txt_password_security_jump": "Go to item", "txt_password_security_exposed_short": "Exposed {count} times", "txt_password_security_weak_short": "Weak password", "txt_password_security_reused_short": "Reused" });
 
+
+Object.assign(sv, {
+  "txt_login_tab_email_otp": "E-post OTP-inloggning",
+  "txt_login_tab_password": "Huvudlösenord",
+  "txt_send_verification_code": "Skicka kod",
+  "txt_resend_code_cooldown": "Skicka igen ({seconds}s)",
+  "txt_email_otp_sent_success": "Verifieringskod har skickats till din e-post. Giltig i 10 minuter.",
+  "txt_email_otp_code_label": "6-siffrig verifieringskod via e-post (OTP)",
+  "txt_email_otp_code_placeholder": "Ange den 6-siffriga koden",
+  "txt_email_otp_login_button": "Verifiera OTP och logga in",
+  "txt_master_password_vault_decrypt": "Huvudlösenord (Lokal valvdekryptering)",
+  "txt_email_otp_security_notice": "Nollkunskap: Lösenordet dekrypterar endast valvet lokalt; skyddat från webbläsarlagring.",
+  "txt_please_send_otp_first": "Skicka verifieringskod först",
+  "txt_please_enter_email_and_otp": "Ange e-post, OTP-kod och huvudlösenord",
+  "txt_send_verification_code_failed": "Kunde inte skicka verifieringskod"
+});
+
 export default sv;

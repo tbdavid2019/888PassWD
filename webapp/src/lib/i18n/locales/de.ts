@@ -1465,4 +1465,21 @@ Object.assign(de, { "txt_password_security_last_checked": "Zuletzt überprüft: 
 Object.assign(de, { "txt_no_password_risks_in_filter": "Keine Passwortrisiken in dieser Kategorie" });
 Object.assign(de, { "txt_password_security_show_all": "Alle anzeigen", "txt_password_security_hide_all": "Alle ausblenden", "txt_password_security_jump": "Öffnen", "txt_password_security_exposed_short": "{count}-mal geleakt", "txt_password_security_weak_short": "Schwaches Passwort", "txt_password_security_reused_short": "Wiederverwendet" });
 
+
+Object.assign(de, {
+  "txt_login_tab_email_otp": "E-Mail-OTP-Anmeldung",
+  "txt_login_tab_password": "Master-Passwort",
+  "txt_send_verification_code": "Code senden",
+  "txt_resend_code_cooldown": "Erneut senden ({seconds}s)",
+  "txt_email_otp_sent_success": "Bestätigungscode an Ihre E-Mail gesendet. Gültig für 10 Minuten.",
+  "txt_email_otp_code_label": "6-stelliger E-Mail-Bestätigungscode (OTP)",
+  "txt_email_otp_code_placeholder": "6-stelligen Code eingeben",
+  "txt_email_otp_login_button": "OTP bestätigen & anmelden",
+  "txt_master_password_vault_decrypt": "Master-Passwort (Lokale Tresorentschlüsselung)",
+  "txt_email_otp_security_notice": "Zero-Knowledge: Passwort entschlüsselt Tresor nur lokal; vor Browser-Speicherung geschützt.",
+  "txt_please_send_otp_first": "Bitte zuerst Bestätigungscode senden",
+  "txt_please_enter_email_and_otp": "Bitte geben Sie E-Mail, OTP-Code und Master-Passwort ein",
+  "txt_send_verification_code_failed": "Fehler beim Senden des Bestätigungscodes"
+});
+
 export default de;
