@@ -6,7 +6,10 @@ export interface SecurityTriageItemResult {
   priority: 'P0' | 'P1' | 'P2' | 'P3';
   reason: string;
   recommendation: string;
-  assetType: string;
+  assetType?: string;
+  badgeText?: string;
+  isPublicAsset?: boolean;
+  isPrivilegedAccount?: boolean;
 }
 
 export interface SecurityAiEvaluation {

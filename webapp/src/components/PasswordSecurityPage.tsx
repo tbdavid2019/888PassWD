@@ -10,6 +10,7 @@ import {
   setSecurityTriageResults,
   startPasswordSecurityScan,
   subscribePasswordSecurityState,
+  type SecurityTriageItemResult,
 } from '@/lib/password-security-cache';
 import type { DecisionExecutionResult } from '@/lib/api/admin';
 import type { VaultTriageItemInput, VaultTriageResponse } from '@/lib/api/vault';
@@ -73,17 +74,28 @@ export default function PasswordSecurityPage(props: PasswordSecurityPageProps) {
           return {
             id: item.cipherId,
             name: String(cipher?.decName || cipher?.name || ''),
-            uri: cipher?.login?.uris?.[0]?.uri,
-            username: cipher?.login?.decUsername || cipher?.login?.username,
+            uri: cipher?.login?.uris?.[0]?.uri || undefined,
+            username: cipher?.login?.decUsername || cipher?.login?.username || undefined,
             exposedCount: item.exposedCount || 0,
             reusedCount: item.reusedCount || 1,
             weak: item.weak,
           };
         });
 
+        if (!props.onTriage) return;
         const result = await props.onTriage(triageInputs);
         if (!active) return;
-        setSecurityTriageResults(result.items, {
+        const triageItems: SecurityTriageItemResult[] = result.items.map((item) => ({
+          id: item.id,
+          priority: item.priority,
+          reason: item.reason,
+          recommendation: item.recommendation,
+          badgeText: item.badgeText,
+          isPublicAsset: item.isPublicAsset,
+          isPrivilegedAccount: item.isPrivilegedAccount,
+          assetType: item.isPublicAsset ? '公網資產' : '內部資產',
+        }));
+        setSecurityTriageResults(triageItems, {
           riskGrade: result.overallGrade,
           recommendation: result.summary,
           provider: result.provider === 'primary_clef' ? 'Clef-Flash (邊緣決策模型)' : result.provider === 'typesafe_jev' ? 'TypeSafe Jev' : result.provider,

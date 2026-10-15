@@ -636,7 +636,7 @@ export default function App() {
 
   async function handleSendEmailLoginOtp(email: string) {
     if (IS_DEMO_MODE) {
-      pushToast('info', t('txt_email_otp_sent_success'));
+      pushToast('success', t('txt_email_otp_sent_success'));
       return { ok: true };
     }
     const result = await sendEmailLoginOtp(email);
@@ -670,7 +670,14 @@ export default function App() {
         await finalizeLogin(result.login);
         return;
       }
-      pushToast('error', result.message || t('txt_login_failed'));
+      if (result.kind === 'totp') {
+        setPendingTotp(result.pendingTotp);
+        setPendingTotpMode('login');
+        setTotpCode('');
+        setRememberDevice(true);
+        return;
+      }
+      pushToast('error', ('message' in result ? result.message : '') || t('txt_login_failed'));
     } catch (error) {
       pushToast('error', error instanceof Error ? error.message : t('txt_login_failed'));
     } finally {

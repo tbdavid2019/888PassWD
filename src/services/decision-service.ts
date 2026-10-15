@@ -133,7 +133,6 @@ export interface DuplicateClusterInput {
     uri?: string;
     username?: string;
     revisionDate?: string;
-    notes?: string;
   }>;
 }
 
@@ -513,9 +512,10 @@ export class DecisionService {
       try {
         const questions: Record<string, SystemOneQuestion> = {};
         for (const item of targetItems) {
+          const role = isPrivilegedAccount(item.username) ? 'admin/root' : (item.username ? 'standard_user' : 'none');
           questions[`item_${item.id}`] = {
             type: 'choice',
-            instructions: `Remediation priority for vault credential "${item.name}" (uri: ${item.uri || 'none'}, user: ${item.username || 'none'}, leaked_count: ${item.exposedCount}, reused_count: ${item.reusedCount}, weak_complexity: ${item.weak}):`,
+            instructions: `Remediation priority for vault credential "${item.name}" (uri: ${item.uri || 'none'}, account_role: ${role}, leaked_count: ${item.exposedCount}, reused_count: ${item.reusedCount}, weak_complexity: ${item.weak}):`,
             criteria: {
               P0: 'Urgent: Public-facing asset with exposed/leaked password',
               P1: 'High: Privileged root/admin account or widespread reuse',
@@ -530,7 +530,9 @@ export class DecisionService {
         };
         const evalRes = await this.evaluate(state, questions);
         remoteProvider = evalRes.provider;
-        remoteAnswers = evalRes.answers;
+        if (evalRes.provider !== 'local_fallback') {
+          remoteAnswers = evalRes.answers || {};
+        }
       } catch (err) {
         console.warn('DecisionService.evaluateVaultTriage remote failed, using heuristic:', err);
       }
@@ -540,10 +542,20 @@ export class DecisionService {
       const isInternal = isInternalNetwork(item.uri, item.name);
       const isPriv = isPrivilegedAccount(item.username);
       const answer = remoteAnswers[`item_${item.id}`] as SystemOneChoiceAnswer | undefined;
-      let priority: TriagePriority = (answer?.choice as TriagePriority) || 'P3';
+      let priority: TriagePriority | undefined = answer?.choice as TriagePriority | undefined;
 
-      // If remote model was not queried or returned P3 for obviously compromised items, apply heuristic
-      if (!answer) {
+      // Model hallucination or fallback guard:
+      // If an asset has exposed count > 0, it must be P0 (for public) or P1 (for internal)
+      if (item.exposedCount > 0) {
+        if (!isInternal) {
+          priority = 'P0';
+        } else if (priority === 'P2' || priority === 'P3' || !priority) {
+          priority = 'P1';
+        }
+      }
+
+      // If remote model was not queried, returned local_fallback, or returned P3 for compromised items, apply deterministic heuristic
+      if (!priority || (priority === 'P3' && (item.reusedCount > 1 || item.weak))) {
         if (item.exposedCount > 0 && !isInternal) priority = 'P0';
         else if (item.exposedCount > 0 && isInternal) priority = 'P1';
         else if (isPriv && (item.reusedCount > 1 || item.weak)) priority = 'P1';
@@ -701,10 +713,14 @@ export class DecisionService {
 
     const findExistingFolder = (keywords: string[]): ExistingFolderInput | null => {
       for (const kw of keywords) {
-        const lowerKw = kw.toLowerCase();
+        const lowerKw = kw.toLowerCase().trim();
+        if (!lowerKw) continue;
         for (const [name, folder] of folderByName.entries()) {
-          if (name === lowerKw || name.includes(lowerKw) || lowerKw.includes(name)) {
-            return folder;
+          if (name === lowerKw) return folder;
+          if (lowerKw.length >= 3 && name.length >= 3) {
+            if (name.includes(lowerKw) || lowerKw.includes(name)) {
+              return folder;
+            }
           }
         }
       }
@@ -736,7 +752,9 @@ export class DecisionService {
       }
       const evalRes = await this.evaluate({ items_count: unclassifiedItems.length }, questions);
       remoteProvider = evalRes.provider;
-      remoteAnswers = evalRes.answers;
+      if (evalRes.provider !== 'local_fallback') {
+        remoteAnswers = evalRes.answers || {};
+      }
     } catch (err) {
       console.warn('DecisionService.evaluateWebsiteCategorization remote failed, using heuristic:', err);
     }
