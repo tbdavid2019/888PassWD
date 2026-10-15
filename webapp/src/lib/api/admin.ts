@@ -136,3 +136,30 @@ export async function clearAuditLogs(authedFetch: AuthedFetch): Promise<number> 
   const body = await parseJson<{ deleted?: number }>(resp);
   return Number(body?.deleted || 0);
 }
+
+export interface DecisionEndpointHealth {
+  name: string;
+  url: string;
+  healthy: boolean;
+  latencyMs: number;
+  statusText?: string;
+  error?: string;
+}
+
+export interface DecisionSystemHealth {
+  overallHealthy: boolean;
+  activeProvider: string;
+  endpoints: {
+    primary: DecisionEndpointHealth;
+    fallbackQ4: DecisionEndpointHealth;
+    typesafeJev: DecisionEndpointHealth;
+  };
+}
+
+export async function getDecisionStatus(authedFetch: AuthedFetch): Promise<DecisionSystemHealth> {
+  const resp = await authedFetch('/api/admin/decision/status');
+  if (!resp.ok) throw new Error('Failed to load decision model status');
+  const body = await parseJson<DecisionSystemHealth>(resp);
+  return body!;
+}
+

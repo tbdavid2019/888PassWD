@@ -1,8 +1,9 @@
-import { useState } from 'preact/hooks';
-import { ChevronLeft, ChevronRight, Clipboard, Plus, RefreshCw, Trash2, UserCheck, UserX } from 'lucide-preact';
+import { useCallback, useEffect, useState } from 'preact/hooks';
+import { Activity, AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, Clipboard, Cpu, Plus, RefreshCw, ShieldCheck, Trash2, UserCheck, UserX } from 'lucide-preact';
 import { copyTextToClipboard } from '@/lib/clipboard';
 import LoadingState from '@/components/LoadingState';
 import type { AdminInvite, AdminUser } from '@/lib/types';
+import type { DecisionSystemHealth } from '@/lib/api/admin';
 import { t } from '@/lib/i18n';
 
 interface AdminPageProps {
@@ -18,6 +19,7 @@ interface AdminPageProps {
   onToggleUserStatus: (userId: string, currentStatus: 'active' | 'banned') => Promise<void>;
   onDeleteUser: (userId: string) => Promise<void>;
   onDeleteInvite: (code: string) => Promise<void>;
+  onLoadDecisionStatus?: () => Promise<DecisionSystemHealth>;
 }
 
 export default function AdminPage(props: AdminPageProps) {
@@ -50,6 +52,26 @@ export default function AdminPage(props: AdminPageProps) {
     return null;
   };
 
+  const [decisionHealth, setDecisionHealth] = useState<DecisionSystemHealth | null>(null);
+  const [decisionLoading, setDecisionLoading] = useState(false);
+
+  const fetchDecisionStatus = useCallback(async () => {
+    if (!props.onLoadDecisionStatus) return;
+    setDecisionLoading(true);
+    try {
+      const data = await props.onLoadDecisionStatus();
+      setDecisionHealth(data);
+    } catch (err) {
+      console.warn('Failed to load decision model status:', err);
+    } finally {
+      setDecisionLoading(false);
+    }
+  }, [props.onLoadDecisionStatus]);
+
+  useEffect(() => {
+    void fetchDecisionStatus();
+  }, [fetchDecisionStatus]);
+
   return (
     <div className="stack">
       {!!props.error && (
@@ -61,6 +83,121 @@ export default function AdminPage(props: AdminPageProps) {
           </button>
         </div>
       )}
+
+      {/* === AI 邊緣決策模型 (Clef / Jev) 4-Tier 容錯鏈面板 === */}
+      <section className="card">
+        <div className="section-head">
+          <div className="flex items-center gap-2">
+            <Cpu size={18} className="text-blue-500" />
+            <h3 className="m-0 font-bold">AI 邊緣決策模型（Clef / Jev）架構</h3>
+            <span className="decision-node-badge fallback">4-Tier 容錯鏈</span>
+          </div>
+          <button
+            type="button"
+            className="btn btn-secondary small"
+            disabled={decisionLoading}
+            onClick={() => void fetchDecisionStatus()}
+          >
+            <RefreshCw size={14} className={`btn-icon ${decisionLoading ? 'animate-spin' : ''}`} />
+            {t('txt_refresh')}
+          </button>
+        </div>
+
+        <div className="text-[13px] text-slate-600 dark:text-slate-400 mt-1 mb-2">
+          採用非自回歸 System One 模型（單次前向傳播，零 Token 生成等待，零幻覺），在登入與 2FA 驗證時進行邊緣即時風險判定與零信任風控防禦。
+        </div>
+
+        <div className="decision-nodes-grid">
+          {/* Node 1: Primary Clef-Flash */}
+          <div className={`decision-node-item ${decisionHealth?.activeProvider === 'primary_clef' ? 'active-tier' : ''}`}>
+            <div>
+              <div className="decision-node-head">
+                <span className="decision-node-title">
+                  <Activity size={15} className="text-emerald-500" />
+                  Primary: Clef-Flash
+                </span>
+                <span className={`decision-node-badge ${decisionHealth?.endpoints?.primary?.healthy ? 'online' : 'offline'}`}>
+                  {decisionHealth?.endpoints?.primary?.healthy ? (
+                    <><CheckCircle2 size={11} /> 在線 ({decisionHealth.endpoints.primary.latencyMs}ms)</>
+                  ) : (
+                    <><AlertCircle size={11} /> 備援中</>
+                  )}
+                </span>
+              </div>
+              <div className="decision-node-url">https://clef.create360.ai/v1/systemone</div>
+              <div className="decision-node-desc">
+                自建邊緣推論節點（極速 &lt;200ms、免外部 Token 費用），承擔日常 99% 以上即時登入風控決策。
+              </div>
+            </div>
+          </div>
+
+          {/* Node 2: Fallback 2 Clef-Flash-Q4 */}
+          <div className={`decision-node-item ${decisionHealth?.activeProvider === 'fallback_q4' ? 'active-tier' : ''}`}>
+            <div>
+              <div className="decision-node-head">
+                <span className="decision-node-title">
+                  <ShieldCheck size={15} className="text-blue-500" />
+                  Fallback 2: Clef-Flash-Q4
+                </span>
+                <span className={`decision-node-badge ${decisionHealth?.endpoints?.fallbackQ4?.healthy ? 'online' : 'fallback'}`}>
+                  {decisionHealth?.endpoints?.fallbackQ4?.healthy ? (
+                    <><CheckCircle2 size={11} /> 在線 ({decisionHealth.endpoints.fallbackQ4.latencyMs}ms)</>
+                  ) : (
+                    <><AlertCircle size={11} /> 待命/離線</>
+                  )}
+                </span>
+              </div>
+              <div className="decision-node-url">https://clef.aiurl.tw/v1/systemone</div>
+              <div className="decision-node-desc">
+                自建備援推理節點（Q4 量化模型），當主節點連線中斷或維護時自動無縫接手。
+              </div>
+            </div>
+          </div>
+
+          {/* Node 3: Fallback 3 TypeSafe Jev */}
+          <div className={`decision-node-item ${decisionHealth?.activeProvider === 'typesafe_jev' ? 'active-tier' : ''}`}>
+            <div>
+              <div className="decision-node-head">
+                <span className="decision-node-title">
+                  <ShieldCheck size={15} className="text-indigo-500" />
+                  Fallback 3: TypeSafe Jev
+                </span>
+                <span className={`decision-node-badge ${decisionHealth?.endpoints?.typesafeJev?.healthy ? 'online' : 'offline'}`}>
+                  {decisionHealth?.endpoints?.typesafeJev?.healthy ? (
+                    <><CheckCircle2 size={11} /> 官方在線 ({decisionHealth.endpoints.typesafeJev.latencyMs}ms)</>
+                  ) : (
+                    <><AlertCircle size={11} /> 未連線</>
+                  )}
+                </span>
+              </div>
+              <div className="decision-node-url">https://api.typesafe.ai/v1/systemone (jev-latest)</div>
+              <div className="decision-node-desc">
+                TypeSafe 官方 Jev 雲端兜底服務（專屬 API Key 認證），確保自建基礎設施異常時仍具備商業級推理能力。
+              </div>
+            </div>
+          </div>
+
+          {/* Node 4: Fallback 4 Safe Fail-Open */}
+          <div className={`decision-node-item ${decisionHealth?.activeProvider === 'local_fallback' ? 'active-tier' : ''}`}>
+            <div>
+              <div className="decision-node-head">
+                <span className="decision-node-title">
+                  <CheckCircle2 size={15} className="text-emerald-600" />
+                  Fallback 4: 本地安全降級放行
+                </span>
+                <span className="decision-node-badge online">
+                  <CheckCircle2 size={11} /> 永不中斷
+                </span>
+              </div>
+              <div className="decision-node-url">local://fail-open-safe-heuristic</div>
+              <div className="decision-node-desc">
+                當前述三層決策節點皆逾時或斷網時，自動切換至安全放行模式，密碼庫所有核心功能保證正常運作。
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="card">
         <div className="section-head">
           <h3>{t('txt_users')}</h3>

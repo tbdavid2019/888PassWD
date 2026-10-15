@@ -433,13 +433,13 @@ export default function AuthViews(props: AuthViewsProps) {
               {/* === 2. Email OTP 登入 (分步漸進揭露) === */}
               {otpStep === 'request' ? (
                 <div className="auth-step-section">
-                  <label className="field">
-                    <span>{t('txt_email')}</span>
+                  <div className="auth-field-compact">
                     <input
                       className="input"
                       type={props.relaxedLoginInput ? 'text' : 'email'}
                       value={props.loginValues.email}
                       autoComplete="email"
+                      aria-label={t('txt_email')}
                       data-1p-ignore="true"
                       data-lpignore="true"
                       data-bwignore="true"
@@ -447,7 +447,7 @@ export default function AuthViews(props: AuthViewsProps) {
                       autoCapitalize="off"
                       autoCorrect="off"
                       spellCheck={false}
-                      placeholder={props.authPlaceholder || 'name@example.com'}
+                      placeholder={t('txt_email')}
                       autoFocus
                       onInput={(e) =>
                         props.onChangeLogin({
@@ -456,7 +456,7 @@ export default function AuthViews(props: AuthViewsProps) {
                         })
                       }
                     />
-                  </label>
+                  </div>
 
                   {showPasswordForm ? (
                     <>

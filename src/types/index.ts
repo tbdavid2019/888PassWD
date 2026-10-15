@@ -20,6 +20,10 @@ export interface Env {
   'globalSettings__yubico__validationUrls'?: string;
   RESEND_API_KEY?: string;
   RESEND_FROM?: string;
+  CLEF_PRIMARY_URL?: string;
+  CLEF_FALLBACK_URL?: string;
+  TYPESAFE_API_URL?: string;
+  TYPESAFE_API_KEY?: string;
 }
 
 export type UserRole = 'admin' | 'user';
