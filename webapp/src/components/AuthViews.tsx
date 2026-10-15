@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { AlertTriangle, ArrowLeft, ChevronDown, Eye, EyeOff, KeyRound, LoaderCircle, Lock, LogIn, LogOut, Mail, Send, ShieldCheck, Unlock, UserPlus } from 'lucide-preact';
-import NetworkStatusBadge from '@/components/NetworkStatusBadge';
 import StandalonePageFrame from '@/components/StandalonePageFrame';
 import { t } from '@/lib/i18n';
 import { getCurrentNetworkStatus, subscribeNetworkStatus, type NetworkStatus } from '@/lib/network-status';
@@ -174,7 +173,7 @@ export default function AuthViews(props: AuthViewsProps) {
   if (props.mode === 'locked') {
     return (
       <div className="auth-page">
-        <StandalonePageFrame title={t('txt_unlock_vault')} titleAccessory={<NetworkStatusBadge />}>
+        <StandalonePageFrame title={t('txt_unlock_vault')}>
           <form
             autoComplete="off"
             data-1p-ignore="true"
@@ -203,13 +202,9 @@ export default function AuthViews(props: AuthViewsProps) {
                   <KeyRound size={22} />
                 </div>
                 <div className="passkey-hero-body">
-                  <div className="passkey-hero-title-row">
-                    <span className="passkey-hero-title">
-                      {passkeyBusy ? t('txt_unlocking') : t('txt_unlock_with_passkey')}
-                    </span>
-                    <span className="passkey-hero-badge">推薦 (Fast)</span>
-                  </div>
-                  <span className="passkey-hero-sub">Touch ID · Face ID · 實體安全金鑰免密快速解鎖</span>
+                  <span className="passkey-hero-title">
+                    {passkeyBusy ? t('txt_unlocking') : t('txt_unlock_with_passkey')}
+                  </span>
                 </div>
               </button>
             </div>
@@ -276,7 +271,7 @@ export default function AuthViews(props: AuthViewsProps) {
   if (props.mode === 'register') {
     return (
       <div className="auth-page">
-        <StandalonePageFrame title={t('txt_create_account')} titleAccessory={<NetworkStatusBadge />}>
+        <StandalonePageFrame title={t('txt_create_account')}>
           <form
             autoComplete="off"
             data-1p-ignore="true"
@@ -365,7 +360,7 @@ export default function AuthViews(props: AuthViewsProps) {
 
   return (
     <div className="auth-page">
-      <StandalonePageFrame title={t('txt_log_in')} titleAccessory={<NetworkStatusBadge />}>
+      <StandalonePageFrame title={t('txt_log_in')}>
         <form
           autoComplete="off"
           data-1p-ignore="true"
@@ -430,13 +425,9 @@ export default function AuthViews(props: AuthViewsProps) {
                     <KeyRound size={22} />
                   </div>
                   <div className="passkey-hero-body">
-                    <div className="passkey-hero-title-row">
-                      <span className="passkey-hero-title">
-                        {passkeyBusy ? t('txt_logging_in') : t('txt_login_with_passkey')}
-                      </span>
-                      <span className="passkey-hero-badge">推薦 (Fast)</span>
-                    </div>
-                    <span className="passkey-hero-sub">Touch ID · Face ID · 實體安全金鑰免密快速登入</span>
+                    <span className="passkey-hero-title">
+                      {passkeyBusy ? t('txt_logging_in') : t('txt_login_with_passkey')}
+                    </span>
                   </div>
                 </button>
               </div>
