@@ -22,7 +22,6 @@ const SecurityDevicesPage = lazy(() => import('@/components/SecurityDevicesPage'
 const AdminPage = lazy(() => import('@/components/AdminPage'));
 const LogCenterPage = lazy(() => import('@/components/LogCenterPage'));
 const BackupCenterPage = lazy(() => import('@/components/BackupCenterPage'));
-const DecisionCenterPage = lazy(() => import('@/components/DecisionCenterPage'));
 const ImportPage = lazy(() => import('@/components/ImportPage'));
 
 function RouteContentFallback() {
@@ -227,7 +226,11 @@ export default function AppMainRoutes(props: AppMainRoutesProps) {
             </div>
           )}
           <Suspense fallback={<RouteContentFallback />}>
-            <PasswordSecurityPage ciphers={props.decryptedCiphers} loading={props.ciphersLoading} />
+            <PasswordSecurityPage
+              ciphers={props.decryptedCiphers}
+              loading={props.ciphersLoading}
+              onEvaluate={props.onEvaluateDecision}
+            />
           </Suspense>
         </div>
       </Route>
@@ -512,19 +515,6 @@ export default function AppMainRoutes(props: AppMainRoutesProps) {
                 onNotify={props.onNotify}
                 mobileLayout={props.mobileLayout}
                 onMobileBack={() => props.onNavigate(props.settingsHomeRoute)}
-              />
-            </Suspense>
-          </div>
-        ) : null}
-      </Route>
-      <Route path="/decision">
-        {isAdmin ? (
-          <div className="stack">
-            <Suspense fallback={<RouteContentFallback />}>
-              <DecisionCenterPage
-                onLoadStatus={props.onLoadDecisionStatus!}
-                onEvaluate={props.onEvaluateDecision!}
-                onNotify={props.onNotify}
               />
             </Suspense>
           </div>

@@ -2019,7 +2019,6 @@ export default function App() {
     if (location === '/sends') return t('nav_sends');
     if (location === '/admin') return t('nav_admin_panel');
     if (location === '/logs') return t('nav_log_center');
-    if (location === '/decision') return 'AI 決策中心';
     if (location === LEGACY_DEVICE_MANAGEMENT_ROUTE || location === DEVICE_MANAGEMENT_ROUTE) return t('nav_device_management');
     if (location === SETTINGS_DOMAIN_RULES_ROUTE) return t('nav_domain_rules');
     if (location === '/backup') return t('nav_backup_strategy');

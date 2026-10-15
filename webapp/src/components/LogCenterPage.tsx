@@ -519,7 +519,18 @@ export default function LogCenterPage(props: LogCenterPageProps) {
                 >
                   <span className={`log-row-icon log-category-${logCategory}`}>{iconForCategory(logCategory)}</span>
                   <span className="log-row-main">
-                    <strong>{formatAction(log.action)}</strong>
+                    <span className="flex items-center gap-1.5 flex-wrap">
+                      <strong>{formatAction(log.action)}</strong>
+                      {metadata.decisionProvider ? (
+                        <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded-full ${
+                          metadata.isSuspicious
+                            ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
+                            : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                        }`}>
+                          {metadata.isSuspicious ? '🚨 AI攔截' : '🛡️ AI放行'}
+                        </span>
+                      ) : null}
+                    </span>
                     <small>{formatTime(log.createdAt)}</small>
                   </span>
                   <span className={`log-level-pill log-level-${logLevel}`}>{t(`txt_log_level_${logLevel}`)}</span>
@@ -561,6 +572,25 @@ export default function LogCenterPage(props: LogCenterPageProps) {
                 <div><span>{t('txt_actor')}</span><strong>{selectedLog.actorEmail || selectedLog.actorUserId || t('txt_dash')}</strong></div>
                 <div><span>{t('txt_target')}</span><strong>{formatLogTarget(selectedLog, selectedMetadata)}</strong></div>
               </div>
+              {selectedMetadata.decisionProvider ? (
+                <div className="card mb-3 p-3 rounded-lg border border-indigo-200/80 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-950/20">
+                  <div className="flex items-center gap-1.5 mb-1.5 text-xs font-bold text-indigo-950 dark:text-indigo-100">
+                    <ShieldAlert size={14} className="text-indigo-600 dark:text-indigo-400" />
+                    AI 邊緣零信任安全風控決策
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div><span className="text-slate-500">模型節點：</span><strong>{String(selectedMetadata.decisionProvider)}</strong></div>
+                    <div><span className="text-slate-500">異常評分：</span><strong>{String(selectedMetadata.riskScore ?? '0.0')}</strong></div>
+                    <div><span className="text-slate-500">風險級別：</span><strong>{String(selectedMetadata.riskLevel ?? 'low')}</strong></div>
+                    <div>
+                      <span className="text-slate-500">處置措施：</span>
+                      <strong className={selectedMetadata.isSuspicious ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}>
+                        {selectedMetadata.isSuspicious ? '強制 Step-up 2FA' : '信任放行'}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
               <div className="log-detail-json">
                 <h4>{t('txt_metadata')}</h4>
                 {visibleMetaEntries.length ? (
