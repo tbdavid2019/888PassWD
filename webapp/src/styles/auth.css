@@ -674,6 +674,28 @@
   @apply mb-4;
 }
 
+.btn-passkey-primary {
+  @apply relative flex items-center justify-center gap-2.5 w-full h-[50px] px-5 rounded-xl font-bold text-[16px] text-white transition-all duration-200 select-none cursor-pointer;
+  background: linear-gradient(135deg, #f95700 0%, #ea580c 100%);
+  border: 1px solid rgba(249, 87, 0, 0.45);
+  box-shadow: 0 4px 16px rgba(249, 87, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  letter-spacing: 0.01em;
+}
+
+.btn-passkey-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+  box-shadow: 0 6px 22px rgba(249, 87, 0, 0.42);
+  transform: translateY(-1.5px);
+}
+
+.btn-passkey-primary:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
+}
+
+.btn-passkey-primary:disabled {
+  @apply opacity-60 cursor-not-allowed transform-none;
+}
+
 .btn-passkey-hero {
   @apply relative flex items-center gap-3.5 w-full px-4 py-3.5 rounded-2xl transition-all duration-200 select-none cursor-pointer text-left;
   background: var(--panel, #ffffff);
@@ -745,17 +767,34 @@
   @apply block text-[14px] font-medium leading-normal text-slate-500 dark:text-slate-400;
 }
 
-/* === Auth Divider (14px Readable) === */
+/* === Auth Divider (Fanpokka Clean Contextual Line) === */
 .auth-divider {
   @apply relative flex items-center justify-center my-4;
 }
 
 .auth-divider-line {
-  @apply flex-grow h-[1px] bg-slate-200 dark:bg-slate-700;
+  @apply flex-grow h-[1px] bg-slate-200 dark:bg-slate-700/80;
 }
 
 .auth-divider-text {
-  @apply px-4 text-[14px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider;
+  @apply px-3 text-[13px] font-semibold text-slate-400 dark:text-slate-500 select-none;
+}
+
+/* === Auth Footer Nav Links (Flat, No Nested Cards) === */
+.auth-footer-nav {
+  @apply flex items-center justify-center gap-3 mt-5 pt-3.5 border-t border-slate-100 dark:border-slate-800 text-[14px];
+}
+
+.auth-nav-link {
+  @apply inline-flex items-center gap-1.5 font-semibold text-slate-500 hover:text-[#f95700] dark:text-slate-400 dark:hover:text-[#fb923c] transition-colors cursor-pointer bg-transparent border-none p-0 text-[14px];
+}
+
+.auth-nav-dot {
+  @apply text-slate-300 dark:text-slate-600 select-none font-bold;
+}
+
+.auth-nav-icon {
+  @apply opacity-75;
 }
 
 /* === Chinese Typography & Field Sizing Floor (No text below 14px) === */
