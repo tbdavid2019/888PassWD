@@ -99,6 +99,7 @@ interface VaultListPanelProps {
   canonicalIds?: Set<string>;
   redundantIds?: Set<string>;
   clusterProvider?: string;
+  securityPriorityById?: Map<string, 'P0' | 'P1' | 'P2' | 'P3'>;
 }
 
 interface CipherListItemProps {
@@ -107,6 +108,7 @@ interface CipherListItemProps {
   checked: boolean;
   duplicateGroupIndex: number | null;
   duplicateTag?: 'canonical' | 'redundant' | null;
+  securityPriority?: 'P0' | 'P1' | 'P2' | 'P3' | null;
   subtitle: string;
   onToggleSelected: (cipherId: string, checked: boolean, shiftKey?: boolean) => void;
   onSelectCipher: (cipherId: string, event?: { shiftKey?: boolean }) => void;
@@ -167,6 +169,19 @@ const CipherListItem = memo(function CipherListItem(props: CipherListItemProps) 
             {props.duplicateTag === 'redundant' && (
               <span className="text-[10px] font-semibold px-1.5 py-0.5 ml-1.5 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
                 建議清理 (歷史冗餘)
+              </span>
+            )}
+            {props.securityPriority && (
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 ml-1.5 rounded-full inline-flex items-center gap-0.5 ${
+                props.securityPriority === 'P0'
+                  ? 'bg-red-100 dark:bg-red-950/70 text-red-700 dark:text-red-300'
+                  : props.securityPriority === 'P1'
+                  ? 'bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300'
+                  : props.securityPriority === 'P2'
+                  ? 'bg-blue-100 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300'
+                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+              }`}>
+                {props.securityPriority === 'P0' ? '🚨 P0' : props.securityPriority === 'P1' ? '⚠️ P1' : props.securityPriority === 'P2' ? '🛡️ P2' : props.securityPriority}
               </span>
             )}
           </span>
@@ -566,6 +581,7 @@ export default function VaultListPanel(props: VaultListPanelProps) {
                     : null
                 }
                 subtitle={props.listSubtitle(cipher)}
+                securityPriority={props.securityPriorityById?.get(cipher.id) ?? null}
                 onToggleSelected={props.onToggleSelected}
                 onSelectCipher={props.onSelectCipher}
               />

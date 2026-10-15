@@ -37,6 +37,8 @@ interface VaultSidebarProps {
   folderSortMode: VaultSortMode;
   folderSortMenuOpen: boolean;
   folderSortMenuRef: RefObject<HTMLDivElement>;
+  securityP0Count?: number;
+  securityTotalRiskCount?: number;
   onCloseMobileSidebar: () => void;
   onChangeFilter: (filter: SidebarFilter) => void;
   onOpenDeleteAllFolders: () => void;
@@ -97,8 +99,20 @@ export default function VaultSidebar(props: VaultSidebarProps) {
         </div>
       )}
       <div className="sidebar-block">
-        <Link href="/security/password-health" className="tree-btn">
-          <ShieldCheck size={14} className="tree-icon" /> <span className="tree-label">{t('nav_password_security')}</span>
+        <Link href="/security/password-health" className="tree-btn flex items-center justify-between">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <ShieldCheck size={14} className="tree-icon flex-shrink-0" />
+            <span className="tree-label truncate">{t('nav_password_security')}</span>
+          </div>
+          {(props.securityP0Count || 0) > 0 ? (
+            <span className="ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 dark:bg-red-950/70 text-red-700 dark:text-red-300">
+              🚨 {props.securityP0Count}
+            </span>
+          ) : (props.securityTotalRiskCount || 0) > 0 ? (
+            <span className="ml-auto text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
+              {props.securityTotalRiskCount}
+            </span>
+          ) : null}
         </Link>
         <button type="button" className={`tree-btn ${props.sidebarFilter.kind === 'all' ? 'active' : ''}`} onClick={() => props.onChangeFilter({ kind: 'all' })}>
           <LayoutGrid size={14} className="tree-icon" /> <span className="tree-label">{t('txt_all_items')}</span>

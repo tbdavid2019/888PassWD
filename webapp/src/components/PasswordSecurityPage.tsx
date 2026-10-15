@@ -1,10 +1,18 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
-import { AlertTriangle, CheckCircle2, ExternalLink, Eye, EyeOff, RefreshCw, ScanSearch, ShieldAlert, ShieldCheck, Sparkles, Unplug } from 'lucide-preact';
+import { AlertTriangle, CheckCircle2, ExternalLink, Eye, EyeOff, RefreshCw, ScanSearch, ShieldAlert, ShieldCheck, Sparkles, Trash2, Unplug } from 'lucide-preact';
 import { Link } from 'wouter';
+import ConfirmDialog from '@/components/ConfirmDialog';
 import { maskSecret } from '@/components/vault/vault-page-helpers';
-import { getPasswordSecurityState, readPasswordSecurityState, startPasswordSecurityScan, subscribePasswordSecurityState } from '@/lib/password-security-cache';
+import {
+  getPasswordSecurityState,
+  readPasswordSecurityState,
+  removeCipherFromSecurityAssessment,
+  setSecurityTriageResults,
+  startPasswordSecurityScan,
+  subscribePasswordSecurityState,
+} from '@/lib/password-security-cache';
 import type { DecisionExecutionResult } from '@/lib/api/admin';
-import type { VaultTriageItemInput, VaultTriageItemResult, VaultTriageResponse } from '@/lib/api/vault';
+import type { VaultTriageItemInput, VaultTriageResponse } from '@/lib/api/vault';
 import { t } from '@/lib/i18n';
 import type { Cipher } from '@/lib/types';
 
@@ -13,6 +21,8 @@ interface PasswordSecurityPageProps {
   loading: boolean;
   onTriage?: (items: VaultTriageItemInput[]) => Promise<VaultTriageResponse>;
   onEvaluate?: (state: Record<string, unknown> | null, questions: Record<string, unknown>) => Promise<DecisionExecutionResult>;
+  onDelete?: (cipher: Cipher) => Promise<void>;
+  onNotify?: (type: 'success' | 'error' | 'warning', text: string) => void;
 }
 
 type PasswordSecurityFilter = 'all' | 'p0' | 'p1' | 'p2' | 'exposed' | 'reused' | 'weak';
@@ -35,32 +45,25 @@ export default function PasswordSecurityPage(props: PasswordSecurityPageProps) {
   const [securityState, setSecurityState] = useState(() => getPasswordSecurityState(fingerprint));
   const [filter, setFilter] = useState<PasswordSecurityFilter>('all');
   const [revealedPasswordIds, setRevealedPasswordIds] = useState<Set<string>>(() => new Set());
-  const [triageMap, setTriageMap] = useState<Map<string, VaultTriageItemResult>>(new Map());
   const [triageLoading, setTriageLoading] = useState(false);
+  const [pendingDeleteCipher, setPendingDeleteCipher] = useState<Cipher | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   useEffect(() => {
     setSecurityState(getPasswordSecurityState(fingerprint));
-    setFilter('all');
-    setRevealedPasswordIds(new Set());
     return subscribePasswordSecurityState(() => {
       const next = readPasswordSecurityState(fingerprint);
-      if (next) setSecurityState(next);
+      if (next) setSecurityState({ ...next });
     });
   }, [fingerprint]);
 
-  const { report, scannedAt, scanning, progress, scanError } = securityState;
-
-  const [aiEvaluation, setAiEvaluation] = useState<{
-    riskGrade: 'A+' | 'B' | 'CRITICAL';
-    recommendation: string;
-    provider: string;
-    latencyMs: number;
-  } | null>(null);
+  const { report, scannedAt, scanning, progress, scanError, triageMap, aiEvaluation } = securityState;
 
   const ciphersById = useMemo(() => new Map(props.ciphers.map((cipher) => [cipher.id, cipher])), [props.ciphers]);
 
   useEffect(() => {
     if (!report || !props.onTriage) return;
+    if (triageMap && Object.keys(triageMap).length > 0 && aiEvaluation) return;
     let active = true;
     setTriageLoading(true);
     void (async () => {
@@ -80,12 +83,7 @@ export default function PasswordSecurityPage(props: PasswordSecurityPageProps) {
 
         const result = await props.onTriage(triageInputs);
         if (!active) return;
-        const map = new Map<string, VaultTriageItemResult>();
-        for (const item of result.items) {
-          map.set(item.id, item);
-        }
-        setTriageMap(map);
-        setAiEvaluation({
+        setSecurityTriageResults(result.items, {
           riskGrade: result.overallGrade,
           recommendation: result.summary,
           provider: result.provider === 'primary_clef' ? 'Clef-Flash (邊緣決策模型)' : result.provider === 'typesafe_jev' ? 'TypeSafe Jev' : result.provider,
@@ -100,30 +98,30 @@ export default function PasswordSecurityPage(props: PasswordSecurityPageProps) {
     return () => {
       active = false;
     };
-  }, [report, props.onTriage, ciphersById]);
+  }, [report, props.onTriage, ciphersById, triageMap, aiEvaluation]);
 
   const eligibleCount = useMemo(
     () => props.ciphers.filter((cipher) => Number(cipher.type) === 1 && !cipher.deletedDate && !(cipher as { deletedAt?: string | null }).deletedAt && !!cipher.login?.decPassword).length,
     [props.ciphers],
   );
 
-  const p0Count = useMemo(() => Array.from(triageMap.values()).filter((t) => t.priority === 'P0').length, [triageMap]);
-  const p1Count = useMemo(() => Array.from(triageMap.values()).filter((t) => t.priority === 'P1').length, [triageMap]);
-  const p2Count = useMemo(() => Array.from(triageMap.values()).filter((t) => t.priority === 'P2').length, [triageMap]);
+  const p0Count = useMemo(() => Object.values(triageMap || {}).filter((t) => t.priority === 'P0').length, [triageMap]);
+  const p1Count = useMemo(() => Object.values(triageMap || {}).filter((t) => t.priority === 'P1').length, [triageMap]);
+  const p2Count = useMemo(() => Object.values(triageMap || {}).filter((t) => t.priority === 'P2').length, [triageMap]);
 
   const filteredItems = useMemo(() => {
     if (!report) return [];
     let items = [...report.items];
     const priorityRank: Record<string, number> = { P0: 0, P1: 1, P2: 2, P3: 3 };
     items.sort((a, b) => {
-      const pA = triageMap.get(a.cipherId)?.priority || (a.exposedCount ? 'P0' : a.reusedCount > 1 ? 'P1' : 'P2');
-      const pB = triageMap.get(b.cipherId)?.priority || (b.exposedCount ? 'P0' : b.reusedCount > 1 ? 'P1' : 'P2');
+      const pA = triageMap?.[a.cipherId]?.priority || (a.exposedCount ? 'P0' : a.reusedCount > 1 ? 'P1' : 'P2');
+      const pB = triageMap?.[b.cipherId]?.priority || (b.exposedCount ? 'P0' : b.reusedCount > 1 ? 'P1' : 'P2');
       return (priorityRank[pA] ?? 3) - (priorityRank[pB] ?? 3);
     });
 
-    if (filter === 'p0') return items.filter((item) => triageMap.get(item.cipherId)?.priority === 'P0');
-    if (filter === 'p1') return items.filter((item) => triageMap.get(item.cipherId)?.priority === 'P1');
-    if (filter === 'p2') return items.filter((item) => triageMap.get(item.cipherId)?.priority === 'P2');
+    if (filter === 'p0') return items.filter((item) => triageMap?.[item.cipherId]?.priority === 'P0');
+    if (filter === 'p1') return items.filter((item) => triageMap?.[item.cipherId]?.priority === 'P1');
+    if (filter === 'p2') return items.filter((item) => triageMap?.[item.cipherId]?.priority === 'P2');
     if (filter === 'exposed') return items.filter((item) => (item.exposedCount || 0) > 0);
     if (filter === 'reused') return items.filter((item) => item.reusedCount > 1);
     if (filter === 'weak') return items.filter((item) => item.weak);
@@ -162,10 +160,12 @@ export default function PasswordSecurityPage(props: PasswordSecurityPageProps) {
           {scannedAt && <p className="password-security-checked-at">{t('txt_password_security_last_checked', { value: formatCheckedAt(scannedAt) })}</p>}
         </div>
         <div className="password-security-intro-actions">
-          {report && <button type="button" className="btn btn-secondary password-security-toggle-all" onClick={toggleAllPasswordVisibility}>
-            {allPasswordsVisible ? <EyeOff size={16} /> : <Eye size={16} />}
-            {allPasswordsVisible ? t('txt_password_security_hide_all') : t('txt_password_security_reveal_all')}
-          </button>}
+          {report && (
+            <button type="button" className="btn btn-secondary password-security-toggle-all" onClick={toggleAllPasswordVisibility}>
+              {allPasswordsVisible ? <EyeOff size={16} /> : <Eye size={16} />}
+              {allPasswordsVisible ? t('txt_password_security_hide_all') : t('txt_password_security_show_all')}
+            </button>
+          )}
           <button
             type="button"
             className="btn btn-primary password-security-scan"
@@ -173,7 +173,11 @@ export default function PasswordSecurityPage(props: PasswordSecurityPageProps) {
             onClick={scan}
           >
             {scanning ? <RefreshCw size={16} className="spin" /> : <ScanSearch size={16} />}
-            {scanning ? t('txt_password_security_checking_progress', { count: progress.checked, total: progress.total }) : report ? t('txt_password_security_recheck') : t('txt_password_security_start')}
+            {scanning
+              ? `${t('txt_checking_password_security')} (${progress.checked}/${progress.total})`
+              : report
+              ? t('txt_recheck_password_security')
+              : t('txt_check_password_security')}
           </button>
         </div>
       </div>
@@ -181,7 +185,7 @@ export default function PasswordSecurityPage(props: PasswordSecurityPageProps) {
       {!report && !scanning && (
         <div className="password-security-empty card">
           <ScanSearch size={32} />
-          <strong>{eligibleCount ? t('txt_password_security_empty_title') : t('txt_password_security_no_logins')}</strong>
+          <strong>{eligibleCount ? t('txt_password_security_ready') : t('txt_password_security_no_login')}</strong>
           <span>{eligibleCount ? t('txt_password_security_manual') : t('txt_password_security_no_login_help')}</span>
         </div>
       )}
@@ -302,7 +306,7 @@ export default function PasswordSecurityPage(props: PasswordSecurityPageProps) {
                 const name = String(cipher?.decName || cipher?.name || '');
                 const password = String(cipher?.login?.decPassword || '');
                 const passwordVisible = revealedPasswordIds.has(item.cipherId);
-                const triage = triageMap.get(item.cipherId);
+                const triage = triageMap?.[item.cipherId];
 
                 return (
                   <article className="password-security-item" key={item.cipherId}>
@@ -348,6 +352,17 @@ export default function PasswordSecurityPage(props: PasswordSecurityPageProps) {
                       <Link href={`/vault?cipher=${encodeURIComponent(item.cipherId)}`} className="btn btn-secondary small password-security-open">
                         <ExternalLink size={14} className="btn-icon" />{t('txt_password_security_jump')}
                       </Link>
+                      {props.onDelete && cipher && (
+                        <button
+                          type="button"
+                          className="btn btn-secondary small text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40"
+                          onClick={() => setPendingDeleteCipher(cipher)}
+                          title={t('txt_delete')}
+                        >
+                          <Trash2 size={14} className="btn-icon" />
+                          {t('txt_delete')}
+                        </button>
+                      )}
                     </div>
                   </article>
                 );
@@ -356,6 +371,30 @@ export default function PasswordSecurityPage(props: PasswordSecurityPageProps) {
           )}
         </section>
       )}
+
+      <ConfirmDialog
+        open={!!pendingDeleteCipher}
+        title={t('txt_delete_item')}
+        message={t('txt_are_you_sure_you_want_to_delete_this_item')}
+        danger
+        confirmDisabled={deleteBusy}
+        cancelDisabled={deleteBusy}
+        onConfirm={async () => {
+          if (!pendingDeleteCipher || !props.onDelete) return;
+          setDeleteBusy(true);
+          try {
+            await props.onDelete(pendingDeleteCipher);
+            removeCipherFromSecurityAssessment(pendingDeleteCipher.id);
+            props.onNotify?.('success', t('txt_item_deleted'));
+            setPendingDeleteCipher(null);
+          } catch (err) {
+            props.onNotify?.('error', String(err));
+          } finally {
+            setDeleteBusy(false);
+          }
+        }}
+        onCancel={() => setPendingDeleteCipher(null)}
+      />
     </section>
   );
 }

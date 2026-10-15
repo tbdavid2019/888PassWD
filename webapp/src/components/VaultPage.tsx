@@ -36,6 +36,7 @@ import { computeSshFingerprint, generateDefaultSshKeyMaterial } from '@/lib/ssh'
 import { ChevronLeft } from 'lucide-preact';
 import type { Cipher, CustomFieldType, Folder, VaultDraft, VaultDraftField } from '@/lib/types';
 import type { DuplicateClusterInput, DuplicateClusterResult, DuplicateClustersResponse } from '@/lib/api/vault';
+import { getSecurityPriorityMap, getSecurityRiskCounts, subscribePasswordSecurityState } from '@/lib/password-security-cache';
 import { t } from '@/lib/i18n';
 
 interface VaultPageProps {
@@ -136,6 +137,15 @@ export default function VaultPage(props: VaultPageProps) {
   const listScrollBucketRef = useRef(0);
   const [listScrollTop, setListScrollTop] = useState(0);
   const [listViewportHeight, setListViewportHeight] = useState(0);
+  const [securityPriorities, setSecurityPriorities] = useState(() => getSecurityPriorityMap());
+  const [securityRiskCounts, setSecurityRiskCounts] = useState(() => getSecurityRiskCounts());
+
+  useEffect(() => {
+    return subscribePasswordSecurityState(() => {
+      setSecurityPriorities(getSecurityPriorityMap());
+      setSecurityRiskCounts(getSecurityRiskCounts());
+    });
+  }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
@@ -1358,6 +1368,8 @@ const folderName = useCallback((id: string | null | undefined): string => {
           folderSortMode={folderSortMode}
           folderSortMenuOpen={folderSortMenuOpen}
           folderSortMenuRef={folderSortMenuRef}
+          securityP0Count={securityRiskCounts.p0}
+          securityTotalRiskCount={securityRiskCounts.total}
           onCloseMobileSidebar={handleCloseMobileSidebar}
           onChangeFilter={setSidebarFilter}
           onOpenDeleteAllFolders={handleOpenDeleteAllFolders}
@@ -1385,6 +1397,7 @@ const folderName = useCallback((id: string | null | undefined): string => {
           canonicalIds={clusterAnalysis.canonicalIds}
           redundantIds={clusterAnalysis.redundantIds}
           clusterProvider={clusterAnalysis.provider}
+          securityPriorityById={securityPriorities}
           virtualRange={virtualRange}
           selectedCipherId={selectedCipherId}
           selectedMap={selectedMap}
