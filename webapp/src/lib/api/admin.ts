@@ -163,3 +163,31 @@ export async function getDecisionStatus(authedFetch: AuthedFetch): Promise<Decis
   return body!;
 }
 
+export interface DecisionExecutionResult {
+  success: boolean;
+  provider: 'primary_clef' | 'fallback_q4' | 'typesafe_jev' | 'local_fallback';
+  endpoint: string;
+  model: string;
+  latencyMs: number;
+  answers: Record<string, any>;
+  error?: string;
+}
+
+export async function evaluateDecision(
+  authedFetch: AuthedFetch,
+  state: Record<string, unknown> | null,
+  questions: Record<string, unknown>
+): Promise<DecisionExecutionResult> {
+  const resp = await authedFetch('/api/admin/decision/evaluate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ state, questions }),
+  });
+  if (!resp.ok) {
+    const text = await resp.text().catch(() => '');
+    throw new Error(`Decision evaluation failed: ${text.slice(0, 100)}`);
+  }
+  const body = await parseJson<DecisionExecutionResult>(resp);
+  return body!;
+}
+
