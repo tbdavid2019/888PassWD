@@ -5,7 +5,7 @@ import { ArrowUpDown, Cloud, FileClock, Globe2, LogOut, Settings as SettingsIcon
 import type { ImportAttachmentFile, ImportResultSummary } from '@/components/ImportPage';
 import LoadingState from '@/components/LoadingState';
 import type { AdminBackupImportResponse, AdminBackupRunResponse, AdminBackupSettings, RemoteBackupBrowserResponse } from '@/lib/api/backup';
-import type { AuditLogFilters, DecisionSystemHealth } from '@/lib/api/admin';
+import type { AuditLogFilters, DecisionExecutionResult, DecisionSystemHealth } from '@/lib/api/admin';
 import type { CiphersImportPayload } from '@/lib/api/vault';
 import { t } from '@/lib/i18n';
 import type { AccountPasskeyCredential, AdminInvite, AdminUser, AuditLogListResult, AuditLogSettings, AuthRequest, AuthorizedDevice, Cipher, CustomEquivalentDomain, DomainRules, Folder as VaultFolder, Profile, Send, SendDraft, SessionState, TwoFactorPasskeySettings, VaultDraft, YubiKeyOtpSettings } from '@/lib/types';
@@ -22,6 +22,7 @@ const SecurityDevicesPage = lazy(() => import('@/components/SecurityDevicesPage'
 const AdminPage = lazy(() => import('@/components/AdminPage'));
 const LogCenterPage = lazy(() => import('@/components/LogCenterPage'));
 const BackupCenterPage = lazy(() => import('@/components/BackupCenterPage'));
+const DecisionCenterPage = lazy(() => import('@/components/DecisionCenterPage'));
 const ImportPage = lazy(() => import('@/components/ImportPage'));
 
 function RouteContentFallback() {
@@ -163,6 +164,7 @@ export interface AppMainRoutesProps {
   onDeleteUser: (userId: string) => Promise<void>;
   onDeleteInvite: (code: string) => Promise<void>;
   onLoadDecisionStatus?: () => Promise<DecisionSystemHealth>;
+  onEvaluateDecision?: (state: Record<string, unknown> | null, questions: Record<string, unknown>) => Promise<DecisionExecutionResult>;
   onLoadAuditLogs: (filters: AuditLogFilters) => Promise<AuditLogListResult>;
   onLoadAuditLogSettings: () => Promise<AuditLogSettings>;
   onSaveAuditLogSettings: (settings: AuditLogSettings) => Promise<AuditLogSettings>;
@@ -510,6 +512,19 @@ export default function AppMainRoutes(props: AppMainRoutesProps) {
                 onNotify={props.onNotify}
                 mobileLayout={props.mobileLayout}
                 onMobileBack={() => props.onNavigate(props.settingsHomeRoute)}
+              />
+            </Suspense>
+          </div>
+        ) : null}
+      </Route>
+      <Route path="/decision">
+        {isAdmin ? (
+          <div className="stack">
+            <Suspense fallback={<RouteContentFallback />}>
+              <DecisionCenterPage
+                onLoadStatus={props.onLoadDecisionStatus!}
+                onEvaluate={props.onEvaluateDecision!}
+                onNotify={props.onNotify}
               />
             </Suspense>
           </div>

@@ -163,6 +163,7 @@ export default function AppAuthenticatedShell(props: AppAuthenticatedShellProps)
             {renderSubLink('/backup', props.location === '/backup', t('nav_backup_strategy'))}
             {renderSubLink('/admin', props.location === '/admin', t('nav_admin_panel'))}
             {renderSubLink('/logs', props.location === '/logs', t('nav_log_center'))}
+            {renderSubLink('/decision', props.location === '/decision', 'AI 決策中心')}
           </>
         )}
     </>
