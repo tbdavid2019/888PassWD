@@ -484,6 +484,9 @@
 
 .standalone-title-row {
   @apply relative mb-1 flex min-h-9 items-center justify-center;
+}
+
+.standalone-title-row:has(.network-status-badge) {
   padding-inline: 84px;
 }
 
@@ -672,7 +675,7 @@
 }
 
 .btn-passkey-hero {
-  @apply relative flex items-center gap-3.5 w-full p-4 rounded-2xl transition-all duration-200 select-none cursor-pointer text-left;
+  @apply relative flex items-center gap-3.5 w-full px-4 py-3.5 rounded-2xl transition-all duration-200 select-none cursor-pointer text-left;
   background: var(--panel, #ffffff);
   border: 1.5px solid rgba(148, 163, 184, 0.35);
   box-shadow: 0 2px 10px rgba(15, 23, 42, 0.04);
@@ -722,7 +725,7 @@
 }
 
 .passkey-hero-title {
-  @apply text-[17px] font-extrabold leading-tight text-slate-900 dark:text-white;
+  @apply text-[16px] font-bold leading-normal text-slate-900 dark:text-white;
 }
 
 .passkey-hero-badge {
