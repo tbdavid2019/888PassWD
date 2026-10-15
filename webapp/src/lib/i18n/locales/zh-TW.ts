@@ -666,6 +666,7 @@ const zhTW: Record<string, string> = {
   "txt_favorites": "我的最愛",
   "txt_duplicates": "重複項",
   "txt_duplicate_detection_mode": "匹配方式",
+  "txt_duplicate_mode_smart": "⚡ AI 智慧關聯 (推薦)",
   "txt_duplicate_mode_exact": "完全相同",
   "txt_duplicate_mode_login_site": "網站+帳號+密碼",
   "txt_duplicate_mode_login_credentials": "帳號+密碼",

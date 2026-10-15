@@ -613,6 +613,7 @@ const it: Record<string, string> = {
   "txt_favorites": "Preferiti",
   "txt_duplicates": "Duplicati",
   "txt_duplicate_detection_mode": "Fai corrispondere per",
+  "txt_duplicate_mode_smart": "⚡ Cluster intelligenti IA (Consigliato)",
   "txt_duplicate_mode_exact": "Elemento esatto",
   "txt_duplicate_mode_login_site": "Sito + nome utente + password",
   "txt_duplicate_mode_login_credentials": "Nome utente + password",

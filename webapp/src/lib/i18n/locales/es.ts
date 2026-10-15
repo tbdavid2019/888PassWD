@@ -613,6 +613,7 @@ const es: Record<string, string> = {
   "txt_favorites": "Favoritos",
   "txt_duplicates": "Duplicados",
   "txt_duplicate_detection_mode": "Coincidir por",
+  "txt_duplicate_mode_smart": "⚡ Grupos inteligentes IA (Recomendado)",
   "txt_duplicate_mode_exact": "Elemento exacto",
   "txt_duplicate_mode_login_site": "Sitio + usuario + contraseña",
   "txt_duplicate_mode_login_credentials": "Usuario + contraseña",

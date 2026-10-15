@@ -35,7 +35,7 @@ import {
 import { clearAuditLogs, evaluateDecision, getAuditLogSettings, getDecisionStatus, listAdminInvites, listAdminUsers, listAuditLogs, saveAuditLogSettings, type AuditLogFilters } from '@/lib/api/admin';
 import { getDomainRules, saveDomainRules } from '@/lib/api/domains';
 import { getSendById, getSends } from '@/lib/api/send';
-import { getCipherById, getFolderById, repairCipherKeyMismatches, repairCipherUriChecksums } from '@/lib/api/vault';
+import { getCipherById, getFolderById, repairCipherKeyMismatches, repairCipherUriChecksums, triageVaultSecurity, evaluateDuplicateClusters } from '@/lib/api/vault';
 import { getCachedVaultCoreSnapshot, invalidateVaultCoreSyncSnapshot, loadVaultCoreSyncSnapshot, saveVaultCoreSyncSnapshot } from '@/lib/api/vault-sync';
 import { silentlyRepairBackupSettingsIfNeeded } from '@/lib/backup-settings-repair';
 import {
@@ -2196,6 +2196,8 @@ export default function App() {
     onDeleteInvite: adminActions.deleteInvite,
     onLoadDecisionStatus: () => getDecisionStatus(authedFetch),
     onEvaluateDecision: (state: Record<string, unknown> | null, questions: Record<string, unknown>) => evaluateDecision(authedFetch, state, questions),
+    onTriageVaultSecurity: (items: any) => triageVaultSecurity(authedFetch, items),
+    onEvaluateDuplicateClusters: (clusters: any) => evaluateDuplicateClusters(authedFetch, clusters),
     onLoadAuditLogs: (filters: AuditLogFilters) => listAuditLogs(authedFetch, filters),
     onLoadAuditLogSettings: () => getAuditLogSettings(authedFetch),
     onSaveAuditLogSettings: (settings: AuditLogSettings) => saveAuditLogSettings(authedFetch, settings),

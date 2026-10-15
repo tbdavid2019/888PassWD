@@ -47,3 +47,56 @@ test('DecisionService: checkHealth reports structured node status', async () => 
   assert.ok(health.endpoints.typesafeJev);
   assert.ok(typeof health.overallHealthy === 'boolean');
 });
+
+test('DecisionService: evaluateVaultTriage prioritizes critical public asset breaches', async () => {
+  const service = new DecisionService();
+  const result = await service.evaluateVaultTriage([
+    {
+      id: 'c1',
+      name: '中華電信hn',
+      uri: 'https://tpass.gov.tw',
+      username: '0908132111',
+      exposedCount: 15,
+      reusedCount: 3,
+      weak: false,
+    },
+    {
+      id: 'c2',
+      name: '內網交換機',
+      uri: 'http://192.168.100.1',
+      username: 'root',
+      exposedCount: 0,
+      reusedCount: 3,
+      weak: true,
+    },
+  ]);
+
+  assert.equal(result.success, true);
+  assert.ok(result.items.length === 2);
+  const p0 = result.items.find((i) => i.id === 'c1');
+  assert.ok(p0);
+  assert.ok(['P0', 'P1'].includes(p0.priority));
+  assert.equal(p0.isPublicAsset, true);
+  assert.equal(result.overallGrade, 'CRITICAL');
+});
+
+test('DecisionService: evaluateDuplicateClusters detects cross-boundary and redundant items', async () => {
+  const service = new DecisionService();
+  const result = await service.evaluateDuplicateClusters([
+    {
+      clusterId: 'cluster-1',
+      type: 'password',
+      items: [
+        { id: 'item-1', name: '雲端主機', uri: 'https://flow.aiurl.tw', revisionDate: '2026-10-15T00:00:00Z' },
+        { id: 'item-2', name: '區網網關', uri: 'http://192.168.1.1', revisionDate: '2026-01-01T00:00:00Z' },
+      ],
+    },
+  ]);
+
+  assert.equal(result.success, true);
+  assert.equal(result.clusters.length, 1);
+  assert.equal(result.clusters[0].canonicalId, 'item-1');
+  assert.deepEqual(result.clusters[0].redundantIds, ['item-2']);
+  assert.equal(result.clusters[0].clusterType, 'cross_boundary');
+});
+

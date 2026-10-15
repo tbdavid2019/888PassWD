@@ -20,7 +20,7 @@ import WebsiteIcon from './WebsiteIcon';
 
 export type TypeFilter = 'login' | 'card' | 'identity' | 'note' | 'ssh' | 'bank' | 'license' | 'passport';
 export type VaultSortMode = 'edited' | 'created' | 'name';
-export type DuplicateDetectionMode = 'exact' | 'login-site' | 'login-credentials' | 'password';
+export type DuplicateDetectionMode = 'smart' | 'password' | 'login-site' | 'login-credentials' | 'exact';
 export type SidebarFilter =
   | { kind: 'all' }
   | { kind: 'favorite' }
@@ -165,10 +165,11 @@ export const VAULT_LIST_OVERSCAN = 10;
 
 export function getDuplicateDetectionOptions(): Array<{ value: DuplicateDetectionMode; label: string }> {
   return [
-    { value: 'exact', label: t('txt_duplicate_mode_exact') },
+    { value: 'smart', label: t('txt_duplicate_mode_smart') },
+    { value: 'password', label: t('txt_duplicate_mode_password') },
     { value: 'login-site', label: t('txt_duplicate_mode_login_site') },
     { value: 'login-credentials', label: t('txt_duplicate_mode_login_credentials') },
-    { value: 'password', label: t('txt_duplicate_mode_password') },
+    { value: 'exact', label: t('txt_duplicate_mode_exact') },
   ];
 }
 
@@ -467,6 +468,19 @@ export function buildCipherDuplicateSignatures(cipher: Cipher, mode: DuplicateDe
 
   const username = duplicateLoginUsername(cipher);
   const password = duplicateLoginPassword(cipher);
+
+  if (mode === 'smart') {
+    const sigs: string[] = [];
+    if (password) {
+      sigs.push(duplicateSignature(['smart-pw', password]));
+    }
+    const sites = duplicateLoginSites(cipher);
+    for (const site of sites) {
+      sigs.push(duplicateSignature(['smart-site', site]));
+    }
+    return sigs;
+  }
+
   if (mode === 'password') {
     return password ? [duplicateSignature(['password', password])] : [];
   }

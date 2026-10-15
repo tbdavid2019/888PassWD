@@ -164,6 +164,8 @@ export interface AppMainRoutesProps {
   onDeleteInvite: (code: string) => Promise<void>;
   onLoadDecisionStatus?: () => Promise<DecisionSystemHealth>;
   onEvaluateDecision?: (state: Record<string, unknown> | null, questions: Record<string, unknown>) => Promise<DecisionExecutionResult>;
+  onTriageVaultSecurity?: (items: any[]) => Promise<any>;
+  onEvaluateDuplicateClusters?: (clusters: any[]) => Promise<any>;
   onLoadAuditLogs: (filters: AuditLogFilters) => Promise<AuditLogListResult>;
   onLoadAuditLogSettings: () => Promise<AuditLogSettings>;
   onSaveAuditLogSettings: (settings: AuditLogSettings) => Promise<AuditLogSettings>;
@@ -229,7 +231,7 @@ export default function AppMainRoutes(props: AppMainRoutesProps) {
             <PasswordSecurityPage
               ciphers={props.decryptedCiphers}
               loading={props.ciphersLoading}
-              onEvaluate={props.onEvaluateDecision}
+              onTriage={props.onTriageVaultSecurity}
             />
           </Suspense>
         </div>
@@ -294,6 +296,7 @@ export default function AppMainRoutes(props: AppMainRoutesProps) {
             uploadingAttachmentName={props.uploadingAttachmentName}
             attachmentUploadPercent={props.attachmentUploadPercent}
             mobileSidebarToggleKey={props.mobileSidebarToggleKey}
+            onEvaluateDuplicateClusters={props.onEvaluateDuplicateClusters}
           />
         </Suspense>
       </Route>
