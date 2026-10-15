@@ -1652,7 +1652,6 @@ export interface DuplicateClusterInput {
     uri?: string;
     username?: string;
     revisionDate?: string;
-    notes?: string;
   }>;
 }
 

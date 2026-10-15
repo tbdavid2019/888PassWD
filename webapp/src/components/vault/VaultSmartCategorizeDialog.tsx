@@ -51,6 +51,22 @@ export default function VaultSmartCategorizeDialog(props: VaultSmartCategorizeDi
     });
   }, [props.ciphers]);
 
+  const ciphersById = useMemo(() => {
+    const map = new Map<string, Cipher>();
+    for (const c of props.ciphers) {
+      map.set(c.id, c);
+    }
+    return map;
+  }, [props.ciphers]);
+
+  const foldersById = useMemo(() => {
+    const map = new Map<string, Folder>();
+    for (const f of props.folders) {
+      map.set(f.id, f);
+    }
+    return map;
+  }, [props.folders]);
+
   const existingFoldersInput = useMemo<ExistingFolderInput[]>(() => {
     return props.folders.map((f) => ({
       id: f.id,
@@ -75,7 +91,7 @@ export default function VaultSmartCategorizeDialog(props: VaultSmartCategorizeDi
       // Select uncategorized items or items whose suggested folder differs from current
       const toSelect = new Set<string>();
       for (const item of res.items) {
-        const cipher = props.ciphers.find((c) => c.id === item.id);
+        const cipher = ciphersById.get(item.id);
         const currentFolderId = cipher?.folderId || null;
         if (!currentFolderId || currentFolderId !== item.suggestedFolderId) {
           toSelect.add(item.id);
@@ -280,9 +296,9 @@ export default function VaultSmartCategorizeDialog(props: VaultSmartCategorizeDi
               <div className="divide-y divide-slate-100 dark:divide-slate-800/80 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-50/30 dark:bg-slate-900/30">
                 {filteredItems.map((item) => {
                   const isChecked = selectedIds.has(item.id);
-                  const cipher = props.ciphers.find((c) => c.id === item.id);
+                  const cipher = ciphersById.get(item.id);
                   const currentFolder = cipher?.folderId
-                    ? props.folders.find((f) => f.id === cipher.folderId)
+                    ? foldersById.get(cipher.folderId)
                     : null;
 
                   return (

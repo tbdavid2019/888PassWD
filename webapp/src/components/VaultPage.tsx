@@ -68,7 +68,7 @@ interface VaultPageProps {
   onBulkMove: (ids: string[], folderId: string | null) => Promise<void>;
   onVerifyMasterPassword: (email: string, password: string) => Promise<void>;
   onNotify: (type: 'success' | 'error' | 'warning', text: string) => void;
-  onCreateFolder: (name: string) => Promise<void>;
+  onCreateFolder: (name: string) => Promise<Folder | void | undefined>;
   onRenameFolder: (folderId: string, name: string) => Promise<void>;
   onDeleteFolder: (folderId: string) => Promise<void>;
   onBulkDeleteFolders: (folderIds: string[]) => Promise<void>;
@@ -547,16 +547,18 @@ export default function VaultPage(props: VaultPageProps) {
       }
     }
 
+    const clusterType: 'password' | 'login-site' | 'smart' =
+      duplicateMode === 'password' ? 'password' : duplicateMode === 'login-site' ? 'login-site' : 'smart';
+
     const clusters: DuplicateClusterInput[] = Array.from(groups.entries()).map(([groupIdx, items]) => ({
       clusterId: `cluster-${groupIdx}`,
-      type: duplicateMode,
+      type: clusterType,
       items: items.map((c) => ({
         id: c.id,
         name: String(c.decName || c.name || ''),
-        uri: c.login?.uris?.[0]?.uri,
-        username: c.login?.decUsername || c.login?.username,
-        revisionDate: c.revisionDate || (c as { revisionDateFormatted?: string }).revisionDateFormatted,
-        notes: c.decNotes || c.notes,
+        uri: c.login?.uris?.[0]?.uri || undefined,
+        username: c.login?.decUsername || c.login?.username || undefined,
+        revisionDate: c.revisionDate || (c as { revisionDateFormatted?: string }).revisionDateFormatted || undefined,
       })),
     }));
 

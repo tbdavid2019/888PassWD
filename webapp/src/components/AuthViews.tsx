@@ -81,7 +81,7 @@ function PasswordField(props: {
           data-form-type="other"
           autoCapitalize="off"
           autoCorrect="off"
-          spellCheck={false}
+          spellcheck={false}
           placeholder={props.placeholder}
         />
         <button type="button" className="eye-btn" onClick={() => setShow((v) => !v)}>
@@ -446,7 +446,7 @@ export default function AuthViews(props: AuthViewsProps) {
                       data-form-type="other"
                       autoCapitalize="off"
                       autoCorrect="off"
-                      spellCheck={false}
+                      spellcheck={false}
                       placeholder={t('txt_email')}
                       autoFocus
                       onInput={(e) =>

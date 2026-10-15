@@ -1373,8 +1373,10 @@ export function createDemoMainRoutesProps(base: AppMainRoutesProps, notify: Noti
         notify('error', t('txt_folder_name_is_required'));
         return;
       }
-      state.setFolders((prev) => [{ id: createDemoId('folder'), name: trimmed, decName: trimmed, creationDate: new Date().toISOString(), revisionDate: new Date().toISOString() }, ...prev]);
+      const newFolder = { id: createDemoId('folder'), name: trimmed, decName: trimmed, creationDate: new Date().toISOString(), revisionDate: new Date().toISOString() };
+      state.setFolders((prev) => [newFolder, ...prev]);
       notify('success', t('txt_folder_created'));
+      return newFolder;
     },
     onRenameFolder: async (folderId, name) => {
       const trimmed = name.trim();
@@ -1428,7 +1430,7 @@ export function createDemoMainRoutesProps(base: AppMainRoutesProps, notify: Noti
     onSavePasswordHint: readonly,
     onEnableTotp: readonly,
     onOpenDisableTotp: readonlyVoid,
-    onSendEmail2faCode: readonlyVoid,
+    onSendEmail2faCode: readonly,
     onEnableEmail2fa: readonly,
     onDisableEmail2fa: readonly,
     onGetTwoFactorPasskeySettings: async () => ({ enabled: false, keys: [] }),
