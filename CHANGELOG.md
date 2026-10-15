@@ -5,6 +5,51 @@ All notable changes to **888warden** (formerly NodeWarden) will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2026.10.15] - 2026-10-15
+
+### Added
+- **Clef-Flash / Jev 邊緣決策推論引擎整合 (Edge Decision Intelligence)**:
+  - 整合自建極速 Clef-Flash（<200ms 推論）、Clef-Flash-Q4 與 TypeSafe Jev 官方服務，打造高可用邊緣決策中樞。
+  - **4 階彈性降級架構 (Multi-Tier Resilient Fallback)**：
+    1. Primary: `https://clef.create360.ai/v1/systemone`
+    2. Fallback 2: `https://clef.aiurl.tw/v1/systemone`
+    3. Fallback 3: `https://api.typesafe.ai/v1/systemone` (支援 `TYPESAFE_API_KEY`)
+    4. Tier 4: 本機確定性啟發式規則引擎（Fail-Open Graceful Degradation），即使外部所有 AI 端點斷線，全系統與密碼庫日常操作依然 100% 正常順暢運作。
+- **密碼安全智慧分級與治理 (Vault Security Triage)**:
+  - 自動偵測公網外洩密碼與內部弱密碼，並提供清晰風險優先級：
+    - `🚨 P0 緊急`：公網關鍵資產密碼已外洩，面臨撞庫攻擊急迫風險。
+    - `⚠️ P1 高危`：特權管理帳號 (admin/root) 存在複用或弱密碼。
+    - `🛡️ P2 建議`：內部設備密碼複用或複雜度不足。
+    - `P3 良好`：無已知安全風險。
+  - **持久化評估快取 (Persistent Assessment Cache)**：
+    - 導入 `nodewarden_security_assessment_v1` 本機快取機制，掃描 2,500+ 筆密碼後切換分頁無須重複運算，秒開即現。
+  - **風險項目一鍵刪除 (Quick Remediation Deletion)**：
+    - 安全檢查清單提供直接「🗑️ 刪除」動作與確認彈窗，支援歷史冗餘項目即時清理並自動同步快取。
+- **AI 網站智慧分類建議 (Smart Website Categorization)**:
+  - 依據網域、內外網架構（`10.x.x.x`、`192.168.x.x`、私有 IP、DNS 服務）與業務性質（金融/銀行、雲端/開發、辦公、電商、社群等），全自動建議分類。
+  - **智慧資料夾配對與一鍵歸納**：
+    - 自動對應現有資料夾（如「區網10」、「區網192」、「金融與銀行」、「雲端與開發」）。
+    - 支援一鍵全選、批次新建目標資料夾與批次搬移。
+  - **自動化標籤建議**：智慧產出 `#內網`、`#10網段`、`#銀行帳戶`、`#開發工具`、`#2FA` 等實用標籤。
+- **主密碼庫即時安全徽章與側邊欄風險計數**:
+  - 在主密碼庫卡片上直接渲染 `🚨 P0`、`⚠️ P1`、`🛡️ P2` 安全徽章。
+  - 側邊欄「🛡️ 密碼安全」即時顯示全庫未處理之安全風險項目數量。
+
+### Security
+- **絕對零知識架構落實 (Zero-Knowledge Privacy Enforcement)**:
+  - 徹底移除重複項目分析及外部決策請求中的備忘（`notes`）欄位，使用者私人備忘錄絕不離開瀏覽器。
+  - 外部 AI 決策提示詞全面針對使用者帳號（`username`）進行身分角色遮罩（僅傳送特權帳號標記，不傳輸真實信箱與帳號）。
+  - 明文密碼 100% 保持在客戶端瀏覽器本機記憶體，絕不上傳任何後端或 AI 端點。
+- **模型防幻覺與本機規則雙重防禦 (Anti-Hallucination & Fallback Guard)**:
+  - 加入強制性安全規則：凡已有確認洩漏記錄（`exposedCount > 0`）之公網憑證，強制鎖定為最高等級 P0，阻斷遠端模型低估或幻覺。
+  - 修正本機降級時假答案污染問題，確保全斷線情境下本機正則規則獨立精準運作。
+
+### Performance
+- **大規模密碼庫效能優化 (Large Vault Scale Optimization)**:
+  - 將智慧分類彈窗渲染循環之 $O(N^2)$ `.find` 搜尋全面改寫為記憶體 Map $O(1)$ 查找，流暢支援數千筆項目。
+
+---
+
 ## [v2026.10.14] - 2026-10-14
 
 ### Added

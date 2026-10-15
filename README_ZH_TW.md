@@ -45,6 +45,9 @@
 | **多使用者支援** | ✅ | ✅ | 支援邀請碼註冊 |
 | 網域規則 | ✅ | ✅ | 自訂等效網域、全域網域排除 |
 | Fill-assist | ✅ | ✅ | `POST /fill-assist` 輔助用戶端自動填入；無法繞過密碼庫解鎖 |
+| **AI 邊緣決策推論引擎** | ❌ | ✅ | **Clef-Flash 與 TypeSafe Jev (<200ms)，4 階彈性降級防護** |
+| **密碼安全智慧分級 (P0-P3)** | ❌ | ✅ | **外洩與弱密碼自動評估、本機持久快取、一鍵清理刪除** |
+| **AI 網站智慧分類建議** | ❌ | ✅ | **自動對應/新建資料夾與實用標籤、一鍵批次歸納整理** |
 | 組織 / 集合 / 成員權限 | ✅ | ❌ | 尚未實作 |
 | SSO / SCIM / 企業目錄 | ✅ | ❌ | 尚未實作 |
 
@@ -93,6 +96,10 @@
 | `RESEND_FROM` | Variable / Secret | 否 | 電子郵件寄件人地址（預設：`888warden <no-reply@vip.david888.com>`）。 |
 | `HIDE_WEB_VAULT` | Variable (變數) | 否 | 設定為 `1` 時將隱藏伺服器託管的 Web Vault（回傳 404），僅保留 Bitwarden App / 擴充功能 API。 |
 | `ADMIN_TOKEN` | Secret (機密) | 否 | 系統管理後台 Token（可選）。 |
+| `CLEF_PRIMARY_URL` | Variable (變數) | 否 | 主要 Clef-Flash 推論網址（預設：`https://clef.create360.ai/v1/systemone`）。 |
+| `CLEF_FALLBACK_URL` | Variable (變數) | 否 | 備援 2 Clef-Flash-Q4 網址（預設：`https://clef.aiurl.tw/v1/systemone`）。 |
+| `TYPESAFE_API_URL` | Variable (變數) | 否 | 備援 3 TypeSafe Jev 網址（預設：`https://api.typesafe.ai/v1/systemone`）。 |
+| `TYPESAFE_API_KEY` | Secret (機密) | 否 | TypeSafe Jev 官方金鑰。 |
 
 ### 透過 Wrangler CLI 設定參數
 

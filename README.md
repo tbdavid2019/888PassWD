@@ -51,6 +51,9 @@
 | **Multi-user** | ✅ | ✅ | Invite-code registration |
 | Domain rules | ✅ | ✅ | Equivalent domains, global exclusions |
 | Fill-assist | ✅ | ✅ | `POST /fill-assist`|
+| **AI Edge Decision Intelligence** | ❌ | ✅ | **Clef-Flash & TypeSafe Jev (<200ms), 4-tier fail-open fallback** |
+| **Security Triage (P0-P3)** | ❌ | ✅ | **Automated breach & weak password prioritization with caching** |
+| **Smart Website Categorization** | ❌ | ✅ | **AI folder & tag recommendations with 1-click batch move** |
 | Organizations / collections / roles | ✅ | ❌ | Not implemented |
 | SSO / SCIM / directory | ✅ | ❌ | Not implemented |
 
@@ -104,6 +107,10 @@ You can configure variables and secrets under Cloudflare Dashboard **Workers →
 | `RESEND_FROM` | Variable / Secret | No | Sender email address (default: `888warden <no-reply@vip.david888.com>`). |
 | `HIDE_WEB_VAULT` | Variable | No | Set to `1` to hide the server-hosted Web Vault (returns 404), keeping Bitwarden clients and extension APIs intact. |
 | `ADMIN_TOKEN` | Secret | No | Admin panel token (optional). |
+| `CLEF_PRIMARY_URL` | Variable | No | Primary Clef-Flash inference URL (default: `https://clef.create360.ai/v1/systemone`). |
+| `CLEF_FALLBACK_URL` | Variable | No | Fallback 2 Clef-Flash-Q4 URL (default: `https://clef.aiurl.tw/v1/systemone`). |
+| `TYPESAFE_API_URL` | Variable | No | Fallback 3 TypeSafe Jev URL (default: `https://api.typesafe.ai/v1/systemone`). |
+| `TYPESAFE_API_KEY` | Secret | No | TypeSafe API key for Jev decision endpoints. |
 
 ### Set Parameters via Wrangler CLI
 
