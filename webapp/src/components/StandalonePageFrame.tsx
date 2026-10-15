@@ -3,7 +3,7 @@ import { APP_VERSION } from '@shared/app-version';
 import StandaloneLanguagePicker from './StandaloneLanguagePicker';
 
 interface StandalonePageFrameProps {
-  title: string;
+  title?: string;
   eyebrow?: ComponentChildren;
   titleAccessory?: ComponentChildren;
   children: ComponentChildren;
@@ -26,10 +26,12 @@ export default function StandalonePageFrame(props: StandalonePageFrameProps) {
 
       <div className="auth-card">
         {props.eyebrow && <div className="standalone-eyebrow">{props.eyebrow}</div>}
-        <div className="standalone-title-row">
-          <h1 className="standalone-title">{props.title}</h1>
-          {props.titleAccessory}
-        </div>
+        {props.title ? (
+          <div className="standalone-title-row">
+            <h1 className="standalone-title">{props.title}</h1>
+            {props.titleAccessory}
+          </div>
+        ) : null}
         {props.children}
       </div>
 

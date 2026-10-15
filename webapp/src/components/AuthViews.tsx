@@ -189,23 +189,17 @@ export default function AuthViews(props: AuthViewsProps) {
             <p className="muted standalone-muted">{props.emailForLock}</p>
             <input type="text" value={props.emailForLock} autoComplete="off" readOnly hidden tabIndex={-1} aria-hidden="true" />
 
-            {/* === 方案 A：通行密鑰解鎖置頂優先 === */}
+            {/* === 方案 A：Passkey 解鎖置頂優先 === */}
             <div className="passkey-hero-section">
               <button
                 type="button"
-                className="btn-passkey-hero"
+                className="btn-passkey-primary"
                 onClick={props.onSubmitPasskeyUnlock}
                 disabled={unlockBusy || passkeyBusy || props.unlockPreparing || !props.unlockReady}
                 aria-label={t('txt_unlock_with_passkey')}
               >
-                <div className="passkey-hero-icon-tile">
-                  <KeyRound size={22} />
-                </div>
-                <div className="passkey-hero-body">
-                  <span className="passkey-hero-title">
-                    {passkeyBusy ? t('txt_unlocking') : t('txt_unlock_with_passkey')}
-                  </span>
-                </div>
+                <KeyRound size={20} className="btn-icon" />
+                <span>{passkeyBusy ? t('txt_unlocking') : t('txt_unlock_with_passkey')}</span>
               </button>
             </div>
 
@@ -360,7 +354,7 @@ export default function AuthViews(props: AuthViewsProps) {
 
   return (
     <div className="auth-page">
-      <StandalonePageFrame title={t('txt_log_in')}>
+      <StandalonePageFrame>
         <form
           autoComplete="off"
           data-1p-ignore="true"
@@ -412,29 +406,27 @@ export default function AuthViews(props: AuthViewsProps) {
             </>
           ) : (
             <>
-              {/* === 1. 通行密鑰登入 (Passkey) === */}
+              {/* === 1. Passkey 登入 === */}
               <div className="passkey-hero-section">
                 <button
                   type="button"
-                  className="btn-passkey-hero"
+                  className="btn-passkey-primary"
                   onClick={props.onSubmitPasskey}
                   disabled={loginBusy || passkeyBusy}
                   aria-label={t('txt_login_with_passkey')}
                 >
-                  <div className="passkey-hero-icon-tile">
-                    <KeyRound size={22} />
-                  </div>
-                  <div className="passkey-hero-body">
-                    <span className="passkey-hero-title">
-                      {passkeyBusy ? t('txt_logging_in') : t('txt_login_with_passkey')}
-                    </span>
-                  </div>
+                  <KeyRound size={20} className="btn-icon" />
+                  <span>{passkeyBusy ? t('txt_logging_in') : t('txt_login_with_passkey')}</span>
                 </button>
               </div>
 
               <div className="auth-divider">
                 <span className="auth-divider-line" />
-                <span className="auth-divider-text">{t('txt_or')}</span>
+                <span className="auth-divider-text">
+                  {showPasswordForm
+                    ? `${t('txt_or')} ${t('txt_login_tab_password')}`
+                    : `${t('txt_or')} ${t('txt_login_tab_email_otp')}`}
+                </span>
                 <span className="auth-divider-line" />
               </div>
 
@@ -466,91 +458,81 @@ export default function AuthViews(props: AuthViewsProps) {
                     />
                   </label>
 
-                  <button
-                    type="submit"
-                    className="btn btn-primary full"
-                    disabled={otpSending || !props.loginValues.email.trim() || loginBusy || passkeyBusy}
-                  >
-                    {otpSending ? (
-                      <>
-                        <LoaderCircle size={16} className="btn-icon animate-spin" />
-                        <span>{t('txt_sending_code')}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Mail size={16} className="btn-icon" />
-                        <span>{t('txt_send_verification_code')}</span>
-                      </>
-                    )}
-                  </button>
-
-                  {/* 傳統帳號密碼登入 (預設折疊，需要才點開) */}
-                  <div className="auth-collapse-section">
-                    <button
-                      type="button"
-                      className="auth-collapse-toggle"
-                      onClick={() => setShowPasswordForm(!showPasswordForm)}
-                      aria-expanded={showPasswordForm}
-                    >
-                      <div className="flex items-center gap-2">
-                        <Lock size={15} />
-                        <span>{t('txt_traditional_password_login')}</span>
-                      </div>
-                      <ChevronDown
-                        size={16}
-                        className={`transition-transform duration-200 ${showPasswordForm ? 'rotate-180' : ''}`}
+                  {showPasswordForm ? (
+                    <>
+                      <PasswordField
+                        label={t('txt_master_password')}
+                        value={props.loginValues.password}
+                        autoComplete="new-password"
+                        placeholder={props.authPlaceholder}
+                        onInput={(v) => props.onChangeLogin({ ...props.loginValues, password: v })}
                       />
-                    </button>
-
-                    {showPasswordForm && (
-                      <div className="auth-collapse-content">
-                        <PasswordField
-                          label={t('txt_master_password')}
-                          value={props.loginValues.password}
-                          autoComplete="new-password"
-                          placeholder={props.authPlaceholder}
-                          onInput={(v) => props.onChangeLogin({ ...props.loginValues, password: v })}
-                        />
-                        <div className="auth-support-row">
-                          <span className="browser-defense-hint">
-                            <ShieldCheck size={14} className="text-emerald-500 shrink-0" />
-                            <span>防瀏覽器儲存隔離</span>
-                          </span>
-                          <button
-                            type="button"
-                            className="auth-link-btn"
-                            onClick={props.onTogglePasswordHint}
-                            disabled={loginBusy || props.loginHintLoading || !props.loginValues.email.trim()}
-                          >
-                            {props.loginHintLoading
-                              ? t('txt_loading_password_hint')
-                              : t('txt_show_password_hint')}
-                          </button>
-                        </div>
+                      <div className="auth-support-row">
+                        <span className="browser-defense-hint">
+                          <ShieldCheck size={14} className="text-emerald-500 shrink-0" />
+                          <span>防瀏覽器儲存隔離</span>
+                        </span>
                         <button
                           type="button"
-                          className="btn btn-secondary full"
-                          onClick={props.onSubmitLogin}
-                          disabled={loginBusy || passkeyBusy || !props.loginValues.email.trim() || !props.loginValues.password}
+                          className="auth-link-btn"
+                          onClick={props.onTogglePasswordHint}
+                          disabled={loginBusy || props.loginHintLoading || !props.loginValues.email.trim()}
                         >
-                          <LogIn size={16} className="btn-icon" />
-                          {loginBusy ? t('txt_logging_in') : t('txt_log_in')}
+                          {props.loginHintLoading
+                            ? t('txt_loading_password_hint')
+                            : t('txt_show_password_hint')}
                         </button>
                       </div>
-                    )}
+                      <button
+                        type="submit"
+                        className="btn btn-primary full"
+                        disabled={loginBusy || passkeyBusy || !props.loginValues.email.trim() || !props.loginValues.password}
+                      >
+                        <LogIn size={16} className="btn-icon" />
+                        <span>{loginBusy ? t('txt_logging_in') : t('txt_log_in')}</span>
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="submit"
+                      className="btn btn-secondary full font-bold"
+                      disabled={otpSending || !props.loginValues.email.trim() || loginBusy || passkeyBusy}
+                    >
+                      {otpSending ? (
+                        <>
+                          <LoaderCircle size={16} className="btn-icon animate-spin" />
+                          <span>{t('txt_sending_code')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Mail size={16} className="btn-icon" />
+                          <span>{t('txt_send_verification_code')}</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {/* 次要切換連結（完全平鋪，無卡片嵌套） */}
+                  <div className="auth-footer-nav">
+                    <button
+                      type="button"
+                      className="auth-nav-link"
+                      onClick={() => setShowPasswordForm(!showPasswordForm)}
+                    >
+                      <Lock size={13} className="auth-nav-icon" />
+                      <span>{showPasswordForm ? t('txt_login_tab_email_otp') : t('txt_login_tab_password')}</span>
+                    </button>
+                    <span className="auth-nav-dot">·</span>
+                    <button
+                      type="button"
+                      className="auth-nav-link"
+                      onClick={props.onGotoRegister}
+                      disabled={loginBusy || passkeyBusy}
+                    >
+                      <UserPlus size={13} className="auth-nav-icon" />
+                      <span>{t('txt_create_account')}</span>
+                    </button>
                   </div>
-
-                  <div className="or">{t('txt_or')}</div>
-
-                  <button
-                    type="button"
-                    className="btn btn-secondary full"
-                    onClick={props.onGotoRegister}
-                    disabled={loginBusy || passkeyBusy}
-                  >
-                    <UserPlus size={16} className="btn-icon" />
-                    {t('txt_create_account')}
-                  </button>
                 </div>
               ) : (
                 <div className="auth-step-section">
