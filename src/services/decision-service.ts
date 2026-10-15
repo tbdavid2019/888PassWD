@@ -93,6 +93,82 @@ export interface DecisionSystemHealth {
   };
 }
 
+export type TriagePriority = 'P0' | 'P1' | 'P2' | 'P3';
+
+export interface VaultTriageItemInput {
+  id: string;
+  name: string;
+  uri?: string;
+  username?: string;
+  exposedCount: number;
+  reusedCount: number;
+  weak: boolean;
+}
+
+export interface VaultTriageItemResult {
+  id: string;
+  priority: TriagePriority;
+  badgeText: string;
+  reason: string;
+  recommendation: string;
+  isPublicAsset: boolean;
+  isPrivilegedAccount: boolean;
+}
+
+export interface VaultTriageResponse {
+  success: boolean;
+  provider: DecisionProvider;
+  latencyMs: number;
+  overallGrade: 'A+' | 'B' | 'CRITICAL';
+  summary: string;
+  items: VaultTriageItemResult[];
+}
+
+export interface DuplicateClusterInput {
+  clusterId: string;
+  type: 'password' | 'login-site' | 'smart';
+  items: Array<{
+    id: string;
+    name: string;
+    uri?: string;
+    username?: string;
+    revisionDate?: string;
+    notes?: string;
+  }>;
+}
+
+export interface DuplicateClusterResult {
+  clusterId: string;
+  clusterType: 'cross_boundary' | 'multi_identity' | 'stale_redundant';
+  canonicalId: string;
+  redundantIds: string[];
+  insight: string;
+  actionRecommendation: string;
+}
+
+export interface DuplicateClustersResponse {
+  success: boolean;
+  provider: DecisionProvider;
+  latencyMs: number;
+  clusters: DuplicateClusterResult[];
+}
+
+export function isInternalNetwork(uri?: string, name?: string): boolean {
+  const target = `${uri || ''} ${name || ''}`.toLowerCase();
+  if (/192\.168\./.test(target)) return true;
+  if (/10\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(target)) return true;
+  if (/172\.(1[6-9]|2\d|3[01])\./.test(target)) return true;
+  if (/127\.0\.0\.1|localhost/.test(target)) return true;
+  if (/區網|內網|lan|router|switch|nas|dlink|tplink|asuswrt|synology/.test(target)) return true;
+  return false;
+}
+
+export function isPrivilegedAccount(username?: string): boolean {
+  const u = (username || '').trim().toLowerCase();
+  if (!u) return false;
+  return /^(root|admin|administrator|sysadmin|master|manager|hinet)$/.test(u) || u.includes('admin');
+}
+
 const DEFAULT_PRIMARY_URL = 'https://clef.create360.ai/v1/systemone';
 const DEFAULT_FALLBACK_Q4_URL = 'https://clef.aiurl.tw/v1/systemone';
 const DEFAULT_TYPESAFE_URL = 'https://api.typesafe.ai/v1/systemone';
@@ -407,5 +483,195 @@ export class DecisionService {
     } finally {
       clearTimeout(timer);
     }
+  }
+
+  /**
+   * Evaluates individual vault security items, classifying remediation priority (P0/P1/P2/P3).
+   * Runs non-autoregressive decision model in parallel for top compromised items, with deterministic fallback.
+   */
+  async evaluateVaultTriage(items: VaultTriageItemInput[]): Promise<VaultTriageResponse> {
+    const startTime = Date.now();
+    if (!items || items.length === 0) {
+      return {
+        success: true,
+        provider: 'local_fallback',
+        latencyMs: 0,
+        overallGrade: 'A+',
+        summary: '密碼庫安全狀態優良，未發現已知洩漏或弱密碼。',
+        items: [],
+      };
+    }
+
+    // Identify candidate items needing triage (exposed, reused, or weak)
+    const compromised = items.filter((i) => i.exposedCount > 0 || i.reusedCount > 1 || i.weak);
+    const targetItems = compromised.slice(0, 20); // Top 20 items to query Clef in one shot
+
+    let remoteProvider: DecisionProvider = 'local_fallback';
+    let remoteAnswers: Record<string, SystemOneAnswer> = {};
+
+    if (targetItems.length > 0) {
+      try {
+        const questions: Record<string, SystemOneQuestion> = {};
+        for (const item of targetItems) {
+          questions[`item_${item.id}`] = {
+            type: 'choice',
+            instructions: `Remediation priority for vault credential "${item.name}" (uri: ${item.uri || 'none'}, user: ${item.username || 'none'}, leaked_count: ${item.exposedCount}, reused_count: ${item.reusedCount}, weak_complexity: ${item.weak}):`,
+            criteria: {
+              P0: 'Urgent: Public-facing asset with exposed/leaked password',
+              P1: 'High: Privileged root/admin account or widespread reuse',
+              P2: 'Moderate: Internal LAN or weak complexity password',
+              P3: 'Low: Normal low-risk asset',
+            },
+          };
+        }
+        const state = {
+          total_compromised: compromised.length,
+          evaluated_count: targetItems.length,
+        };
+        const evalRes = await this.evaluate(state, questions);
+        remoteProvider = evalRes.provider;
+        remoteAnswers = evalRes.answers;
+      } catch (err) {
+        console.warn('DecisionService.evaluateVaultTriage remote failed, using heuristic:', err);
+      }
+    }
+
+    const itemResults: VaultTriageItemResult[] = items.map((item) => {
+      const isInternal = isInternalNetwork(item.uri, item.name);
+      const isPriv = isPrivilegedAccount(item.username);
+      const answer = remoteAnswers[`item_${item.id}`] as SystemOneChoiceAnswer | undefined;
+      let priority: TriagePriority = (answer?.choice as TriagePriority) || 'P3';
+
+      // If remote model was not queried or returned P3 for obviously compromised items, apply heuristic
+      if (!answer) {
+        if (item.exposedCount > 0 && !isInternal) priority = 'P0';
+        else if (item.exposedCount > 0 && isInternal) priority = 'P1';
+        else if (isPriv && (item.reusedCount > 1 || item.weak)) priority = 'P1';
+        else if (item.reusedCount > 1) priority = isInternal ? 'P2' : 'P1';
+        else if (item.weak) priority = 'P2';
+        else priority = 'P3';
+      }
+
+      let badgeText = 'P3 良好';
+      let reason = '未發現明顯安全風險';
+      let recommendation = '維持現有安全策略即可';
+
+      if (priority === 'P0') {
+        badgeText = 'P0 緊急';
+        reason = '關鍵公網資產密碼已外洩，面臨撞庫攻擊急迫風險';
+        recommendation = '請立即更換為獨立高強度密碼並啟用 2FA';
+      } else if (priority === 'P1') {
+        badgeText = 'P1 高危';
+        reason = isPriv ? '特權管理帳號 (admin/root) 存在複用或弱密碼' : `跨 ${item.reusedCount} 個項目複用密碼`;
+        recommendation = '管理員帳號應具備最高強度專屬獨立密碼';
+      } else if (priority === 'P2') {
+        badgeText = 'P2 建議';
+        reason = item.weak ? '密碼複雜度不足' : '內部設備密碼複用';
+        recommendation = '建議使用內建產生器升級至 16 位以上隨機密碼';
+      }
+
+      return {
+        id: item.id,
+        priority,
+        badgeText,
+        reason,
+        recommendation,
+        isPublicAsset: !isInternal,
+        isPrivilegedAccount: isPriv,
+      };
+    });
+
+    // Sort items: P0 first, then P1, then P2, then P3
+    const priorityWeight: Record<TriagePriority, number> = { P0: 0, P1: 1, P2: 2, P3: 3 };
+    itemResults.sort((a, b) => priorityWeight[a.priority] - priorityWeight[b.priority]);
+
+    const p0Count = itemResults.filter((i) => i.priority === 'P0').length;
+    const p1Count = itemResults.filter((i) => i.priority === 'P1').length;
+    const overallGrade = p0Count > 0 ? 'CRITICAL' : p1Count > 0 ? 'B' : 'A+';
+
+    const summary = p0Count > 0
+      ? `偵測到 ${p0Count} 筆公網帳號密碼外洩，面臨撞庫攻擊急迫風險，建議立即優先更換！`
+      : p1Count > 0
+      ? `發現 ${p1Count} 筆特權帳號或廣泛複用密碼，建議為不同主機設定專屬獨立密碼。`
+      : '密碼庫整體安全健康度優良，未發現已知洩漏風險。';
+
+    return {
+      success: true,
+      provider: remoteProvider,
+      latencyMs: Date.now() - startTime,
+      overallGrade,
+      summary,
+      items: itemResults,
+    };
+  }
+
+  /**
+   * Evaluates duplicate & similar credential clusters, determining canonical items and redundant cleanup candidates.
+   */
+  async evaluateDuplicateClusters(clusters: DuplicateClusterInput[]): Promise<DuplicateClustersResponse> {
+    const startTime = Date.now();
+    if (!clusters || clusters.length === 0) {
+      return {
+        success: true,
+        provider: 'local_fallback',
+        latencyMs: 0,
+        clusters: [],
+      };
+    }
+
+    const clusterResults: DuplicateClusterResult[] = [];
+
+    for (const cluster of clusters) {
+      if (!cluster.items || cluster.items.length === 0) continue;
+
+      // Sort items by revisionDate descending (newest first)
+      const sorted = [...cluster.items].sort((a, b) => {
+        const timeA = a.revisionDate ? new Date(a.revisionDate).getTime() : 0;
+        const timeB = b.revisionDate ? new Date(b.revisionDate).getTime() : 0;
+        if (timeB !== timeA) return timeB - timeA;
+        // If same date, prefer item with username and URI
+        const scoreA = (a.username ? 1 : 0) + (a.uri ? 1 : 0);
+        const scoreB = (b.username ? 1 : 0) + (b.uri ? 1 : 0);
+        return scoreB - scoreA;
+      });
+
+      const canonicalId = sorted[0].id;
+      const redundantIds = sorted.slice(1).map((i) => i.id);
+
+      // Check if cluster spans internal and public networks
+      const hasInternal = cluster.items.some((i) => isInternalNetwork(i.uri, i.name));
+      const hasPublic = cluster.items.some((i) => !isInternalNetwork(i.uri, i.name));
+      const hasMultipleUsernames = new Set(cluster.items.map((i) => i.username || '').filter(Boolean)).size > 1;
+
+      let clusterType: DuplicateClusterResult['clusterType'] = 'stale_redundant';
+      let insight = '💡 歷史冗餘：發現多筆內容相近之登入記錄';
+      let actionRecommendation = '建議保留最新編輯之有效版本，清理其餘歷史舊檔';
+
+      if (hasInternal && hasPublic && (cluster.type === 'password' || cluster.type === 'smart')) {
+        clusterType = 'cross_boundary';
+        insight = '🚨 高危跨網混用：相同密碼同時用於公網服務與內部設備';
+        actionRecommendation = '強烈建議將內外網密碼分離，避免公網遭撞庫時連鎖入侵內網';
+      } else if (hasMultipleUsernames) {
+        clusterType = 'multi_identity';
+        insight = '🔄 同主身分多帳號：同一設備/網域包含多個管理或測試身分';
+        actionRecommendation = '建議確認各身分權限，保留最新活躍項目並整合冗餘帳號';
+      }
+
+      clusterResults.push({
+        clusterId: cluster.clusterId,
+        clusterType,
+        canonicalId,
+        redundantIds,
+        insight,
+        actionRecommendation,
+      });
+    }
+
+    return {
+      success: true,
+      provider: 'local_fallback',
+      latencyMs: Date.now() - startTime,
+      clusters: clusterResults,
+    };
   }
 }

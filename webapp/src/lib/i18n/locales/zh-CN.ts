@@ -616,6 +616,7 @@ const zhCN: Record<string, string> = {
   "txt_favorites": "收藏",
   "txt_duplicates": "重复项",
   "txt_duplicate_detection_mode": "匹配方式",
+  "txt_duplicate_mode_smart": "⚡ AI 智慧关联 (推荐)",
   "txt_duplicate_mode_exact": "完全相同",
   "txt_duplicate_mode_login_site": "网站+账号+密码",
   "txt_duplicate_mode_login_credentials": "账号+密码",

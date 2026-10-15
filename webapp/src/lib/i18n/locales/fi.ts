@@ -613,6 +613,7 @@ const fi: Record<string, string> = {
   "txt_favorites": "Suosikit",
   "txt_duplicates": "Kaksoiskappaleet",
   "txt_duplicate_detection_mode": "Vertailuperuste",
+  "txt_duplicate_mode_smart": "⚡ Älykkäät ryhmät (Suositus)",
   "txt_duplicate_mode_exact": "Tarkalleen sama nimike",
   "txt_duplicate_mode_login_site": "Sivusto + käyttäjätunnus + salasana",
   "txt_duplicate_mode_login_credentials": "Käyttäjätunnus + salasana",

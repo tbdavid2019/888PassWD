@@ -613,6 +613,7 @@ const sv: Record<string, string> = {
   "txt_favorites": "Favoriter",
   "txt_duplicates": "Dubbletter",
   "txt_duplicate_detection_mode": "Matcha efter",
+  "txt_duplicate_mode_smart": "⚡ Smarta AI-kluster (Rekommenderas)",
   "txt_duplicate_mode_exact": "Exakt objekt",
   "txt_duplicate_mode_login_site": "Sida + användarnamn + lösenord",
   "txt_duplicate_mode_login_credentials": "Användarnamn + lösenord",

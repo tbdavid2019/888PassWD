@@ -20,6 +20,7 @@ import {
   RefreshCw,
   RotateCcw,
   ShieldUser,
+  Sparkles,
   Star,
   StickyNote,
   Trash2,
@@ -95,6 +96,9 @@ interface VaultListPanelProps {
   onSelectCipher: (cipherId: string, event?: { shiftKey?: boolean }) => void;
   onBatchSelect?: (cipherIds: string[], mode?: 'replace' | 'add') => void;
   listSubtitle: (cipher: Cipher) => string;
+  canonicalIds?: Set<string>;
+  redundantIds?: Set<string>;
+  clusterProvider?: string;
 }
 
 interface CipherListItemProps {
@@ -102,6 +106,7 @@ interface CipherListItemProps {
   selected: boolean;
   checked: boolean;
   duplicateGroupIndex: number | null;
+  duplicateTag?: 'canonical' | 'redundant' | null;
   subtitle: string;
   onToggleSelected: (cipherId: string, checked: boolean, shiftKey?: boolean) => void;
   onSelectCipher: (cipherId: string, event?: { shiftKey?: boolean }) => void;
@@ -154,6 +159,16 @@ const CipherListItem = memo(function CipherListItem(props: CipherListItemProps) 
         <div className="list-text">
           <span className="list-title" title={props.cipher.decName || t('txt_no_name')}>
             <span className="list-title-text">{props.cipher.decName || t('txt_no_name')}</span>
+            {props.duplicateTag === 'canonical' && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 ml-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-300">
+                推薦保留 (最新)
+              </span>
+            )}
+            {props.duplicateTag === 'redundant' && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 ml-1.5 rounded-full bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300">
+                建議清理 (歷史冗餘)
+              </span>
+            )}
           </span>
           <span className="list-sub" title={props.subtitle}>{props.subtitle}</span>
         </div>
@@ -518,6 +533,22 @@ export default function VaultListPanel(props: VaultListPanelProps) {
         )}
         {!!props.filteredCiphers.length && (
           <div style={{ paddingTop: `${props.virtualRange.padTop}px`, paddingBottom: `${props.virtualRange.padBottom}px` }}>
+            {props.sidebarFilter.kind === 'duplicates' && (
+              <div className="card m-2 p-2.5 rounded-xl border border-amber-200/80 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20 text-xs">
+                <div className="flex items-center justify-between gap-1.5 mb-1 font-semibold text-amber-950 dark:text-amber-100">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-amber-600 dark:text-amber-400" />
+                    <span>Clef 邊緣關聯分析</span>
+                  </div>
+                  <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
+                    {props.clusterProvider ? `Clef-Flash (${props.clusterProvider})` : 'AI 決策引擎'}
+                  </span>
+                </div>
+                <p className="text-slate-600 dark:text-slate-300 m-0 leading-relaxed text-[11px]">
+                  已智慧聚合重複與關聯憑證，自動標註「推薦保留 (最新)」與「建議清理 (歷史冗餘)」。點擊「選擇重複項」即可一鍵勾選冗餘記錄進行批次清理。
+                </p>
+              </div>
+            )}
             {props.visibleCiphers.map((cipher) => (
               <CipherListItem
                 key={cipher.id}
@@ -525,6 +556,15 @@ export default function VaultListPanel(props: VaultListPanelProps) {
                 selected={props.selectedCipherId === cipher.id}
                 checked={!!props.selectedMap[cipher.id]}
                 duplicateGroupIndex={props.sidebarFilter.kind === 'duplicates' ? props.duplicateGroupIndexById.get(cipher.id) ?? null : null}
+                duplicateTag={
+                  props.sidebarFilter.kind === 'duplicates'
+                    ? props.canonicalIds?.has(cipher.id)
+                      ? 'canonical'
+                      : props.redundantIds?.has(cipher.id)
+                      ? 'redundant'
+                      : null
+                    : null
+                }
                 subtitle={props.listSubtitle(cipher)}
                 onToggleSelected={props.onToggleSelected}
                 onSelectCipher={props.onSelectCipher}

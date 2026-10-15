@@ -666,6 +666,7 @@ const en: Record<string, string> = {
   "txt_favorites": "Favorites",
   "txt_duplicates": "Duplicates",
   "txt_duplicate_detection_mode": "Match by",
+  "txt_duplicate_mode_smart": "AI Smart Clusters (Recommended)",
   "txt_duplicate_mode_exact": "Exact item",
   "txt_duplicate_mode_login_site": "Site + username + password",
   "txt_duplicate_mode_login_credentials": "Username + password",

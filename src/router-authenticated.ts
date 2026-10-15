@@ -56,6 +56,10 @@ import {
   handleBulkDeleteFolders,
 } from './handlers/folders';
 import {
+  handleVaultTriage,
+  handleVaultClusters,
+} from './handlers/decision';
+import {
   handleGetSends,
   handleGetSend,
   handleCreateSend,
@@ -468,6 +472,14 @@ export async function handleAuthenticatedRoute(
     if (method === 'GET') return handleGetDomains(env, userId);
     if (method === 'PUT' || method === 'POST') return handleUpdateDomains(request, env, userId);
     return null;
+  }
+
+  if (path === '/api/vault/decision/triage' && method === 'POST') {
+    return handleVaultTriage(request, env, userId);
+  }
+
+  if (path === '/api/vault/decision/clusters' && method === 'POST') {
+    return handleVaultClusters(request, env, userId);
   }
 
   const authenticatedDeviceResponse = await handleAuthenticatedDeviceRoute(request, env, userId, path, method);

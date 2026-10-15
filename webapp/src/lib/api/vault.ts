@@ -1597,3 +1597,91 @@ export async function bulkMoveCiphers(
     if (!resp.ok) throw new Error('Bulk move failed');
   }
 }
+
+export interface VaultTriageItemInput {
+  id: string;
+  name: string;
+  uri?: string;
+  username?: string;
+  exposedCount: number;
+  reusedCount: number;
+  weak: boolean;
+}
+
+export type TriagePriority = 'P0' | 'P1' | 'P2' | 'P3';
+
+export interface VaultTriageItemResult {
+  id: string;
+  priority: TriagePriority;
+  badgeText: string;
+  reason: string;
+  recommendation: string;
+  isPublicAsset: boolean;
+  isPrivilegedAccount: boolean;
+}
+
+export interface VaultTriageResponse {
+  success: boolean;
+  provider: string;
+  latencyMs: number;
+  overallGrade: 'A+' | 'B' | 'CRITICAL';
+  summary: string;
+  items: VaultTriageItemResult[];
+}
+
+export async function triageVaultSecurity(
+  authedFetch: AuthedFetch,
+  items: VaultTriageItemInput[]
+): Promise<VaultTriageResponse> {
+  const resp = await authedFetch('/api/vault/decision/triage', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items }),
+  });
+  if (!resp.ok) throw new Error('Vault security triage failed');
+  const body = await parseJson<VaultTriageResponse>(resp);
+  return body!;
+}
+
+export interface DuplicateClusterInput {
+  clusterId: string;
+  type: 'password' | 'login-site' | 'smart';
+  items: Array<{
+    id: string;
+    name: string;
+    uri?: string;
+    username?: string;
+    revisionDate?: string;
+    notes?: string;
+  }>;
+}
+
+export interface DuplicateClusterResult {
+  clusterId: string;
+  clusterType: 'cross_boundary' | 'multi_identity' | 'stale_redundant';
+  canonicalId: string;
+  redundantIds: string[];
+  insight: string;
+  actionRecommendation: string;
+}
+
+export interface DuplicateClustersResponse {
+  success: boolean;
+  provider: string;
+  latencyMs: number;
+  clusters: DuplicateClusterResult[];
+}
+
+export async function evaluateDuplicateClusters(
+  authedFetch: AuthedFetch,
+  clusters: DuplicateClusterInput[]
+): Promise<DuplicateClustersResponse> {
+  const resp = await authedFetch('/api/vault/decision/clusters', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ clusters }),
+  });
+  if (!resp.ok) throw new Error('Duplicate clusters evaluation failed');
+  const body = await parseJson<DuplicateClustersResponse>(resp);
+  return body!;
+}

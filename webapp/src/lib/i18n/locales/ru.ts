@@ -613,6 +613,7 @@ const ru: Record<string, string> = {
   "txt_favorites": "Избранное",
   "txt_duplicates": "Дубликаты",
   "txt_duplicate_detection_mode": "Сравнивать по",
+  "txt_duplicate_mode_smart": "⚡ Умные кластеры ИИ (Рекомендуется)",
   "txt_duplicate_mode_exact": "Полное совпадение",
   "txt_duplicate_mode_login_site": "Сайт + логин + пароль",
   "txt_duplicate_mode_login_credentials": "Логин + пароль",

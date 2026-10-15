@@ -4,16 +4,18 @@ import { Link } from 'wouter';
 import { maskSecret } from '@/components/vault/vault-page-helpers';
 import { getPasswordSecurityState, readPasswordSecurityState, startPasswordSecurityScan, subscribePasswordSecurityState } from '@/lib/password-security-cache';
 import type { DecisionExecutionResult } from '@/lib/api/admin';
+import type { VaultTriageItemInput, VaultTriageItemResult, VaultTriageResponse } from '@/lib/api/vault';
 import { t } from '@/lib/i18n';
 import type { Cipher } from '@/lib/types';
 
 interface PasswordSecurityPageProps {
   ciphers: Cipher[];
   loading: boolean;
+  onTriage?: (items: VaultTriageItemInput[]) => Promise<VaultTriageResponse>;
   onEvaluate?: (state: Record<string, unknown> | null, questions: Record<string, unknown>) => Promise<DecisionExecutionResult>;
 }
 
-type PasswordSecurityFilter = 'exposed' | 'reused' | 'weak' | 'all';
+type PasswordSecurityFilter = 'all' | 'p0' | 'p1' | 'p2' | 'exposed' | 'reused' | 'weak';
 
 function vaultFingerprint(ciphers: Cipher[]): string {
   return JSON.stringify(ciphers.map((cipher) => ({
@@ -33,6 +35,9 @@ export default function PasswordSecurityPage(props: PasswordSecurityPageProps) {
   const [securityState, setSecurityState] = useState(() => getPasswordSecurityState(fingerprint));
   const [filter, setFilter] = useState<PasswordSecurityFilter>('all');
   const [revealedPasswordIds, setRevealedPasswordIds] = useState<Set<string>>(() => new Set());
+  const [triageMap, setTriageMap] = useState<Map<string, VaultTriageItemResult>>(new Map());
+  const [triageLoading, setTriageLoading] = useState(false);
+
   useEffect(() => {
     setSecurityState(getPasswordSecurityState(fingerprint));
     setFilter('all');
@@ -52,69 +57,79 @@ export default function PasswordSecurityPage(props: PasswordSecurityPageProps) {
     latencyMs: number;
   } | null>(null);
 
+  const ciphersById = useMemo(() => new Map(props.ciphers.map((cipher) => [cipher.id, cipher])), [props.ciphers]);
+
   useEffect(() => {
-    if (!report || !props.onEvaluate) return;
+    if (!report || !props.onTriage) return;
     let active = true;
+    setTriageLoading(true);
     void (async () => {
       try {
-        const state = {
-          exposed_passwords_count: report.exposedCount,
-          reused_passwords_count: report.reusedCount,
-          weak_passwords_count: report.weakCount,
-          total_checked_count: report.checkedCount,
-        };
-        const questions = {
-          action_priority: {
-            type: 'choice',
-            instructions: 'What is the top priority action for this password vault user?',
-            criteria: {
-              rotate_breached: 'Urgent: Change leaked passwords immediately to prevent credential stuffing',
-              eliminate_reuse: 'Replace duplicate passwords across accounts',
-              strengthen: 'Upgrade short or weak passwords',
-              maintain: 'Security hygiene is excellent, maintain existing policies',
-            },
-          },
-        };
-        const result = await props.onEvaluate(state, questions);
+        const triageInputs: VaultTriageItemInput[] = report.items.map((item) => {
+          const cipher = ciphersById.get(item.cipherId);
+          return {
+            id: item.cipherId,
+            name: String(cipher?.decName || cipher?.name || ''),
+            uri: cipher?.login?.uris?.[0]?.uri,
+            username: cipher?.login?.decUsername || cipher?.login?.username,
+            exposedCount: item.exposedCount || 0,
+            reusedCount: item.reusedCount || 1,
+            weak: item.weak,
+          };
+        });
+
+        const result = await props.onTriage(triageInputs);
         if (!active) return;
-        const actionChoice = result.answers?.action_priority?.choice;
-
-        const grade = report.exposedCount > 0 ? 'CRITICAL' : report.reusedCount > 0 || report.weakCount > 0 ? 'B' : 'A+';
-        const rec =
-          actionChoice === 'rotate_breached'
-            ? '偵測到外洩密碼！強烈建議優先更換已遭公佈的密碼，防止遭受自動化撞庫攻擊。'
-            : actionChoice === 'eliminate_reuse'
-            ? '發現重複使用密碼。建議為不同網站設定專屬獨立密碼，避免連鎖受駭。'
-            : actionChoice === 'strengthen'
-            ? '部分密碼強度不足，建議使用內建產生器升級為高強度隨機密碼。'
-            : '密碼庫安全狀態優良，未發現已知洩漏風險。';
-
+        const map = new Map<string, VaultTriageItemResult>();
+        for (const item of result.items) {
+          map.set(item.id, item);
+        }
+        setTriageMap(map);
         setAiEvaluation({
-          riskGrade: grade,
-          recommendation: rec,
-          provider: result.provider === 'primary_clef' ? 'Clef-Flash (邊緣模型)' : result.provider === 'typesafe_jev' ? 'TypeSafe Jev' : result.provider,
+          riskGrade: result.overallGrade,
+          recommendation: result.summary,
+          provider: result.provider === 'primary_clef' ? 'Clef-Flash (邊緣決策模型)' : result.provider === 'typesafe_jev' ? 'TypeSafe Jev' : result.provider,
           latencyMs: result.latencyMs,
         });
-      } catch {
-        // fail silently
+      } catch (err) {
+        console.warn('Triage evaluation failed:', err);
+      } finally {
+        if (active) setTriageLoading(false);
       }
     })();
     return () => {
       active = false;
     };
-  }, [report, props.onEvaluate]);
+  }, [report, props.onTriage, ciphersById]);
 
   const eligibleCount = useMemo(
     () => props.ciphers.filter((cipher) => Number(cipher.type) === 1 && !cipher.deletedDate && !(cipher as { deletedAt?: string | null }).deletedAt && !!cipher.login?.decPassword).length,
     [props.ciphers],
   );
-  const ciphersById = useMemo(() => new Map(props.ciphers.map((cipher) => [cipher.id, cipher])), [props.ciphers]);
+
+  const p0Count = useMemo(() => Array.from(triageMap.values()).filter((t) => t.priority === 'P0').length, [triageMap]);
+  const p1Count = useMemo(() => Array.from(triageMap.values()).filter((t) => t.priority === 'P1').length, [triageMap]);
+  const p2Count = useMemo(() => Array.from(triageMap.values()).filter((t) => t.priority === 'P2').length, [triageMap]);
+
   const filteredItems = useMemo(() => {
-    if (!report || filter === 'all') return report?.items || [];
-    if (filter === 'exposed') return report.items.filter((item) => (item.exposedCount || 0) > 0);
-    if (filter === 'reused') return report.items.filter((item) => item.reusedCount > 1);
-    return report.items.filter((item) => item.weak);
-  }, [filter, report]);
+    if (!report) return [];
+    let items = [...report.items];
+    const priorityRank: Record<string, number> = { P0: 0, P1: 1, P2: 2, P3: 3 };
+    items.sort((a, b) => {
+      const pA = triageMap.get(a.cipherId)?.priority || (a.exposedCount ? 'P0' : a.reusedCount > 1 ? 'P1' : 'P2');
+      const pB = triageMap.get(b.cipherId)?.priority || (b.exposedCount ? 'P0' : b.reusedCount > 1 ? 'P1' : 'P2');
+      return (priorityRank[pA] ?? 3) - (priorityRank[pB] ?? 3);
+    });
+
+    if (filter === 'p0') return items.filter((item) => triageMap.get(item.cipherId)?.priority === 'P0');
+    if (filter === 'p1') return items.filter((item) => triageMap.get(item.cipherId)?.priority === 'P1');
+    if (filter === 'p2') return items.filter((item) => triageMap.get(item.cipherId)?.priority === 'P2');
+    if (filter === 'exposed') return items.filter((item) => (item.exposedCount || 0) > 0);
+    if (filter === 'reused') return items.filter((item) => item.reusedCount > 1);
+    if (filter === 'weak') return items.filter((item) => item.weak);
+    return items;
+  }, [filter, report, triageMap]);
+
   const allPasswordsVisible = !!report?.items.length && report.items.every((item) => revealedPasswordIds.has(item.cipherId));
 
   const togglePasswordVisibility = (cipherId: string) => {
@@ -148,20 +163,25 @@ export default function PasswordSecurityPage(props: PasswordSecurityPageProps) {
         </div>
         <div className="password-security-intro-actions">
           {report && <button type="button" className="btn btn-secondary password-security-toggle-all" onClick={toggleAllPasswordVisibility}>
-            {allPasswordsVisible ? <EyeOff size={16} className="btn-icon" /> : <Eye size={16} className="btn-icon" />}
-            {allPasswordsVisible ? t('txt_password_security_hide_all') : t('txt_password_security_show_all')}
+            {allPasswordsVisible ? <EyeOff size={16} /> : <Eye size={16} />}
+            {allPasswordsVisible ? t('txt_password_security_hide_all') : t('txt_password_security_reveal_all')}
           </button>}
-          <button type="button" className="btn btn-primary password-security-scan" disabled={props.loading || scanning || eligibleCount === 0} onClick={scan}>
-            {scanning ? <RefreshCw size={16} className="btn-icon spin" /> : <ScanSearch size={16} className="btn-icon" />}
-            {scanning ? t('txt_checking_password_security') : report ? t('txt_recheck_password_security') : t('txt_check_password_security')}
+          <button
+            type="button"
+            className="btn btn-primary password-security-scan"
+            disabled={props.loading || scanning || !eligibleCount}
+            onClick={scan}
+          >
+            {scanning ? <RefreshCw size={16} className="spin" /> : <ScanSearch size={16} />}
+            {scanning ? t('txt_password_security_checking_progress', { count: progress.checked, total: progress.total }) : report ? t('txt_password_security_recheck') : t('txt_password_security_start')}
           </button>
         </div>
       </div>
 
-      {!report && !scanning && !props.loading && (
+      {!report && !scanning && (
         <div className="password-security-empty card">
-          <ShieldCheck size={26} aria-hidden="true" />
-          <strong>{eligibleCount ? t('txt_password_security_ready') : t('txt_password_security_no_login')}</strong>
+          <ScanSearch size={32} />
+          <strong>{eligibleCount ? t('txt_password_security_empty_title') : t('txt_password_security_no_logins')}</strong>
           <span>{eligibleCount ? t('txt_password_security_manual') : t('txt_password_security_no_login_help')}</span>
         </div>
       )}
@@ -210,6 +230,67 @@ export default function PasswordSecurityPage(props: PasswordSecurityPageProps) {
           {report.unavailableCount > 0 && (
             <div className="password-security-notice warning"><Unplug size={16} />{t('txt_password_security_unavailable', { count: report.unavailableCount })}</div>
           )}
+
+          {/* AI Priority Filter Chips */}
+          <div className="flex flex-wrap items-center gap-1.5 p-2 mb-2 border-b border-slate-200/60 dark:border-slate-800/60">
+            <span className="text-xs font-semibold text-slate-500 mr-1">AI 處置分級:</span>
+            <button
+              type="button"
+              className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
+                filter === 'all'
+                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300'
+              }`}
+              onClick={() => setFilter('all')}
+            >
+              全部 ({report.items.length})
+            </button>
+            {p0Count > 0 && (
+              <button
+                type="button"
+                className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                  filter === 'p0'
+                    ? 'bg-red-600 text-white ring-2 ring-red-400'
+                    : 'bg-red-50 hover:bg-red-100 text-red-700 dark:bg-red-950/40 dark:hover:bg-red-950/60 dark:text-red-300'
+                }`}
+                onClick={() => setFilter('p0')}
+              >
+                🚨 P0 緊急 ({p0Count})
+              </button>
+            )}
+            {p1Count > 0 && (
+              <button
+                type="button"
+                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
+                  filter === 'p1'
+                    ? 'bg-amber-600 text-white ring-2 ring-amber-400'
+                    : 'bg-amber-50 hover:bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:hover:bg-amber-950/60 dark:text-amber-300'
+                }`}
+                onClick={() => setFilter('p1')}
+              >
+                ⚠️ P1 高危 ({p1Count})
+              </button>
+            )}
+            {p2Count > 0 && (
+              <button
+                type="button"
+                className={`px-2.5 py-1 text-xs font-medium rounded-lg transition-all ${
+                  filter === 'p2'
+                    ? 'bg-blue-600 text-white ring-2 ring-blue-400'
+                    : 'bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:hover:bg-blue-950/60 dark:text-blue-300'
+                }`}
+                onClick={() => setFilter('p2')}
+              >
+                🛡️ P2 建議 ({p2Count})
+              </button>
+            )}
+            {triageLoading && (
+              <span className="text-xs text-slate-400 ml-auto flex items-center gap-1">
+                <RefreshCw size={12} className="spin" /> Clef 分析中...
+              </span>
+            )}
+          </div>
+
           {!report.items.length ? (
             <div className="password-security-empty compact"><CheckCircle2 size={25} /><strong>{t('txt_no_password_risks')}</strong></div>
           ) : !filteredItems.length ? (
@@ -221,29 +302,55 @@ export default function PasswordSecurityPage(props: PasswordSecurityPageProps) {
                 const name = String(cipher?.decName || cipher?.name || '');
                 const password = String(cipher?.login?.decPassword || '');
                 const passwordVisible = revealedPasswordIds.has(item.cipherId);
-                return <article className="password-security-item" key={item.cipherId}>
-                  <div className="password-security-item-main">
-                    <div className="password-security-item-header">
-                      <strong>{name || t('txt_no_name')}</strong>
-                      <div className="password-security-badges">
-                        {item.exposedCount === null && <span className="risk-badge muted">{t('txt_password_security_not_checked')}</span>}
-                        {(item.exposedCount || 0) > 0 && <span className="risk-badge danger">{t('txt_password_security_exposed_short', { count: item.exposedCount || 0 })}</span>}
-                        {item.weak && <span className="risk-badge weak">{t('txt_password_security_weak_short')}</span>}
-                        {item.reusedCount > 1 && <span className="risk-badge reused">{t('txt_password_security_reused_short')}</span>}
+                const triage = triageMap.get(item.cipherId);
+
+                return (
+                  <article className="password-security-item" key={item.cipherId}>
+                    <div className="password-security-item-main">
+                      <div className="password-security-item-header">
+                        <div className="flex items-center gap-2 flex-wrap min-w-0">
+                          <strong>{name || t('txt_no_name')}</strong>
+                          {triage?.priority === 'P0' && (
+                            <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-950/60 text-red-700 dark:text-red-300">
+                              🚨 P0 緊急
+                            </span>
+                          )}
+                          {triage?.priority === 'P1' && (
+                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300">
+                              ⚠️ P1 高危
+                            </span>
+                          )}
+                          {triage?.priority === 'P2' && (
+                            <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300">
+                              🛡️ P2 建議
+                            </span>
+                          )}
+                        </div>
+                        <div className="password-security-badges">
+                          {item.exposedCount === null && <span className="risk-badge muted">{t('txt_password_security_not_checked')}</span>}
+                          {(item.exposedCount || 0) > 0 && <span className="risk-badge danger">{t('txt_password_security_exposed_short', { count: item.exposedCount || 0 })}</span>}
+                          {item.weak && <span className="risk-badge weak">{t('txt_password_security_weak_short')}</span>}
+                          {item.reusedCount > 1 && <span className="risk-badge reused">{t('txt_password_security_reused_short')}</span>}
+                        </div>
                       </div>
+                      {triage && (
+                        <div className="text-[12px] text-slate-600 dark:text-slate-300 leading-snug">
+                          <span className="font-medium text-slate-800 dark:text-slate-200">{triage.reason}</span> • <span className="text-slate-500 dark:text-slate-400">{triage.recommendation}</span>
+                        </div>
+                      )}
+                      <span className="password-security-password">{passwordVisible ? password : maskSecret(password)}</span>
                     </div>
-                    <span className="password-security-password">{passwordVisible ? password : maskSecret(password)}</span>
-                  </div>
-                  <div className="password-security-item-actions">
-                    <button type="button" className="btn btn-secondary small" onClick={() => togglePasswordVisibility(item.cipherId)}>
-                      {passwordVisible ? <EyeOff size={14} className="btn-icon" /> : <Eye size={14} className="btn-icon" />}
-                      {passwordVisible ? t('txt_hide') : t('txt_reveal')}
-                    </button>
-                    <Link href={`/vault?cipher=${encodeURIComponent(item.cipherId)}`} className="btn btn-secondary small password-security-open">
-                      <ExternalLink size={14} className="btn-icon" />{t('txt_password_security_jump')}
-                    </Link>
-                  </div>
-                </article>;
+                    <div className="password-security-item-actions">
+                      <button type="button" className="btn btn-secondary small" onClick={() => togglePasswordVisibility(item.cipherId)}>
+                        {passwordVisible ? <EyeOff size={14} className="btn-icon" /> : <Eye size={14} className="btn-icon" />}
+                        {passwordVisible ? t('txt_hide') : t('txt_reveal')}
+                      </button>
+                      <Link href={`/vault?cipher=${encodeURIComponent(item.cipherId)}`} className="btn btn-secondary small password-security-open">
+                        <ExternalLink size={14} className="btn-icon" />{t('txt_password_security_jump')}
+                      </Link>
+                    </div>
+                  </article>
+                );
               })}
             </div>
           )}

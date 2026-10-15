@@ -35,6 +35,7 @@ import { calcTotpNow, type TotpCodeResult } from '@/lib/crypto';
 import { computeSshFingerprint, generateDefaultSshKeyMaterial } from '@/lib/ssh';
 import { ChevronLeft } from 'lucide-preact';
 import type { Cipher, CustomFieldType, Folder, VaultDraft, VaultDraftField } from '@/lib/types';
+import type { DuplicateClusterInput, DuplicateClusterResult, DuplicateClustersResponse } from '@/lib/api/vault';
 import { t } from '@/lib/i18n';
 
 interface VaultPageProps {
@@ -68,6 +69,7 @@ interface VaultPageProps {
   uploadingAttachmentName: string;
   attachmentUploadPercent: number | null;
   mobileSidebarToggleKey: number;
+  onEvaluateDuplicateClusters?: (clusters: DuplicateClusterInput[]) => Promise<DuplicateClustersResponse>;
 }
 
 
@@ -83,7 +85,7 @@ export default function VaultPage(props: VaultPageProps) {
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const [folderSortMode, setFolderSortMode] = useState<VaultSortMode>('name');
   const [folderSortMenuOpen, setFolderSortMenuOpen] = useState(false);
-  const [duplicateMode, setDuplicateMode] = useState<DuplicateDetectionMode>('exact');
+  const [duplicateMode, setDuplicateMode] = useState<DuplicateDetectionMode>('smart');
   const [sidebarFilter, setSidebarFilter] = useState<SidebarFilter>({ kind: 'all' });
   const [selectedCipherId, setSelectedCipherId] = useState('');
   const [selectedMap, setSelectedMap] = useState<Record<string, boolean>>({});
@@ -499,6 +501,74 @@ export default function VaultPage(props: VaultPageProps) {
   useEffect(() => {
     if (sidebarFilter.kind === 'duplicates') setSelectedMap({});
   }, [sidebarFilter.kind, duplicateMode]);
+
+  const [clusterAnalysis, setClusterAnalysis] = useState<{
+    canonicalIds: Set<string>;
+    redundantIds: Set<string>;
+    provider?: string;
+  }>({
+    canonicalIds: new Set(),
+    redundantIds: new Set(),
+  });
+
+  useEffect(() => {
+    if (sidebarFilter.kind !== 'duplicates' || !props.onEvaluateDuplicateClusters) {
+      setClusterAnalysis({ canonicalIds: new Set(), redundantIds: new Set() });
+      return;
+    }
+    let active = true;
+
+    const groups = new Map<number, Cipher[]>();
+    for (const cipher of filteredCiphers) {
+      const idx = duplicateGroupIndexById.get(cipher.id);
+      if (idx !== undefined) {
+        if (!groups.has(idx)) groups.set(idx, []);
+        groups.get(idx)!.push(cipher);
+      }
+    }
+
+    const clusters: DuplicateClusterInput[] = Array.from(groups.entries()).map(([groupIdx, items]) => ({
+      clusterId: `cluster-${groupIdx}`,
+      type: duplicateMode,
+      items: items.map((c) => ({
+        id: c.id,
+        name: String(c.decName || c.name || ''),
+        uri: c.login?.uris?.[0]?.uri,
+        username: c.login?.decUsername || c.login?.username,
+        revisionDate: c.revisionDate || (c as { revisionDateFormatted?: string }).revisionDateFormatted,
+        notes: c.decNotes || c.notes,
+      })),
+    }));
+
+    if (clusters.length === 0) {
+      setClusterAnalysis({ canonicalIds: new Set(), redundantIds: new Set() });
+      return;
+    }
+
+    void (async () => {
+      try {
+        const res = await props.onEvaluateDuplicateClusters!(clusters);
+        if (!active) return;
+        const canonical = new Set<string>();
+        const redundant = new Set<string>();
+        for (const cl of res.clusters) {
+          if (cl.canonicalId) canonical.add(cl.canonicalId);
+          for (const rid of cl.redundantIds) redundant.add(rid);
+        }
+        setClusterAnalysis({
+          canonicalIds: canonical,
+          redundantIds: redundant,
+          provider: res.provider,
+        });
+      } catch (err) {
+        console.warn('Evaluate duplicate clusters failed:', err);
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, [sidebarFilter.kind, filteredCiphers, duplicateGroupIndexById, duplicateMode, props.onEvaluateDuplicateClusters]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1141,18 +1211,26 @@ const folderName = useCallback((id: string | null | undefined): string => {
   }, [filteredCiphers, duplicateSignatureInfo, duplicateMode]);
   const handleSelectUniqueFromDuplicates = useCallback(() => {
     const map: Record<string, boolean> = {};
-    const seen = new Set<number>();
-    for (const cipher of filteredCiphers) {
-      const groupIndex = duplicateGroupIndexById.get(cipher.id);
-      if (groupIndex === undefined) continue;
-      if (seen.has(groupIndex)) {
-        map[cipher.id] = true;
-      } else {
-        seen.add(groupIndex);
+    if (clusterAnalysis.redundantIds.size > 0) {
+      for (const cipher of filteredCiphers) {
+        if (clusterAnalysis.redundantIds.has(cipher.id)) {
+          map[cipher.id] = true;
+        }
+      }
+    } else {
+      const seen = new Set<number>();
+      for (const cipher of filteredCiphers) {
+        const groupIndex = duplicateGroupIndexById.get(cipher.id);
+        if (groupIndex === undefined) continue;
+        if (seen.has(groupIndex)) {
+          map[cipher.id] = true;
+        } else {
+          seen.add(groupIndex);
+        }
       }
     }
     setSelectedMap(map);
-  }, [filteredCiphers, duplicateGroupIndexById]);
+  }, [filteredCiphers, duplicateGroupIndexById, clusterAnalysis.redundantIds]);
   const handleSelectAll = useCallback(() => {
     const map: Record<string, boolean> = {};
     for (const cipher of filteredCiphers) map[cipher.id] = true;
@@ -1304,6 +1382,9 @@ const folderName = useCallback((id: string | null | undefined): string => {
           filteredCiphers={filteredCiphers}
           visibleCiphers={visibleCiphers}
           duplicateGroupIndexById={duplicateGroupIndexById}
+          canonicalIds={clusterAnalysis.canonicalIds}
+          redundantIds={clusterAnalysis.redundantIds}
+          clusterProvider={clusterAnalysis.provider}
           virtualRange={virtualRange}
           selectedCipherId={selectedCipherId}
           selectedMap={selectedMap}
