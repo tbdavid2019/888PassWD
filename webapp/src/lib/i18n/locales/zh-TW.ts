@@ -1557,7 +1557,13 @@ Object.assign(zhTW, {
   "txt_please_send_otp_first": "請先點擊發送驗證碼",
   "txt_please_enter_email_and_otp": "請輸入電子郵件、驗證碼與主密碼",
   "txt_traditional_password_login": "傳統帳號密碼登入",
-  "txt_send_verification_code_failed": "發送驗證碼失敗"
+  "txt_send_verification_code_failed": "發送驗證碼失敗",
+  "txt_sending_code": "發送中...",
+  "txt_change_email": "更換信箱",
+  "txt_code_sent_to": "驗證碼已發送至",
+  "txt_otp_validity_hint": "驗證碼 10 分鐘內有效",
+  "txt_resend_verification_code": "重新發送驗證碼",
+  "txt_back_to_email_step": "返回重新輸入信箱"
 });
 
 export default zhTW;

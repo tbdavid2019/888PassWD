@@ -1480,7 +1480,13 @@ Object.assign(es, {
   "txt_please_send_otp_first": "Por favor envíe el código de verificación primero",
   "txt_please_enter_email_and_otp": "Por favor ingrese correo, código OTP y contraseña maestra",
   "txt_traditional_password_login": "Inicio con contraseña tradicional",
-  "txt_send_verification_code_failed": "Error al enviar el código de verificación"
+  "txt_send_verification_code_failed": "Error al enviar el código de verificación",
+  "txt_sending_code": "Enviando código...",
+  "txt_change_email": "Cambiar correo",
+  "txt_code_sent_to": "Código de verificación enviado a",
+  "txt_otp_validity_hint": "Código válido por 10 minutos",
+  "txt_resend_verification_code": "Reenviar código",
+  "txt_back_to_email_step": "Volver al correo"
 });
 
 export default es;

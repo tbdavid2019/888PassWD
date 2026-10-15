@@ -726,16 +726,16 @@
 }
 
 .passkey-hero-badge {
-  @apply text-[13px] font-bold px-2.5 py-0.5 rounded-full shrink-0 tracking-wide;
-  background: rgba(249, 115, 22, 0.12);
+  @apply text-[14px] font-bold px-2.5 py-0.5 rounded-full shrink-0 tracking-wide;
+  background: rgba(249, 115, 22, 0.1);
   color: #ea580c;
-  border: 1px solid rgba(249, 115, 22, 0.3);
+  border: 1px solid rgba(249, 115, 22, 0.25);
 }
 
 :is(.dark) .passkey-hero-badge {
-  background: rgba(249, 115, 22, 0.22);
+  background: rgba(249, 115, 22, 0.18);
   color: #fb923c;
-  border-color: rgba(249, 115, 22, 0.45);
+  border-color: rgba(249, 115, 22, 0.4);
 }
 
 .passkey-hero-sub {
@@ -772,17 +772,18 @@
   @apply text-[14px] font-semibold text-brand-strong hover:underline;
 }
 
-/* === Unified Cyber Orange Primary Button === */
+/* === Unified Cyber Orange Primary Button (Contrast-Safe) === */
 .auth-card .btn-primary {
   @apply text-[16px] font-bold h-12 text-white;
-  background: linear-gradient(135deg, #f95700 0%, #ea580c 100%);
-  border: 1px solid rgba(249, 87, 0, 0.45);
-  box-shadow: 0 4px 14px rgba(249, 87, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  color: #ffffff !important;
+  background: linear-gradient(135deg, #f95700 0%, #ea580c 100%) !important;
+  border: 1px solid rgba(249, 87, 0, 0.45) !important;
+  box-shadow: 0 4px 14px rgba(249, 87, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
 }
 
 .auth-card .btn-primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
-  box-shadow: 0 6px 20px rgba(249, 87, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%) !important;
+  box-shadow: 0 6px 20px rgba(249, 87, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
   transform: translateY(-1.5px);
 }
 
@@ -798,77 +799,94 @@
   @apply text-[14px] font-medium text-slate-500;
 }
 
-/* === Email OTP vs Password Mode Tabs === */
-.auth-mode-tabs {
-  @apply grid grid-cols-2 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 mb-4 gap-1;
+/* === Disabled Button State (Strict Neutral Contrast Floor) === */
+.auth-card .btn:disabled,
+.auth-card .btn-primary:disabled,
+.auth-card .btn-secondary:disabled {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #94a3b8 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  cursor: not-allowed !important;
+  opacity: 0.9 !important;
 }
 
-.auth-mode-tab {
-  @apply flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-[15px] font-bold transition-all text-slate-500 dark:text-slate-400 cursor-pointer border-none bg-transparent select-none;
+:is(.dark) .auth-card .btn:disabled,
+:is(.dark) .auth-card .btn-primary:disabled,
+:is(.dark) .auth-card .btn-secondary:disabled {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #64748b !important;
+  box-shadow: none !important;
+  transform: none !important;
+  cursor: not-allowed !important;
+  opacity: 0.85 !important;
 }
 
-.auth-mode-tab:hover:not(.active) {
-  @apply text-slate-800 dark:text-slate-200 bg-slate-200/50 dark:bg-slate-700/40;
+/* === Progressive Disclosure Step Section === */
+.auth-step-section {
+  @apply space-y-4;
 }
 
-.auth-mode-tab.active {
-  @apply bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-sm;
-  border-bottom: 2.5px solid #f95700;
+/* === Sent OTP Verification Banner in Step 2 === */
+.otp-sent-banner {
+  @apply flex items-center justify-between gap-3 p-3.5 rounded-xl border text-[14px];
+  background: #f8fafc;
+  border-color: #e2e8f0;
 }
 
-/* === Send OTP Button & Input Row === */
-.send-otp-row {
-  @apply flex gap-2 items-stretch;
+:is(.dark) .otp-sent-banner {
+  background: #1e293b;
+  border-color: #334155;
 }
 
-.btn-send-otp {
-  @apply shrink-0 px-4 h-12 rounded-xl text-[14px] font-bold transition-all flex items-center justify-center gap-1.5 border select-none cursor-pointer;
-  background: rgba(249, 115, 22, 0.08);
-  border-color: rgba(249, 115, 22, 0.35);
-  color: #ea580c;
+.otp-sent-info {
+  @apply flex items-center gap-2.5 min-w-0 flex-1;
 }
 
-.btn-send-otp:hover:not(:disabled) {
-  background: rgba(249, 115, 22, 0.16);
-  border-color: #f95700;
+.otp-sent-icon {
+  @apply shrink-0 text-orange-500;
 }
 
-:is(.dark) .btn-send-otp {
-  background: rgba(249, 115, 22, 0.15);
-  border-color: rgba(249, 115, 22, 0.4);
-  color: #fb923c;
+.otp-sent-text {
+  @apply flex flex-col min-w-0;
 }
 
-:is(.dark) .btn-send-otp:hover:not(:disabled) {
-  background: rgba(249, 115, 22, 0.25);
-  border-color: #f95700;
+.otp-sent-label {
+  @apply text-[14px] text-slate-500 dark:text-slate-400 font-medium leading-none mb-1;
 }
 
-.btn-send-otp:disabled {
-  @apply opacity-60 cursor-not-allowed bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700;
+.otp-sent-email {
+  @apply text-[15px] font-bold text-slate-900 dark:text-slate-100 truncate leading-tight;
+}
+
+.otp-change-email-btn {
+  @apply shrink-0 px-3 py-1.5 rounded-lg text-[14px] font-bold transition-all text-brand-strong bg-slate-200/70 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 cursor-pointer border-none select-none;
 }
 
 /* === 6-digit OTP Code Field === */
 .auth-card .otp-input {
-  @apply text-[22px] font-mono font-bold tracking-[0.35em] text-center h-13;
+  @apply text-[24px] font-mono font-bold tracking-[0.4em] text-center h-14 text-slate-900 dark:text-white bg-slate-50/50 dark:bg-slate-900/50 border-slate-300 dark:border-slate-700;
 }
 
-/* === Security Notice Info Banner === */
-.auth-info-banner {
-  @apply flex items-start gap-2.5 p-3 rounded-xl text-[14px] font-medium leading-relaxed mb-4 text-slate-700 dark:text-slate-300;
-  background: rgba(249, 115, 22, 0.07);
-  border: 1px solid rgba(249, 115, 22, 0.25);
+.auth-card .otp-input:focus {
+  border-color: #f95700;
+  box-shadow: 0 0 0 3px rgba(249, 87, 0, 0.15);
 }
 
-:is(.dark) .auth-info-banner {
-  background: rgba(249, 115, 22, 0.12);
-  border-color: rgba(249, 115, 22, 0.3);
-  color: #fed7aa;
+.otp-cooldown-timer {
+  @apply text-[14px] font-medium text-slate-400 dark:text-slate-500;
+}
+
+/* === Zero-Knowledge Note === */
+.auth-zk-note {
+  @apply flex items-center gap-2 text-[14px] text-slate-500 dark:text-slate-400 my-1 leading-relaxed;
 }
 
 /* === Collapsible Traditional Password Login Section === */
 .auth-collapse-section {
-  @apply mt-4 pt-3.5 border-t border-slate-200/80 dark:border-slate-800/80;
+  @apply mt-4 pt-3 border-t border-slate-200/80 dark:border-slate-800/80;
 }
 
 .auth-collapse-toggle {
@@ -878,5 +896,6 @@
 .auth-collapse-content {
   @apply mt-3 p-3.5 rounded-xl bg-slate-50/80 dark:bg-slate-900/80 border border-slate-200/80 dark:border-slate-800/80 space-y-3 transition-all;
 }
+
 
 

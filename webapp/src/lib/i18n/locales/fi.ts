@@ -1480,7 +1480,13 @@ Object.assign(fi, {
   "txt_please_send_otp_first": "Lähetä vahvistuskoodi ensin",
   "txt_please_enter_email_and_otp": "Syötä sähköposti, OTP-koodi ja pääsalasana",
   "txt_traditional_password_login": "Perinteinen salasanakirjautuminen",
-  "txt_send_verification_code_failed": "Vahvistuskoodin lähetys epäonnistui"
+  "txt_send_verification_code_failed": "Vahvistuskoodin lähetys epäonnistui",
+  "txt_sending_code": "Lähetetään koodia...",
+  "txt_change_email": "Vaihda sähköpostia",
+  "txt_code_sent_to": "Vahvistuskoodi lähetetty osoitteeseen",
+  "txt_otp_validity_hint": "Koodi voimassa 10 minuuttia",
+  "txt_resend_verification_code": "Lähetä koodi uudelleen",
+  "txt_back_to_email_step": "Takaisin sähköpostiin"
 });
 
 export default fi;

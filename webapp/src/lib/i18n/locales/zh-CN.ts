@@ -1510,7 +1510,13 @@ Object.assign(zhCN, {
   "txt_please_send_otp_first": "请先点击发送验证码",
   "txt_please_enter_email_and_otp": "请输入电子邮箱、验证码与主密码",
   "txt_traditional_password_login": "传统账号密码登录",
-  "txt_send_verification_code_failed": "发送验证码失败"
+  "txt_send_verification_code_failed": "发送验证码失败",
+  "txt_sending_code": "发送中...",
+  "txt_change_email": "更换邮箱",
+  "txt_code_sent_to": "验证码已发送至",
+  "txt_otp_validity_hint": "验证码 10 分钟内有效",
+  "txt_resend_verification_code": "重新发送验证码",
+  "txt_back_to_email_step": "返回重新输入邮箱"
 });
 
 export default zhCN;
