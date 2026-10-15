@@ -16,6 +16,7 @@ import {
   buildUserDecryptionOptions,
 } from '../utils/user-decryption';
 import { auditRequestMetadata, safeWriteAuditEvent } from '../services/audit-events';
+import { DecisionService } from '../services/decision-service';
 import {
   assertAccountPasskeyCredential,
   assertTwoFactorPasskeyCredential,
@@ -504,6 +505,40 @@ export async function handleToken(request: Request, env: Env): Promise<Response>
         // Remember token missing/invalid/expired should re-enter the 2FA challenge flow.
         if (!passedByRememberToken) {
           return await twoFactorRequiredResponse(request, env, storage, user, 'Two factor required.');
+        }
+
+        // Adaptive Zero-Trust AI Decision Evaluation (Clef-Flash / Jev with fail-open)
+        // If an anomalous or suspicious environment is detected, revoke the remember bypass and force full 2FA challenge.
+        const decisionService = new DecisionService(env);
+        const loginRisk = await decisionService.evaluateLoginRisk({
+          ip: clientIdentifier,
+          country: request.headers.get('CF-IPCountry'),
+          userAgent: request.headers.get('User-Agent'),
+          email: user.email,
+          failedAttempts: 0,
+          has2FA: true,
+          isRemembered2fa: true,
+        });
+
+        if (loginRisk.isSuspicious) {
+          console.warn(`[DecisionService] Suspicious login detected (${loginRisk.provider}, riskScore=${loginRisk.riskScore}). Revoking remember-token bypass and requiring step-up 2FA.`);
+          await safeWriteAuditEvent(env, {
+            actorUserId: user.id,
+            action: 'auth.login.step_up_2fa_required',
+            category: 'security',
+            level: 'warn',
+            targetType: 'user',
+            targetId: user.id,
+            metadata: {
+              reason: 'ai_decision_risk_elevated',
+              decisionProvider: loginRisk.provider,
+              riskScore: loginRisk.riskScore,
+              riskLevel: loginRisk.riskLevel,
+              isSuspicious: true,
+              ...auditRequestMetadata(request),
+            },
+          });
+          return await twoFactorRequiredResponse(request, env, storage, user, 'Additional verification required.');
         }
       } else if (normalizedTwoFactorProvider === String(TWO_FACTOR_PROVIDER_AUTHENTICATOR)) {
         if (!effectiveTotpSecret) {

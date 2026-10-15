@@ -5,7 +5,7 @@ import { ArrowUpDown, Cloud, FileClock, Globe2, LogOut, Settings as SettingsIcon
 import type { ImportAttachmentFile, ImportResultSummary } from '@/components/ImportPage';
 import LoadingState from '@/components/LoadingState';
 import type { AdminBackupImportResponse, AdminBackupRunResponse, AdminBackupSettings, RemoteBackupBrowserResponse } from '@/lib/api/backup';
-import type { AuditLogFilters } from '@/lib/api/admin';
+import type { AuditLogFilters, DecisionSystemHealth } from '@/lib/api/admin';
 import type { CiphersImportPayload } from '@/lib/api/vault';
 import { t } from '@/lib/i18n';
 import type { AccountPasskeyCredential, AdminInvite, AdminUser, AuditLogListResult, AuditLogSettings, AuthRequest, AuthorizedDevice, Cipher, CustomEquivalentDomain, DomainRules, Folder as VaultFolder, Profile, Send, SendDraft, SessionState, TwoFactorPasskeySettings, VaultDraft, YubiKeyOtpSettings } from '@/lib/types';
@@ -162,6 +162,7 @@ export interface AppMainRoutesProps {
   onToggleUserStatus: (userId: string, status: 'active' | 'banned') => Promise<void>;
   onDeleteUser: (userId: string) => Promise<void>;
   onDeleteInvite: (code: string) => Promise<void>;
+  onLoadDecisionStatus?: () => Promise<DecisionSystemHealth>;
   onLoadAuditLogs: (filters: AuditLogFilters) => Promise<AuditLogListResult>;
   onLoadAuditLogSettings: () => Promise<AuditLogSettings>;
   onSaveAuditLogSettings: (settings: AuditLogSettings) => Promise<AuditLogSettings>;
@@ -492,6 +493,7 @@ export default function AppMainRoutes(props: AppMainRoutesProps) {
               onToggleUserStatus={props.onToggleUserStatus}
               onDeleteUser={props.onDeleteUser}
               onDeleteInvite={props.onDeleteInvite}
+              onLoadDecisionStatus={props.onLoadDecisionStatus}
             />
           </Suspense>
         </div>

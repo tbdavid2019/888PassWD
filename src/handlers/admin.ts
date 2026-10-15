@@ -4,6 +4,7 @@ import { StorageService } from '../services/storage';
 import { jsonResponse, errorResponse } from '../utils/response';
 import { deleteBlobObject, getAttachmentObjectKey, getSendFileObjectKey } from '../services/blob-store';
 import { auditRequestMetadata, getAuditLogSettings, normalizeAuditLogSettings, saveAuditLogSettings, writeAuditEvent } from '../services/audit-events';
+import { DecisionService } from '../services/decision-service';
 
 function isAdmin(user: User): boolean {
   return user.role === 'admin' && user.status === 'active';
@@ -444,3 +445,32 @@ export async function handleAdminDeleteUser(
 
   return new Response(null, { status: 204 });
 }
+
+export async function handleAdminDecisionStatus(
+  request: Request,
+  env: Env,
+  actorUser: User
+): Promise<Response> {
+  if (!isAdmin(actorUser)) return errorResponse('Forbidden', 403);
+  const service = new DecisionService(env);
+  const health = await service.checkHealth();
+  return jsonResponse(health);
+}
+
+export async function handleAdminDecisionEvaluate(
+  request: Request,
+  env: Env,
+  actorUser: User
+): Promise<Response> {
+  if (!isAdmin(actorUser)) return errorResponse('Forbidden', 403);
+  const body = await readJsonBody(request);
+  const state = (body.state as Record<string, unknown>) || null;
+  const questions = (body.questions as Record<string, any>) || {};
+  if (!questions || Object.keys(questions).length === 0) {
+    return errorResponse('questions object is required', 400);
+  }
+  const service = new DecisionService(env);
+  const result = await service.evaluate(state, questions);
+  return jsonResponse(result);
+}
+

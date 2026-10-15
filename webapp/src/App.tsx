@@ -32,7 +32,7 @@ import {
   listPendingAuthRequests,
   respondToAuthRequest,
 } from '@/lib/api/auth-requests';
-import { clearAuditLogs, getAuditLogSettings, listAdminInvites, listAdminUsers, listAuditLogs, saveAuditLogSettings, type AuditLogFilters } from '@/lib/api/admin';
+import { clearAuditLogs, getAuditLogSettings, getDecisionStatus, listAdminInvites, listAdminUsers, listAuditLogs, saveAuditLogSettings, type AuditLogFilters } from '@/lib/api/admin';
 import { getDomainRules, saveDomainRules } from '@/lib/api/domains';
 import { getSendById, getSends } from '@/lib/api/send';
 import { getCipherById, getFolderById, repairCipherKeyMismatches, repairCipherUriChecksums } from '@/lib/api/vault';
@@ -2194,6 +2194,7 @@ export default function App() {
     onToggleUserStatus: adminActions.toggleUserStatus,
     onDeleteUser: adminActions.deleteUser,
     onDeleteInvite: adminActions.deleteInvite,
+    onLoadDecisionStatus: () => getDecisionStatus(authedFetch),
     onLoadAuditLogs: (filters: AuditLogFilters) => listAuditLogs(authedFetch, filters),
     onLoadAuditLogSettings: () => getAuditLogSettings(authedFetch),
     onSaveAuditLogSettings: (settings: AuditLogSettings) => saveAuditLogSettings(authedFetch, settings),

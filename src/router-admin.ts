@@ -11,6 +11,8 @@ import {
   handleAdminGetAuditLogSettings,
   handleAdminUpdateAuditLogSettings,
   handleAdminClearAuditLogs,
+  handleAdminDecisionStatus,
+  handleAdminDecisionEvaluate,
 } from './handlers/admin';
 import { handleAdminBackupRoute } from './router-admin-backup';
 import { errorResponse } from './utils/response';
@@ -21,6 +23,8 @@ function isKnownAdminPath(path: string): boolean {
     path === '/api/admin/logs' ||
     path === '/api/admin/logs/settings' ||
     path === '/api/admin/invites' ||
+    path === '/api/admin/decision/status' ||
+    path === '/api/admin/decision/evaluate' ||
     path.startsWith('/api/admin/backup') ||
     /^\/api\/admin\/invites\/[^/]+$/i.test(path) ||
     /^\/api\/admin\/users\/[a-f0-9-]+(?:\/status)?$/i.test(path)
@@ -61,6 +65,14 @@ export async function handleAdminRoute(
     if (method === 'GET') return handleAdminGetAuditLogSettings(request, env, actorUser);
     if (method === 'PUT' || method === 'POST') return handleAdminUpdateAuditLogSettings(request, env, actorUser);
     return null;
+  }
+
+  if (path === '/api/admin/decision/status' && method === 'GET') {
+    return handleAdminDecisionStatus(request, env, actorUser);
+  }
+
+  if (path === '/api/admin/decision/evaluate' && method === 'POST') {
+    return handleAdminDecisionEvaluate(request, env, actorUser);
   }
 
   const adminBackupResponse = await handleAdminBackupRoute(request, env, actorUser, path, method);

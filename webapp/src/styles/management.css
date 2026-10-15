@@ -2266,3 +2266,65 @@
     padding-top: 0;
   }
 }
+
+/* === AI Decision Model (Clef / Jev) Status Dashboard === */
+.decision-nodes-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-3;
+}
+
+.decision-node-item {
+  @apply flex flex-col justify-between p-3.5 rounded-xl border transition-all;
+  border-color: rgba(226, 232, 240, 0.8);
+  background: rgba(248, 250, 252, 0.6);
+}
+
+:is(.dark) .decision-node-item {
+  border-color: rgba(51, 65, 85, 0.7);
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.decision-node-item.active-tier {
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.04);
+}
+
+:is(.dark) .decision-node-item.active-tier {
+  border-color: #60a5fa;
+  background: rgba(59, 130, 246, 0.08);
+}
+
+.decision-node-head {
+  @apply flex items-center justify-between gap-2 mb-2;
+}
+
+.decision-node-title {
+  @apply font-semibold text-[15px] flex items-center gap-1.5;
+}
+
+.decision-node-badge {
+  @apply text-[11px] font-semibold px-2 py-0.5 rounded-full inline-flex items-center gap-1;
+}
+
+.decision-node-badge.online {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.decision-node-badge.offline {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+
+.decision-node-badge.fallback {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+.decision-node-url {
+  @apply text-[12px] text-slate-500 dark:text-slate-400 font-mono truncate mb-1;
+}
+
+.decision-node-desc {
+  @apply text-[13px] text-slate-600 dark:text-slate-300 leading-snug;
+}
+
