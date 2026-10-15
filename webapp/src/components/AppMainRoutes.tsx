@@ -232,6 +232,8 @@ export default function AppMainRoutes(props: AppMainRoutesProps) {
               ciphers={props.decryptedCiphers}
               loading={props.ciphersLoading}
               onTriage={props.onTriageVaultSecurity}
+              onDelete={props.onDeleteVaultItem}
+              onNotify={props.onNotify}
             />
           </Suspense>
         </div>
