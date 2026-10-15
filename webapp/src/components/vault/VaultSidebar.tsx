@@ -18,6 +18,7 @@ import {
   Pencil,
   ShieldUser,
   ShieldCheck,
+  Sparkles,
   Star,
   StickyNote,
   Trash2,
@@ -47,6 +48,7 @@ interface VaultSidebarProps {
   onOpenDeleteFolder: (folder: Folder) => void;
   onToggleFolderSortMenu: () => void;
   onSelectFolderSortMode: (value: VaultSortMode) => void;
+  onOpenSmartCategorize?: () => void;
 }
 
 export default function VaultSidebar(props: VaultSidebarProps) {
@@ -204,6 +206,17 @@ export default function VaultSidebar(props: VaultSidebarProps) {
             </button>
           </div>
         </div>
+        {props.onOpenSmartCategorize && (
+          <button
+            type="button"
+            className="w-full mb-1.5 px-2.5 py-1.5 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 text-amber-800 dark:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-all cursor-pointer"
+            onClick={props.onOpenSmartCategorize}
+            title="依據網站網域與服務類型，自動分析並建議合適資料夾與標籤"
+          >
+            <Sparkles size={13} className="text-amber-600 dark:text-amber-400" />
+            <span>AI 智慧分類建議</span>
+          </button>
+        )}
         <button type="button" className={`tree-btn ${props.sidebarFilter.kind === 'folder' && props.sidebarFilter.folderId === null ? 'active' : ''}`} onClick={() => props.onChangeFilter({ kind: 'folder', folderId: null })}>
           <FolderX size={14} className="tree-icon" /> <span className="tree-label">{t('txt_no_folder')}</span>
         </button>

@@ -674,4 +674,359 @@ export class DecisionService {
       clusters: clusterResults,
     };
   }
+
+  /**
+   * Categorizes vault websites/credentials and provides intelligent folder and tag recommendations.
+   */
+  async evaluateWebsiteCategorization(
+    items: VaultCategorizeItemInput[],
+    existingFolders: ExistingFolderInput[] = [],
+  ): Promise<VaultCategorizeResponse> {
+    const startTime = Date.now();
+    if (!items || items.length === 0) {
+      return {
+        success: true,
+        provider: 'local_fallback',
+        latencyMs: 0,
+        items: [],
+        folderStats: [],
+      };
+    }
+
+    // Prepare existing folder lookup
+    const folderByName = new Map<string, ExistingFolderInput>();
+    for (const f of existingFolders) {
+      folderByName.set(f.name.trim().toLowerCase(), f);
+    }
+
+    const findExistingFolder = (keywords: string[]): ExistingFolderInput | null => {
+      for (const kw of keywords) {
+        const lowerKw = kw.toLowerCase();
+        for (const [name, folder] of folderByName.entries()) {
+          if (name === lowerKw || name.includes(lowerKw) || lowerKw.includes(name)) {
+            return folder;
+          }
+        }
+      }
+      return null;
+    };
+
+    // Fast-path heuristic & Clef candidate batching
+    const unclassifiedItems = items.slice(0, 15);
+    let remoteProvider: DecisionProvider = 'local_fallback';
+    let remoteAnswers: Record<string, SystemOneAnswer> = {};
+
+    try {
+      const questions: Record<string, SystemOneQuestion> = {};
+      for (const item of unclassifiedItems) {
+        questions[`cat_${item.id}`] = {
+          type: 'choice',
+          instructions: `Classify web credential "${item.name}" (uri: ${item.uri || 'none'}):`,
+          criteria: {
+            internal: 'Internal network, router, private IP, local service, or colab/server',
+            dev: 'Cloud, DevOps, programming, hosting, or API tool',
+            finance: 'Banking, payment, crypto, or financial service',
+            social: 'Social media, chat, messaging, or community',
+            work: 'Office productivity, project management, or document tools',
+            ecommerce: 'E-commerce, online shopping, or marketplace',
+            security: '2FA, authentication, identity, or security service',
+            general: 'General personal website or utility',
+          },
+        };
+      }
+      const evalRes = await this.evaluate({ items_count: unclassifiedItems.length }, questions);
+      remoteProvider = evalRes.provider;
+      remoteAnswers = evalRes.answers;
+    } catch (err) {
+      console.warn('DecisionService.evaluateWebsiteCategorization remote failed, using heuristic:', err);
+    }
+
+    const categorizedItems: VaultCategorizeItemResult[] = items.map((item) => {
+      const uri = (item.uri || '').toLowerCase();
+      const name = (item.name || '').toLowerCase();
+      const combined = `${name} ${uri}`;
+
+      const aiChoice = remoteAnswers[`cat_${item.id}`]?.type === 'choice'
+        ? (remoteAnswers[`cat_${item.id}`] as SystemOneChoiceAnswer).choice
+        : null;
+
+      // 1. Internal network detection
+      if (
+        isInternalNetwork(item.uri, item.name) ||
+        aiChoice === 'internal' ||
+        uri.includes('10.') ||
+        uri.includes('192.168.') ||
+        uri.includes(':8008') ||
+        uri.includes(':8443') ||
+        uri.includes('colab.google')
+      ) {
+        let matchedFolder: ExistingFolderInput | null = null;
+        let defaultFolderName = '內部網路';
+        const tags: string[] = ['#內網'];
+
+        if (uri.includes('10.') || combined.includes('10.') || combined.includes('區網10')) {
+          matchedFolder = findExistingFolder(['區網10', '10區網', '10.0', '10.']);
+          defaultFolderName = matchedFolder ? matchedFolder.name : '區網10';
+          tags.push('#10網段', '#內部設備');
+        } else if (uri.includes('192.168.') || combined.includes('192.168') || combined.includes('區網192')) {
+          matchedFolder = findExistingFolder(['區網192', '192區網', '192.168', '192.']);
+          defaultFolderName = matchedFolder ? matchedFolder.name : '區網192';
+          tags.push('#192網段', '#區域網路');
+        } else if (uri.includes('colab.google')) {
+          matchedFolder = findExistingFolder(['開發', '雲端', 'ai', 'colab']);
+          defaultFolderName = matchedFolder ? matchedFolder.name : '雲端與開發';
+          tags.push('#GoogleColab', '#開發運算');
+        } else {
+          matchedFolder = findExistingFolder(['內網', '內部', 'lan', '局域網']);
+          defaultFolderName = matchedFolder ? matchedFolder.name : '內部網路';
+          tags.push('#內部伺服器');
+        }
+
+        return {
+          id: item.id,
+          name: item.name,
+          category: 'internal_network',
+          categoryLabel: '內部網路與設備',
+          suggestedFolderId: matchedFolder?.id ?? null,
+          suggestedFolderName: matchedFolder ? matchedFolder.name : defaultFolderName,
+          isNewFolder: !matchedFolder,
+          confidence: 0.95,
+          suggestedTags: tags,
+          reason: matchedFolder
+            ? `偵測到內部網路位址，自動對應至現有「${matchedFolder.name}」資料夾`
+            : `偵測到區域網路設備，建議歸入「${defaultFolderName}」資料夾`,
+        };
+      }
+
+      // 2. Finance & Banking
+      if (
+        aiChoice === 'finance' ||
+        /bank|cathay|esun|ctbc|fubon|taishin|sinopac|richart|paypal|stripe|visa|mastercard|crypto|binance|max|bito|銀行|金融|證券|錢包/.test(combined)
+      ) {
+        const matched = findExistingFolder(['bank', '銀行', '金融', 'finance', '錢包', '財務']);
+        const defaultName = matched ? matched.name : '金融與銀行';
+        const tags = ['#金融財務'];
+        if (/crypto|binance|max|bito|錢包/.test(combined)) tags.push('#加密貨幣');
+        else tags.push('#銀行帳戶');
+
+        return {
+          id: item.id,
+          name: item.name,
+          category: 'finance_banking',
+          categoryLabel: '金融與銀行',
+          suggestedFolderId: matched?.id ?? null,
+          suggestedFolderName: matched ? matched.name : defaultName,
+          isNewFolder: !matched,
+          confidence: 0.92,
+          suggestedTags: tags,
+          reason: matched
+            ? `偵測到金融理財服務，自動配對至現有「${matched.name}」資料夾`
+            : `偵測到銀行或支付服務，建議集中管理於「${defaultName}」資料夾`,
+        };
+      }
+
+      // 3. Cloud & DevOps
+      if (
+        aiChoice === 'dev' ||
+        /github|gitlab|cloudflare|aws|azure|digitalocean|huggingface|openai|anthropic|vercel|docker|kubernetes|postman|sentry|datadog|colab|ssh|git|vps/.test(combined)
+      ) {
+        const matched = findExistingFolder(['雲端', '開發', 'dev', 'cloud', '伺服器', 'tools']);
+        const defaultName = matched ? matched.name : '雲端與開發';
+        const tags = ['#開發工具', '#雲端服務'];
+
+        return {
+          id: item.id,
+          name: item.name,
+          category: 'dev_cloud',
+          categoryLabel: '雲端與開發',
+          suggestedFolderId: matched?.id ?? null,
+          suggestedFolderName: matched ? matched.name : defaultName,
+          isNewFolder: !matched,
+          confidence: 0.9,
+          suggestedTags: tags,
+          reason: matched
+            ? `偵測到開發運維或雲端平台，自動對應至「${matched.name}」資料夾`
+            : `偵測到代碼與基礎架構服務，建議建立「${defaultName}」分類`,
+        };
+      }
+
+      // 4. Security & Authentication
+      if (
+        aiChoice === 'security' ||
+        /2fa|bitwarden|passkey|authenticator|yubikey|auth0|okta|identity|security/.test(combined)
+      ) {
+        const matched = findExistingFolder(['安全', '認證', '2fa', 'security', 'auth']);
+        const defaultName = matched ? matched.name : '安全與認證';
+        return {
+          id: item.id,
+          name: item.name,
+          category: 'security_auth',
+          categoryLabel: '安全與認證',
+          suggestedFolderId: matched?.id ?? null,
+          suggestedFolderName: matched ? matched.name : defaultName,
+          isNewFolder: !matched,
+          confidence: 0.88,
+          suggestedTags: ['#安全憑證', '#2FA'],
+          reason: matched
+            ? `偵測到雙重認證或安全金鑰，對應至「${matched.name}」`
+            : `偵測到身分驗證資產，建議歸納於「${defaultName}」資料夾`,
+        };
+      }
+
+      // 5. Social & Communication
+      if (
+        aiChoice === 'social' ||
+        /discord|telegram|t\.me|slack|line\.me|twitter|x\.com|facebook|instagram|threads|whatsapp|wechat|linkedin|reddit|mastodon|youtube/.test(combined)
+      ) {
+        const matched = findExistingFolder(['社群', '通訊', 'social', '聊天', 'comms']);
+        const defaultName = matched ? matched.name : '社群與通訊';
+        return {
+          id: item.id,
+          name: item.name,
+          category: 'social_comms',
+          categoryLabel: '社群與通訊',
+          suggestedFolderId: matched?.id ?? null,
+          suggestedFolderName: matched ? matched.name : defaultName,
+          isNewFolder: !matched,
+          confidence: 0.87,
+          suggestedTags: ['#社群媒體', '#通訊軟體'],
+          reason: matched
+            ? `偵測到社交平台帳號，配對至現有「${matched.name}」資料夾`
+            : `建議將社群與通訊服務收納於「${defaultName}」資料夾`,
+        };
+      }
+
+      // 6. Productivity & Work
+      if (
+        aiChoice === 'work' ||
+        /notion|figma|jira|confluence|trello|asana|airtable|monday|miro|docs\.google|sheets\.google|office|microsoft365|zoom|teams|canva|adobe/.test(combined)
+      ) {
+        const matched = findExistingFolder(['辦公', '工作', 'work', '生產力', 'office']);
+        const defaultName = matched ? matched.name : '辦公與生產力';
+        return {
+          id: item.id,
+          name: item.name,
+          category: 'productivity_work',
+          categoryLabel: '辦公與生產力',
+          suggestedFolderId: matched?.id ?? null,
+          suggestedFolderName: matched ? matched.name : defaultName,
+          isNewFolder: !matched,
+          confidence: 0.85,
+          suggestedTags: ['#協同作業', '#生產力工具'],
+          reason: matched
+            ? `偵測到企業協作工具，建議歸類至「${matched.name}」`
+            : `建議建立「${defaultName}」資料夾整理辦公文件與工具`,
+        };
+      }
+
+      // 7. E-Commerce
+      if (
+        aiChoice === 'ecommerce' ||
+        /amazon|shopee|pchome|momo|taobao|tmall|ebay|coupang|uber|foodpanda|booking|agoda|airbnb/.test(combined)
+      ) {
+        const matched = findExistingFolder(['購物', '電商', 'shop', 'ecommerce', '買賣']);
+        const defaultName = matched ? matched.name : '電商購物';
+        return {
+          id: item.id,
+          name: item.name,
+          category: 'ecommerce_shopping',
+          categoryLabel: '電商與購物',
+          suggestedFolderId: matched?.id ?? null,
+          suggestedFolderName: matched ? matched.name : defaultName,
+          isNewFolder: !matched,
+          confidence: 0.85,
+          suggestedTags: ['#線上購物', '#電商平台'],
+          reason: matched
+            ? `偵測到電商平台帳號，歸納至「${matched.name}」資料夾`
+            : `建議將線上消費平台集中管理於「${defaultName}」資料夾`,
+        };
+      }
+
+      // 8. General / Fallback
+      const matched = findExistingFolder(['常用', '一般', 'general', 'misc', '網站']);
+      const defaultName = matched ? matched.name : '常用網站';
+      return {
+        id: item.id,
+        name: item.name,
+        category: 'general',
+        categoryLabel: '一般服務',
+        suggestedFolderId: matched?.id ?? null,
+        suggestedFolderName: matched ? matched.name : defaultName,
+        isNewFolder: !matched,
+        confidence: 0.7,
+        suggestedTags: ['#網站服務'],
+        reason: matched
+          ? `一般網路服務憑據，建議整理至「${matched.name}」`
+          : `建議集中整理於「${defaultName}」以避免目錄雜亂`,
+      };
+    });
+
+    // Compute stats by suggested folder
+    const countsByFolder = new Map<string, { folderId?: string | null; isNew: boolean; count: number }>();
+    for (const item of categorizedItems) {
+      const entry = countsByFolder.get(item.suggestedFolderName) || {
+        folderId: item.suggestedFolderId,
+        isNew: item.isNewFolder,
+        count: 0,
+      };
+      entry.count++;
+      countsByFolder.set(item.suggestedFolderName, entry);
+    }
+
+    const folderStats = Array.from(countsByFolder.entries())
+      .map(([folderName, data]) => ({
+        folderName,
+        folderId: data.folderId,
+        isNew: data.isNew,
+        count: data.count,
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    return {
+      success: true,
+      provider: remoteProvider,
+      latencyMs: Date.now() - startTime,
+      items: categorizedItems,
+      folderStats,
+    };
+  }
 }
+
+export interface VaultCategorizeItemInput {
+  id: string;
+  name: string;
+  uri?: string;
+  currentFolderId?: string | null;
+}
+
+export interface ExistingFolderInput {
+  id: string;
+  name: string;
+}
+
+export interface VaultCategorizeItemResult {
+  id: string;
+  name: string;
+  category: string;
+  categoryLabel: string;
+  suggestedFolderId?: string | null;
+  suggestedFolderName: string;
+  isNewFolder: boolean;
+  confidence: number;
+  suggestedTags: string[];
+  reason: string;
+}
+
+export interface VaultCategorizeResponse {
+  success: boolean;
+  provider: DecisionProvider;
+  latencyMs: number;
+  items: VaultCategorizeItemResult[];
+  folderStats: {
+    folderName: string;
+    folderId?: string | null;
+    isNew: boolean;
+    count: number;
+  }[];
+}
+

@@ -58,6 +58,7 @@ import {
 import {
   handleVaultTriage,
   handleVaultClusters,
+  handleVaultCategorize,
 } from './handlers/decision';
 import {
   handleGetSends,
@@ -480,6 +481,10 @@ export async function handleAuthenticatedRoute(
 
   if (path === '/api/vault/decision/clusters' && method === 'POST') {
     return handleVaultClusters(request, env, userId);
+  }
+
+  if (path === '/api/vault/decision/categorize' && method === 'POST') {
+    return handleVaultCategorize(request, env, userId);
   }
 
   const authenticatedDeviceResponse = await handleAuthenticatedDeviceRoute(request, env, userId, path, method);

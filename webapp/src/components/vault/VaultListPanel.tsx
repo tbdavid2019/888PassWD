@@ -100,6 +100,7 @@ interface VaultListPanelProps {
   redundantIds?: Set<string>;
   clusterProvider?: string;
   securityPriorityById?: Map<string, 'P0' | 'P1' | 'P2' | 'P3'>;
+  onOpenSmartCategorize?: () => void;
 }
 
 interface CipherListItemProps {
@@ -562,6 +563,29 @@ export default function VaultListPanel(props: VaultListPanelProps) {
                 <p className="text-slate-600 dark:text-slate-300 m-0 leading-relaxed text-[11px]">
                   已智慧聚合重複與關聯憑證，自動標註「推薦保留 (最新)」與「建議清理 (歷史冗餘)」。點擊「選擇重複項」即可一鍵勾選冗餘記錄進行批次清理。
                 </p>
+              </div>
+            )}
+            {props.sidebarFilter.kind === 'folder' && props.sidebarFilter.folderId === null && props.onOpenSmartCategorize && (
+              <div className="card m-2 p-3 rounded-xl border border-amber-200/80 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/20 text-xs flex flex-wrap items-center justify-between gap-2.5">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Sparkles size={16} className="text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                  <div>
+                    <strong className="text-amber-950 dark:text-amber-100 block">
+                      尚有未分類的網站憑證？
+                    </strong>
+                    <span className="text-slate-600 dark:text-slate-300 text-[11px] block">
+                      讓 Clef 自動辨識網站性質，一鍵建議並歸類至「區網10」、「雲端與開發」、「金融與銀行」等資料夾。
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-primary small flex-shrink-0 text-xs bg-amber-600 hover:bg-amber-500 text-white font-semibold"
+                  onClick={props.onOpenSmartCategorize}
+                >
+                  <Sparkles size={13} />
+                  AI 智慧分類建議
+                </button>
               </div>
             )}
             {props.visibleCiphers.map((cipher) => (

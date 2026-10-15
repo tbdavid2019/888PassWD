@@ -1685,3 +1685,57 @@ export async function evaluateDuplicateClusters(
   const body = await parseJson<DuplicateClustersResponse>(resp);
   return body!;
 }
+
+export interface VaultCategorizeItemInput {
+  id: string;
+  name: string;
+  uri?: string;
+  currentFolderId?: string | null;
+}
+
+export interface ExistingFolderInput {
+  id: string;
+  name: string;
+}
+
+export interface VaultCategorizeItemResult {
+  id: string;
+  name: string;
+  category: string;
+  categoryLabel: string;
+  suggestedFolderId?: string | null;
+  suggestedFolderName: string;
+  isNewFolder: boolean;
+  confidence: number;
+  suggestedTags: string[];
+  reason: string;
+}
+
+export interface VaultCategorizeResponse {
+  success: boolean;
+  provider: string;
+  latencyMs: number;
+  items: VaultCategorizeItemResult[];
+  folderStats: {
+    folderName: string;
+    folderId?: string | null;
+    isNew: boolean;
+    count: number;
+  }[];
+}
+
+export async function categorizeVaultWebsites(
+  authedFetch: AuthedFetch,
+  items: VaultCategorizeItemInput[],
+  existingFolders: ExistingFolderInput[] = []
+): Promise<VaultCategorizeResponse> {
+  const resp = await authedFetch('/api/vault/decision/categorize', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items, existingFolders }),
+  });
+  if (!resp.ok) throw new Error('Vault websites categorization failed');
+  const body = await parseJson<VaultCategorizeResponse>(resp);
+  return body!;
+}
+
