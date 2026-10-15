@@ -821,6 +821,7 @@ export default function useVaultSendActions(options: UseVaultSendActionsOptions)
           ]);
           void refreshVaultRevisionStamp();
           onNotify('success', t('txt_folder_created'));
+          return created;
         } catch (error) {
           onNotify('error', error instanceof Error ? error.message : t('txt_create_folder_failed'));
           throw error;

@@ -166,6 +166,7 @@ export interface AppMainRoutesProps {
   onEvaluateDecision?: (state: Record<string, unknown> | null, questions: Record<string, unknown>) => Promise<DecisionExecutionResult>;
   onTriageVaultSecurity?: (items: any[]) => Promise<any>;
   onEvaluateDuplicateClusters?: (clusters: any[]) => Promise<any>;
+  onCategorizeVaultWebsites?: (items: any[], existingFolders: any[]) => Promise<any>;
   onLoadAuditLogs: (filters: AuditLogFilters) => Promise<AuditLogListResult>;
   onLoadAuditLogSettings: () => Promise<AuditLogSettings>;
   onSaveAuditLogSettings: (settings: AuditLogSettings) => Promise<AuditLogSettings>;
@@ -299,6 +300,7 @@ export default function AppMainRoutes(props: AppMainRoutesProps) {
             attachmentUploadPercent={props.attachmentUploadPercent}
             mobileSidebarToggleKey={props.mobileSidebarToggleKey}
             onEvaluateDuplicateClusters={props.onEvaluateDuplicateClusters}
+            onCategorizeVaultWebsites={props.onCategorizeVaultWebsites}
           />
         </Suspense>
       </Route>

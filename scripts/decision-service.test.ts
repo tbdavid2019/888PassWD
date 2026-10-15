@@ -100,3 +100,45 @@ test('DecisionService: evaluateDuplicateClusters detects cross-boundary and redu
   assert.equal(result.clusters[0].clusterType, 'cross_boundary');
 });
 
+test('DecisionService: evaluateWebsiteCategorization accurately maps LAN, cloud, and banking services', async () => {
+  const service = new DecisionService();
+  const existingFolders = [
+    { id: 'f-10', name: '區網10' },
+    { id: 'f-192', name: '區網192' },
+    { id: 'f-bank', name: 'bank' },
+  ];
+
+  const result = await service.evaluateWebsiteCategorization([
+    { id: '1', name: 'Gateway', uri: 'http://10.0.0.1' },
+    { id: '2', name: 'Colab Training', uri: 'https://5b3tl4dkgq-496ff2e9c6d22116-0-colab.google.com' },
+    { id: '3', name: '國泰世華網銀', uri: 'https://www.cathaybk.com.tw' },
+    { id: '4', name: 'GitHub Pro', uri: 'https://github.com' },
+  ], existingFolders);
+
+  assert.equal(result.success, true);
+  assert.equal(result.items.length, 4);
+
+  // 10.0.0.1 should match existing 區網10 folder
+  const lan10 = result.items.find((i) => i.id === '1');
+  assert.ok(lan10);
+  assert.equal(lan10.suggestedFolderId, 'f-10');
+  assert.equal(lan10.suggestedFolderName, '區網10');
+  assert.equal(lan10.isNewFolder, false);
+
+  // Bank should match existing bank folder
+  const bank = result.items.find((i) => i.id === '3');
+  assert.ok(bank);
+  assert.equal(bank.suggestedFolderId, 'f-bank');
+  assert.equal(bank.isNewFolder, false);
+
+  // Colab & Github should suggest Cloud & Dev
+  const colab = result.items.find((i) => i.id === '2');
+  assert.ok(colab);
+  assert.equal(colab.category, 'internal_network');
+
+  const github = result.items.find((i) => i.id === '4');
+  assert.ok(github);
+  assert.equal(github.category, 'dev_cloud');
+  assert.equal(github.isNewFolder, true);
+});
+

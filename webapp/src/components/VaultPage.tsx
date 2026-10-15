@@ -5,6 +5,7 @@ import VaultDetailView from '@/components/vault/VaultDetailView';
 import VaultEditor from '@/components/vault/VaultEditor';
 import VaultListPanel from '@/components/vault/VaultListPanel';
 import VaultSidebar from '@/components/vault/VaultSidebar';
+import VaultSmartCategorizeDialog from '@/components/vault/VaultSmartCategorizeDialog';
 import {
   MOBILE_LAYOUT_QUERY,
   VAULT_LIST_OVERSCAN,
@@ -35,7 +36,14 @@ import { calcTotpNow, type TotpCodeResult } from '@/lib/crypto';
 import { computeSshFingerprint, generateDefaultSshKeyMaterial } from '@/lib/ssh';
 import { ChevronLeft } from 'lucide-preact';
 import type { Cipher, CustomFieldType, Folder, VaultDraft, VaultDraftField } from '@/lib/types';
-import type { DuplicateClusterInput, DuplicateClusterResult, DuplicateClustersResponse } from '@/lib/api/vault';
+import type {
+  DuplicateClusterInput,
+  DuplicateClusterResult,
+  DuplicateClustersResponse,
+  VaultCategorizeItemInput,
+  ExistingFolderInput,
+  VaultCategorizeResponse,
+} from '@/lib/api/vault';
 import { getSecurityPriorityMap, getSecurityRiskCounts, subscribePasswordSecurityState } from '@/lib/password-security-cache';
 import { t } from '@/lib/i18n';
 
@@ -71,6 +79,7 @@ interface VaultPageProps {
   attachmentUploadPercent: number | null;
   mobileSidebarToggleKey: number;
   onEvaluateDuplicateClusters?: (clusters: DuplicateClusterInput[]) => Promise<DuplicateClustersResponse>;
+  onCategorizeVaultWebsites?: (items: VaultCategorizeItemInput[], existingFolders: ExistingFolderInput[]) => Promise<VaultCategorizeResponse>;
 }
 
 
@@ -139,6 +148,7 @@ export default function VaultPage(props: VaultPageProps) {
   const [listViewportHeight, setListViewportHeight] = useState(0);
   const [securityPriorities, setSecurityPriorities] = useState(() => getSecurityPriorityMap());
   const [securityRiskCounts, setSecurityRiskCounts] = useState(() => getSecurityRiskCounts());
+  const [smartCategorizeOpen, setSmartCategorizeOpen] = useState(false);
 
   useEffect(() => {
     return subscribePasswordSecurityState(() => {
@@ -1370,6 +1380,7 @@ const folderName = useCallback((id: string | null | undefined): string => {
           folderSortMenuRef={folderSortMenuRef}
           securityP0Count={securityRiskCounts.p0}
           securityTotalRiskCount={securityRiskCounts.total}
+          onOpenSmartCategorize={() => setSmartCategorizeOpen(true)}
           onCloseMobileSidebar={handleCloseMobileSidebar}
           onChangeFilter={setSidebarFilter}
           onOpenDeleteAllFolders={handleOpenDeleteAllFolders}
@@ -1398,6 +1409,7 @@ const folderName = useCallback((id: string | null | undefined): string => {
           redundantIds={clusterAnalysis.redundantIds}
           clusterProvider={clusterAnalysis.provider}
           securityPriorityById={securityPriorities}
+          onOpenSmartCategorize={() => setSmartCategorizeOpen(true)}
           virtualRange={virtualRange}
           selectedCipherId={selectedCipherId}
           selectedMap={selectedMap}
@@ -1620,6 +1632,18 @@ const folderName = useCallback((id: string | null | undefined): string => {
         onRepromptPasswordChange={setRepromptPassword}
         onConfirmDeletePasskey={confirmDeleteLoginPasskey}
         onCancelDeletePasskey={() => setPendingDeletePasskeyIndex(null)}
+      />
+
+      <VaultSmartCategorizeDialog
+        open={smartCategorizeOpen}
+        busy={busy}
+        ciphers={props.ciphers}
+        folders={props.folders}
+        onClose={() => setSmartCategorizeOpen(false)}
+        onCategorizeWebsites={props.onCategorizeVaultWebsites}
+        onCreateFolder={props.onCreateFolder}
+        onBulkMove={props.onBulkMove}
+        onNotify={props.onNotify}
       />
     </>
   );
