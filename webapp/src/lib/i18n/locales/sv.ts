@@ -1480,7 +1480,13 @@ Object.assign(sv, {
   "txt_please_send_otp_first": "Skicka verifieringskod först",
   "txt_please_enter_email_and_otp": "Ange e-post, OTP-kod och huvudlösenord",
   "txt_traditional_password_login": "Traditionell lösenordsinloggning",
-  "txt_send_verification_code_failed": "Kunde inte skicka verifieringskod"
+  "txt_send_verification_code_failed": "Kunde inte skicka verifieringskod",
+  "txt_sending_code": "Skickar kod...",
+  "txt_change_email": "Ändra e-post",
+  "txt_code_sent_to": "Verifieringskod skickad till",
+  "txt_otp_validity_hint": "Koden är giltig i 10 minuter",
+  "txt_resend_verification_code": "Skicka kod igen",
+  "txt_back_to_email_step": "Tillbaka till e-post"
 });
 
 export default sv;

@@ -1480,7 +1480,13 @@ Object.assign(de, {
   "txt_please_send_otp_first": "Bitte zuerst Bestätigungscode senden",
   "txt_please_enter_email_and_otp": "Bitte geben Sie E-Mail, OTP-Code und Master-Passwort ein",
   "txt_traditional_password_login": "Klassische Passwort-Anmeldung",
-  "txt_send_verification_code_failed": "Fehler beim Senden des Bestätigungscodes"
+  "txt_send_verification_code_failed": "Fehler beim Senden des Bestätigungscodes",
+  "txt_sending_code": "Code wird gesendet...",
+  "txt_change_email": "E-Mail ändern",
+  "txt_code_sent_to": "Bestätigungscode gesendet an",
+  "txt_otp_validity_hint": "Code ist 10 Minuten gültig",
+  "txt_resend_verification_code": "Code erneut senden",
+  "txt_back_to_email_step": "Zurück zur E-Mail"
 });
 
 export default de;

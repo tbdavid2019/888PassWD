@@ -1480,7 +1480,13 @@ Object.assign(ru, {
   "txt_please_send_otp_first": "Сначала отправьте код подтверждения",
   "txt_please_enter_email_and_otp": "Введите адрес почты, код OTP и мастер-пароль",
   "txt_traditional_password_login": "Традиционный вход по паролю",
-  "txt_send_verification_code_failed": "Не удалось отправить код подтверждения"
+  "txt_send_verification_code_failed": "Не удалось отправить код подтверждения",
+  "txt_sending_code": "Отправка кода...",
+  "txt_change_email": "Изменить email",
+  "txt_code_sent_to": "Код подтверждения отправлен на",
+  "txt_otp_validity_hint": "Код действителен 10 минут",
+  "txt_resend_verification_code": "Отправить код повторно",
+  "txt_back_to_email_step": "Назад к email"
 });
 
 export default ru;

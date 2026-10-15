@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { AlertTriangle, ArrowLeft, ChevronDown, Eye, EyeOff, KeyRound, Lock, LogIn, LogOut, Mail, Send, ShieldCheck, Unlock, UserPlus } from 'lucide-preact';
+import { AlertTriangle, ArrowLeft, ChevronDown, Eye, EyeOff, KeyRound, LoaderCircle, Lock, LogIn, LogOut, Mail, Send, ShieldCheck, Unlock, UserPlus } from 'lucide-preact';
 import NetworkStatusBadge from '@/components/NetworkStatusBadge';
 import StandalonePageFrame from '@/components/StandalonePageFrame';
 import { t } from '@/lib/i18n';
@@ -131,6 +131,7 @@ export default function AuthViews(props: AuthViewsProps) {
   const passkeyPasswordPending = !!props.pendingPasskeyPasswordEmail;
   const showInviteCodeField = props.registrationInviteRequired !== false || !!props.registerValues.inviteCode.trim();
 
+  const [otpStep, setOtpStep] = useState<'request' | 'verify'>('request');
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [otpCountdown, setOtpCountdown] = useState(0);
@@ -154,9 +155,16 @@ export default function AuthViews(props: AuthViewsProps) {
       const result = await props.onSendOtp(email);
       if (result.ok) {
         setOtpCountdown(60);
-        otpInputRef.current?.focus();
+        setOtpStep('verify');
+        window.setTimeout(() => {
+          otpInputRef.current?.focus();
+        }, 80);
       } else if (result.retryAfter) {
         setOtpCountdown(result.retryAfter);
+        setOtpStep('verify');
+        window.setTimeout(() => {
+          otpInputRef.current?.focus();
+        }, 80);
       }
     } finally {
       setOtpSending(false);
@@ -370,19 +378,18 @@ export default function AuthViews(props: AuthViewsProps) {
               props.onSubmitPasskeyPassword();
               return;
             }
-            if (showPasswordForm && !otpCode.trim()) {
-              props.onSubmitLogin();
-              return;
-            }
-            if (otpCode.trim()) {
-              props.onSubmitEmailOtpLogin(props.loginValues.email, otpCode, props.loginValues.password);
-              return;
-            }
             if (showPasswordForm) {
               props.onSubmitLogin();
               return;
             }
-            props.onSubmitEmailOtpLogin(props.loginValues.email, otpCode, props.loginValues.password);
+            if (otpStep === 'request') {
+              void handleSendOtp();
+              return;
+            }
+            if (otpStep === 'verify') {
+              props.onSubmitEmailOtpLogin(props.loginValues.email, otpCode, props.loginValues.password);
+              return;
+            }
           }}
         >
           <OfflineModeNotice />
@@ -440,17 +447,16 @@ export default function AuthViews(props: AuthViewsProps) {
                 <span className="auth-divider-line" />
               </div>
 
-              {/* === 2. Email OTP 驗證碼登入 (主要登入區) === */}
-              <div className="auth-otp-section">
-                {/* Email 欄位 + 發送驗證碼按鈕 */}
-                <label className="field">
-                  <span>{t('txt_email')}</span>
-                  <div className="send-otp-row">
+              {/* === 2. Email OTP 登入 (分步漸進揭露) === */}
+              {otpStep === 'request' ? (
+                <div className="auth-step-section">
+                  <label className="field">
+                    <span>{t('txt_email')}</span>
                     <input
-                      className="input flex-1"
+                      className="input"
                       type={props.relaxedLoginInput ? 'text' : 'email'}
                       value={props.loginValues.email}
-                      autoComplete="off"
+                      autoComplete="email"
                       data-1p-ignore="true"
                       data-lpignore="true"
                       data-bwignore="true"
@@ -458,7 +464,7 @@ export default function AuthViews(props: AuthViewsProps) {
                       autoCapitalize="off"
                       autoCorrect="off"
                       spellCheck={false}
-                      placeholder={props.authPlaceholder}
+                      placeholder={props.authPlaceholder || 'name@example.com'}
                       autoFocus
                       onInput={(e) =>
                         props.onChangeLogin({
@@ -467,179 +473,224 @@ export default function AuthViews(props: AuthViewsProps) {
                         })
                       }
                     />
+                  </label>
+
+                  <button
+                    type="submit"
+                    className="btn btn-primary full"
+                    disabled={otpSending || !props.loginValues.email.trim() || loginBusy || passkeyBusy}
+                  >
+                    {otpSending ? (
+                      <>
+                        <LoaderCircle size={16} className="btn-icon animate-spin" />
+                        <span>{t('txt_sending_code')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mail size={16} className="btn-icon" />
+                        <span>{t('txt_send_verification_code')}</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* 傳統帳號密碼登入 (預設折疊，需要才點開) */}
+                  <div className="auth-collapse-section">
                     <button
                       type="button"
-                      className="btn-send-otp"
-                      onClick={() => void handleSendOtp()}
-                      disabled={otpSending || otpCountdown > 0 || !props.loginValues.email.trim() || loginBusy}
+                      className="auth-collapse-toggle"
+                      onClick={() => setShowPasswordForm(!showPasswordForm)}
+                      aria-expanded={showPasswordForm}
                     >
-                      {otpSending ? <span className="spinner-sm" /> : <Send size={14} />}
-                      <span>
-                        {otpCountdown > 0
-                          ? t('txt_resend_code_cooldown', { seconds: otpCountdown })
-                          : t('txt_send_verification_code')}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <Lock size={15} />
+                        <span>{t('txt_traditional_password_login')}</span>
+                      </div>
+                      <ChevronDown
+                        size={16}
+                        className={`transition-transform duration-200 ${showPasswordForm ? 'rotate-180' : ''}`}
+                      />
                     </button>
+
+                    {showPasswordForm && (
+                      <div className="auth-collapse-content">
+                        <PasswordField
+                          label={t('txt_master_password')}
+                          value={props.loginValues.password}
+                          autoComplete="new-password"
+                          placeholder={props.authPlaceholder}
+                          onInput={(v) => props.onChangeLogin({ ...props.loginValues, password: v })}
+                        />
+                        <div className="auth-support-row">
+                          <span className="browser-defense-hint">
+                            <ShieldCheck size={14} className="text-emerald-500 shrink-0" />
+                            <span>防瀏覽器儲存隔離</span>
+                          </span>
+                          <button
+                            type="button"
+                            className="auth-link-btn"
+                            onClick={props.onTogglePasswordHint}
+                            disabled={loginBusy || props.loginHintLoading || !props.loginValues.email.trim()}
+                          >
+                            {props.loginHintLoading
+                              ? t('txt_loading_password_hint')
+                              : t('txt_show_password_hint')}
+                          </button>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-secondary full"
+                          onClick={props.onSubmitLogin}
+                          disabled={loginBusy || passkeyBusy || !props.loginValues.email.trim() || !props.loginValues.password}
+                        >
+                          <LogIn size={16} className="btn-icon" />
+                          {loginBusy ? t('txt_logging_in') : t('txt_log_in')}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                </label>
 
-                {/* 6 位數 OTP 驗證碼輸入欄 */}
-                <label className="field">
-                  <span>{t('txt_email_otp_code_label')}</span>
-                  <input
-                    ref={otpInputRef}
-                    className="input otp-input"
-                    type="text"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    maxLength={6}
-                    value={otpCode}
-                    autoComplete="one-time-code"
-                    data-1p-ignore="true"
-                    data-lpignore="true"
-                    data-bwignore="true"
-                    data-form-type="other"
-                    placeholder={t('txt_email_otp_code_placeholder')}
-                    onInput={(e) =>
-                      setOtpCode((e.currentTarget as HTMLInputElement).value.replace(/\D/g, '').slice(0, 6))
-                    }
-                  />
-                </label>
+                  <div className="or">{t('txt_or')}</div>
 
-                {/* 主密碼（零知識本地解鎖） */}
-                <PasswordField
-                  label={t('txt_master_password_vault_decrypt')}
-                  value={props.loginValues.password}
-                  autoComplete="new-password"
-                  placeholder={props.authPlaceholder}
-                  onInput={(v) => props.onChangeLogin({ ...props.loginValues, password: v })}
-                />
-
-                {/* 零知識安全與防瀏覽器記憶說明卡 */}
-                <div className="auth-info-banner">
-                  <ShieldCheck size={18} className="text-orange-500 shrink-0 mt-0.5" />
-                  <span>{t('txt_email_otp_security_notice')}</span>
-                </div>
-
-                <div className="auth-support-row">
-                  <span className="browser-defense-hint">
-                    <ShieldCheck size={13} className="text-emerald-500 shrink-0" />
-                    <span>防瀏覽器儲存隔離</span>
-                  </span>
                   <button
                     type="button"
-                    className="auth-link-btn"
-                    onClick={props.onTogglePasswordHint}
-                    disabled={loginBusy || props.loginHintLoading || !props.loginValues.email.trim()}
+                    className="btn btn-secondary full"
+                    onClick={props.onGotoRegister}
+                    disabled={loginBusy || passkeyBusy}
                   >
-                    {props.loginHintLoading
-                      ? t('txt_loading_password_hint')
-                      : t('txt_show_password_hint')}
+                    <UserPlus size={16} className="btn-icon" />
+                    {t('txt_create_account')}
                   </button>
                 </div>
-
-                <button
-                  type="button"
-                  className="btn btn-primary full"
-                  onClick={() => {
-                    props.onSubmitEmailOtpLogin(props.loginValues.email, otpCode, props.loginValues.password);
-                  }}
-                  disabled={loginBusy || passkeyBusy || !props.loginValues.email.trim() || !otpCode.trim() || !props.loginValues.password}
-                >
-                  <Mail size={16} className="btn-icon" />
-                  {loginBusy ? t('txt_logging_in') : t('txt_email_otp_login_button')}
-                </button>
-              </div>
-
-              {/* === 3. 傳統密碼登入 (預設折疊，需要才點開) === */}
-              <div className="auth-collapse-section">
-                <button
-                  type="button"
-                  className="auth-collapse-toggle"
-                  onClick={() => setShowPasswordForm(!showPasswordForm)}
-                  aria-expanded={showPasswordForm}
-                >
-                  <div className="flex items-center gap-2">
-                    <Lock size={15} />
-                    <span>{t('txt_traditional_password_login')}</span>
-                  </div>
-                  <ChevronDown
-                    size={16}
-                    className={`transition-transform duration-200 ${showPasswordForm ? 'rotate-180' : ''}`}
-                  />
-                </button>
-
-                {showPasswordForm && (
-                  <div className="auth-collapse-content">
-                    <label className="field">
-                      <span>{t('txt_email')}</span>
-                      <input
-                        className="input"
-                        type={props.relaxedLoginInput ? 'text' : 'email'}
-                        value={props.loginValues.email}
-                        autoComplete="off"
-                        data-1p-ignore="true"
-                        data-lpignore="true"
-                        data-bwignore="true"
-                        data-form-type="other"
-                        autoCapitalize="off"
-                        autoCorrect="off"
-                        spellCheck={false}
-                        placeholder={props.authPlaceholder}
-                        onInput={(e) =>
-                          props.onChangeLogin({
-                            ...props.loginValues,
-                            email: (e.currentTarget as HTMLInputElement).value,
-                          })
-                        }
-                      />
-                    </label>
-                    <PasswordField
-                      label={t('txt_master_password')}
-                      value={props.loginValues.password}
-                      autoComplete="new-password"
-                      placeholder={props.authPlaceholder}
-                      onInput={(v) => props.onChangeLogin({ ...props.loginValues, password: v })}
-                    />
-                    <div className="auth-support-row">
-                      <span className="browser-defense-hint">
-                        <ShieldCheck size={13} className="text-emerald-500 shrink-0" />
-                        <span>防瀏覽器儲存隔離</span>
-                      </span>
-                      <button
-                        type="button"
-                        className="auth-link-btn"
-                        onClick={props.onTogglePasswordHint}
-                        disabled={loginBusy || props.loginHintLoading || !props.loginValues.email.trim()}
-                      >
-                        {props.loginHintLoading
-                          ? t('txt_loading_password_hint')
-                          : t('txt_show_password_hint')}
-                      </button>
+              ) : (
+                <div className="auth-step-section">
+                  {/* 驗證碼發送確認卡片 */}
+                  <div className="otp-sent-banner">
+                    <div className="otp-sent-info">
+                      <Mail size={18} className="otp-sent-icon" />
+                      <div className="otp-sent-text">
+                        <span className="otp-sent-label">{t('txt_code_sent_to')}</span>
+                        <span className="otp-sent-email">{props.loginValues.email}</span>
+                      </div>
                     </div>
                     <button
                       type="button"
-                      className="btn btn-secondary full"
-                      onClick={props.onSubmitLogin}
-                      disabled={loginBusy || passkeyBusy || !props.loginValues.email.trim() || !props.loginValues.password}
+                      className="otp-change-email-btn"
+                      onClick={() => setOtpStep('request')}
                     >
-                      <LogIn size={16} className="btn-icon" />
-                      {loginBusy ? t('txt_logging_in') : t('txt_log_in')}
+                      {t('txt_change_email')}
                     </button>
                   </div>
-                )}
-              </div>
 
-              <div className="or">{t('txt_or')}</div>
-              <button
-                type="button"
-                className="btn btn-secondary full"
-                onClick={props.onGotoRegister}
-                disabled={loginBusy || passkeyBusy}
-              >
-                <UserPlus size={16} className="btn-icon" />
-                {t('txt_create_account')}
-              </button>
+                  {/* 6 位數 OTP 驗證碼輸入欄 */}
+                  <label className="field">
+                    <div className="flex items-center justify-between">
+                      <span>{t('txt_email_otp_code_label')}</span>
+                      {otpCountdown > 0 ? (
+                        <span className="otp-cooldown-timer">
+                          {t('txt_resend_code_cooldown', { seconds: otpCountdown })}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="auth-link-btn"
+                          onClick={() => void handleSendOtp()}
+                          disabled={otpSending}
+                        >
+                          {otpSending ? t('txt_sending_code') : t('txt_resend_verification_code')}
+                        </button>
+                      )}
+                    </div>
+                    <input
+                      ref={otpInputRef}
+                      className="input otp-input"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      value={otpCode}
+                      autoComplete="one-time-code"
+                      data-1p-ignore="true"
+                      data-lpignore="true"
+                      data-bwignore="true"
+                      data-form-type="other"
+                      placeholder="· · · · · ·"
+                      autoFocus
+                      onInput={(e) =>
+                        setOtpCode((e.currentTarget as HTMLInputElement).value.replace(/\D/g, '').slice(0, 6))
+                      }
+                    />
+                  </label>
+
+                  {/* 主密碼（零知識本地解鎖） */}
+                  <PasswordField
+                    label={t('txt_master_password_vault_decrypt')}
+                    value={props.loginValues.password}
+                    autoComplete="new-password"
+                    placeholder={props.authPlaceholder}
+                    onInput={(v) => props.onChangeLogin({ ...props.loginValues, password: v })}
+                  />
+
+                  {/* 防瀏覽器記憶與密碼提示 */}
+                  <div className="auth-support-row">
+                    <span className="browser-defense-hint">
+                      <ShieldCheck size={14} className="text-emerald-500 shrink-0" />
+                      <span>防瀏覽器儲存隔離</span>
+                    </span>
+                    <button
+                      type="button"
+                      className="auth-link-btn"
+                      onClick={props.onTogglePasswordHint}
+                      disabled={loginBusy || props.loginHintLoading || !props.loginValues.email.trim()}
+                    >
+                      {props.loginHintLoading
+                        ? t('txt_loading_password_hint')
+                        : t('txt_show_password_hint')}
+                    </button>
+                  </div>
+
+                  {/* 零知識安全說明 */}
+                  <div className="auth-zk-note">
+                    <ShieldCheck size={14} className="shrink-0 text-emerald-500" />
+                    <span>{t('txt_email_otp_security_notice')}</span>
+                  </div>
+
+                  {/* 驗證 OTP 並登入 按鈕 */}
+                  <button
+                    type="submit"
+                    className="btn btn-primary full"
+                    disabled={
+                      loginBusy ||
+                      passkeyBusy ||
+                      !props.loginValues.email.trim() ||
+                      otpCode.trim().length !== 6 ||
+                      !props.loginValues.password
+                    }
+                  >
+                    {loginBusy ? (
+                      <>
+                        <LoaderCircle size={16} className="btn-icon animate-spin" />
+                        <span>{t('txt_logging_in')}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Mail size={16} className="btn-icon" />
+                        <span>{t('txt_email_otp_login_button')}</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* 返回重新輸入信箱 */}
+                  <button
+                    type="button"
+                    className="btn btn-secondary full"
+                    onClick={() => setOtpStep('request')}
+                    disabled={loginBusy || passkeyBusy}
+                  >
+                    <ArrowLeft size={16} className="btn-icon" />
+                    {t('txt_back_to_email_step')}
+                  </button>
+                </div>
+              )}
             </>
           )}
         </form>
@@ -647,3 +698,4 @@ export default function AuthViews(props: AuthViewsProps) {
     </div>
   );
 }
+
