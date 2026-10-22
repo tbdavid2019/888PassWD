@@ -20,7 +20,7 @@
   --color-muted-strong: var(--muted-strong);
   --color-brand: var(--primary);
   --color-brand-hover: var(--primary-hover);
-  --color-brand-strong: var(--primary-strong);
+  --color-brand-strong: var(--brand-strong);
   --color-danger: var(--danger);
 
   --shadow-soft: var(--shadow-sm);

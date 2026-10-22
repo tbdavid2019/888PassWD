@@ -1,32 +1,48 @@
 :root {
-  --bg-accent: #f3f6f9;
+  /* 2md.aiurl.tw Pantone Standard Color Palette Primitives */
+  --saffron: #ffb010;             /* Pantone 14-1064 TPG Saffron (藏紅花黃) */
+  --saffron-hover: #f2a600;
+  --saffron-strong: #d48e00;
+  --deep-blue: #17324d;           /* Pantone 19-4024 TCX Dress Blues (夜幕深藍) */
+  --deep-blue-hover: #1f4265;
+  --clay: #a9471d;                /* Pantone 18-1442 TCX Clay (赤陶/陶土褐) */
+  --clay-hover: #8f3b17;
+  --warm-cream: #fff9e8;          /* Pantone 11-0104 TCX Pureed Pumpkin Pale / Cream (暖奶油) */
+  --canvas: #faf6ee;              /* 畫布底色 (Warm Tint Canvas) */
+  --canvas-warm: #fff0cc;         /* 畫布暖色 (Warm Saffron Tint) */
+  --ink: #2b251a;                 /* Pantone 19-0303 TCX Jet Black / Deep Ink (沉木焦墨) */
+  --bronze-muted: #655a43;        /* Pantone 18-0930 TCX Bronze Brown Muted (次要文字) */
+
+  /* Light Mode Semantic Mappings */
+  --bg-accent: var(--canvas);
   --panel: #ffffff;
-  --panel-soft: #f8fafc;
-  --panel-muted: #edf2f7;
-  --panel-subtle: #fbfcfe;
+  --panel-soft: var(--warm-cream);
+  --panel-muted: #f6efe0;
+  --panel-subtle: #fbf8f0;
   --surface: #ffffff;
-  --line: rgba(100, 116, 139, 0.24);
-  --line-soft: rgba(100, 116, 139, 0.14);
-  --text: #0f172a;
-  --text-muted: #64748b;
-  --muted: #64748b;
-  --muted-strong: #334155;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-strong: #1e40af;
+  --line: rgba(43, 37, 26, 0.16);
+  --line-soft: rgba(43, 37, 26, 0.08);
+  --text: var(--ink);             /* #2b251a: 14.45:1 on warm-cream, WCAG AAA */
+  --text-muted: var(--bronze-muted); /* #655a43: 6.45:1 on warm-cream, WCAG AA */
+  --muted: var(--bronze-muted);
+  --muted-strong: #443c2c;
+  --primary: var(--saffron);      /* #ffb010 */
+  --primary-hover: var(--saffron-hover); /* #f2a600 */
+  --primary-strong: var(--saffron-strong); /* #d48e00 */
+  --primary-text: var(--ink);     /* #2b251a: 8.30:1 on Saffron, WCAG AAA */
   --brand: var(--primary);
-  --brand-strong: var(--primary-strong);
-  --accent: #0d9488;
-  --accent-soft: #e6f6f3;
-  --danger: #dc2626;
-  --success: #059669;
+  --brand-strong: var(--deep-blue); /* #17324d: 12.48:1 on warm-cream, WCAG AAA */
+  --accent: var(--deep-blue);
+  --accent-soft: rgba(23, 50, 77, 0.08);
+  --danger: var(--clay);          /* #a9471d: 5.54:1 on warm-cream, WCAG AA */
+  --success: #1b7340;
   --warning: #d97706;
-  --overlay-strong: rgba(15, 23, 42, 0.62);
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -1px rgba(15, 23, 42, 0.05);
-  --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.10), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
-  --shadow-xl: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
-  --shadow-glow: 0 0 20px rgba(37, 99, 235, 0.15), 0 8px 24px rgba(37, 99, 235, 0.12);
+  --overlay-strong: rgba(23, 50, 77, 0.65);
+  --shadow-sm: 0 1px 3px rgba(43, 37, 26, 0.06), 0 1px 2px rgba(43, 37, 26, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(43, 37, 26, 0.08), 0 2px 4px -1px rgba(43, 37, 26, 0.05);
+  --shadow-lg: 0 20px 25px -5px rgba(43, 37, 26, 0.10), 0 10px 10px -5px rgba(43, 37, 26, 0.04);
+  --shadow-xl: 0 25px 50px -12px rgba(43, 37, 26, 0.25);
+  --shadow-glow: 0 0 20px rgba(255, 176, 16, 0.20), 0 8px 24px rgba(255, 176, 16, 0.15);
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 10px;
@@ -89,32 +105,33 @@
 }
 
 :root[data-theme='dark'] {
-  --bg-accent: #0a0e13;
-  --panel: #151b24;
-  --panel-soft: #111720;
-  --panel-muted: #0d1219;
-  --panel-subtle: #1a2230;
-  --surface: #151b24;
-  --line: rgba(148, 163, 184, 0.16);
-  --line-soft: rgba(148, 163, 184, 0.09);
-  --text: #f1f5f9;
-  --text-muted: #94a3b8;
-  --muted: #94a3b8;
-  --muted-strong: #cbd5e1;
-  --primary: #60a5fa;
-  --primary-hover: #93c5fd;
-  --primary-strong: #bfdbfe;
+  --bg-accent: #0b131d;          /* 深夜幕藍 */
+  --panel: #132030;              /* 深藍面板 */
+  --panel-soft: #101b2a;
+  --panel-muted: #0d1622;
+  --panel-subtle: #172638;        /* 次級卡片 */
+  --surface: #132030;
+  --line: rgba(255, 249, 232, 0.14);
+  --line-soft: rgba(255, 249, 232, 0.08);
+  --text: #fff9e8;               /* 暖奶油 - WCAG AAA 15.6:1 on #132030 */
+  --text-muted: #b5a990;         /* 暖米灰 - WCAG AAA 7.08:1 on #132030 */
+  --muted: #b5a990;
+  --muted-strong: #ded4c0;
+  --primary: #ffb010;            /* 藏紅花黃 - WCAG AAA 8.98:1 on #132030 */
+  --primary-hover: #ffbd33;
+  --primary-strong: #e69d05;
+  --primary-text: #2b251a;       /* 沉木焦墨 - WCAG AAA 8.30:1 on Saffron */
   --brand: var(--primary);
-  --brand-strong: var(--primary-strong);
-  --accent: #2dd4bf;
-  --accent-soft: rgba(45, 212, 191, 0.12);
-  --danger: #f87171;
+  --brand-strong: #ffc44d;       /* 亮琥珀 - WCAG AAA 10.38:1 on #132030 */
+  --accent: #ffb010;
+  --accent-soft: rgba(255, 176, 16, 0.14);
+  --danger: #e06d42;
   --success: #34d399;
-  --warning: #fbbf24;
-  --overlay-strong: rgba(0, 0, 0, 0.75);
+  --warning: #ffb010;
+  --overlay-strong: rgba(7, 12, 19, 0.78);
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.45), 0 2px 4px -1px rgba(0, 0, 0, 0.35);
   --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.50), 0 10px 10px -5px rgba(0, 0, 0, 0.40);
   --shadow-xl: 0 25px 50px -12px rgba(0, 0, 0, 0.60);
-  --shadow-glow: 0 0 20px rgba(96, 165, 250, 0.20), 0 8px 24px rgba(96, 165, 250, 0.15);
+  --shadow-glow: 0 0 20px rgba(255, 176, 16, 0.25), 0 8px 24px rgba(255, 176, 16, 0.18);
 }

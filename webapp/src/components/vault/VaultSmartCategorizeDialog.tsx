@@ -266,7 +266,7 @@ export default function VaultSmartCategorizeDialog(props: VaultSmartCategorizeDi
                     type="button"
                     className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                       folderFilter === stat.folderName
-                        ? 'bg-amber-600 text-white shadow-sm ring-2 ring-amber-400'
+                        ? 'bg-[var(--primary)] text-[var(--primary-text)] font-bold shadow-sm ring-2 ring-amber-400'
                         : 'bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300'
                     }`}
                     onClick={() => setFolderFilter(stat.folderName)}
@@ -404,7 +404,7 @@ export default function VaultSmartCategorizeDialog(props: VaultSmartCategorizeDi
             </button>
             <button
               type="button"
-              className="btn btn-primary small bg-amber-600 hover:bg-amber-500 text-white font-semibold flex items-center gap-1.5"
+              className="btn btn-primary small flex items-center gap-1.5"
               onClick={handleApply}
               disabled={loading || applying || selectedIds.size === 0}
             >

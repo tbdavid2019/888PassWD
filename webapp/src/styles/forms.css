@@ -61,8 +61,8 @@ input[type='file'].input::file-selector-button:hover {
 
 .input:focus {
   border-color: var(--primary);
-  background-color: #fbfdff;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12), 0 8px 20px rgba(37, 99, 235, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  background-color: #fffdf9;
+  box-shadow: 0 0 0 3px rgba(255, 176, 16, 0.22), 0 8px 20px rgba(255, 176, 16, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.95);
   transform: translateY(-1px);
 }
 
@@ -96,8 +96,8 @@ input[type='file'].input::file-selector-button:hover {
 }
 
 .input-icon-btn:hover:not(:disabled) {
-  color: var(--primary);
-  background: rgba(37, 99, 235, 0.08);
+  color: var(--brand-strong);
+  background: rgba(255, 176, 16, 0.16);
   transform: translateY(-50%) scale(1.04);
 }
 
@@ -106,12 +106,14 @@ input[type='file'].input::file-selector-button:hover {
 }
 
 .password-toggle {
-  @apply absolute right-2 top-1/2 grid cursor-pointer place-items-center border-0 bg-transparent text-blue-700 transition;
+  @apply absolute right-2 top-1/2 grid cursor-pointer place-items-center border-0 bg-transparent transition;
+  color: var(--text-muted);
   transform: translateY(-50%);
 }
 
 .eye-btn {
-  @apply absolute right-2.5 top-1/2 grid h-8 w-8 cursor-pointer place-items-center border-0 bg-transparent text-slate-700 transition;
+  @apply absolute right-2.5 top-1/2 grid h-8 w-8 cursor-pointer place-items-center border-0 bg-transparent transition;
+  color: var(--text-muted);
   transform: translateY(-50%);
 }
 
@@ -183,10 +185,11 @@ input[type='file'].input::file-selector-button:hover {
 }
 
 .btn-primary {
-  @apply text-white;
-  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
-  border: 1px solid rgba(37, 99, 235, 0.4);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  color: var(--primary-text);
+  background: var(--primary);
+  border: 1px solid rgba(217, 142, 0, 0.5);
+  box-shadow: 0 4px 14px rgba(255, 176, 16, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  font-weight: 600;
   position: relative;
   overflow: hidden;
 }
@@ -195,45 +198,51 @@ input[type='file'].input::file-selector-button:hover {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, transparent 60%);
   opacity: 0;
   transition: opacity var(--dur-fast) var(--ease-smooth);
 }
 
-.btn-primary:hover {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-hover);
+  color: var(--primary-text);
+  border-color: rgba(194, 126, 0, 0.6);
+  box-shadow: 0 6px 20px rgba(255, 176, 16, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.4);
   transform: translateY(-2px);
 }
 
-.btn-primary:hover::before {
+.btn-primary:hover:not(:disabled)::before {
   opacity: 1;
 }
 
 .btn-primary:active:not(:disabled) {
+  background: var(--primary-strong);
+  color: var(--primary-text);
+  border-color: rgba(180, 115, 0, 0.7);
+  box-shadow: 0 2px 8px rgba(255, 176, 16, 0.2), inset 0 1px 2px rgba(0, 0, 0, 0.12);
   transform: translateY(0) scale(0.98);
 }
 
 .btn-secondary {
   @apply bg-panel text-brand-strong;
-  border: 1px solid rgba(37, 99, 235, 0.22);
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(23, 50, 77, 0.22);
+  box-shadow: 0 2px 8px rgba(43, 37, 26, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .btn-secondary:hover {
-  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-  border-color: rgba(37, 99, 235, 0.40);
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1);
+  background: linear-gradient(180deg, #ffffff 0%, var(--warm-cream) 100%);
+  border-color: rgba(23, 50, 77, 0.40);
+  box-shadow: 0 4px 12px rgba(23, 50, 77, 0.15), inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 
 .btn-danger {
   @apply bg-white/80 text-danger;
-  border-color: rgba(217, 45, 87, 0.28);
+  border-color: rgba(169, 71, 29, 0.28);
 }
 
 .btn-danger:hover {
-  background: rgba(255, 241, 242, 0.96);
-  border-color: rgba(217, 45, 87, 0.38);
+  background: rgba(255, 245, 240, 0.96);
+  border-color: rgba(169, 71, 29, 0.42);
 }
 
 .btn:disabled {
@@ -271,7 +280,7 @@ input[type='file'].input::file-selector-button:hover {
   font-size: var(--font-xs);
   font-weight: 600;
   letter-spacing: var(--tracking-wide);
-  color: var(--primary-strong);
+  color: var(--brand-strong);
   line-height: var(--leading-snug);
 }
 

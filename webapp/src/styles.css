@@ -53,9 +53,9 @@
 .backup-destination-item.active,
 .backup-interval-preset.active,
 .mobile-settings-link.active {
-  background: color-mix(in srgb, var(--primary) 12%, var(--panel));
-  border-color: color-mix(in srgb, var(--primary) 32%, var(--line));
-  color: var(--primary-strong);
+  background: color-mix(in srgb, var(--primary) 14%, var(--panel));
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--line));
+  color: var(--brand-strong);
 }
 
 /* ── danger / warning panels (cosmetic resets only) ── */
@@ -142,8 +142,8 @@
 
 :root[data-theme='dark'] .btn-primary {
   background: var(--primary);
-  border-color: transparent;
-  color: #08111f;
+  border-color: rgba(217, 142, 0, 0.5);
+  color: var(--primary-text);
 }
 
 :root[data-theme='dark'] .btn-danger {
@@ -360,9 +360,9 @@ h4 {
 .backup-interval-preset.active,
 .mobile-settings-link.active,
 .nav-layout-option.active {
-  background: color-mix(in srgb, var(--primary) 10%, var(--panel));
-  border-color: color-mix(in srgb, var(--primary) 34%, var(--line));
-  color: var(--primary-strong);
+  background: color-mix(in srgb, var(--primary) 14%, var(--panel));
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--line));
+  color: var(--brand-strong);
   box-shadow: none;
 }
 
@@ -546,20 +546,21 @@ h4 {
 
 .btn-primary {
   background: var(--primary);
-  border-color: transparent;
-  color: #fff;
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 20%, transparent);
+  border: 1px solid rgba(217, 142, 0, 0.5);
+  color: var(--primary-text);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 24%, transparent);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: var(--primary-hover);
-  box-shadow: 0 10px 22px color-mix(in srgb, var(--primary) 24%, transparent);
+  color: var(--primary-text);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--primary) 32%, transparent);
 }
 
 .btn-secondary {
   background: var(--panel);
   border-color: var(--line);
-  color: var(--primary-strong);
+  color: var(--brand-strong);
 }
 
 .btn-secondary:hover:not(:disabled) {
@@ -991,7 +992,7 @@ textarea {
 }
 
 :root[data-theme='dark'] .btn-primary {
-  color: #08111f;
+  color: var(--primary-text);
 }
 
 @media (max-width: 1180px) {
@@ -1238,7 +1239,7 @@ input[type='file'].input::file-selector-button {
 
 .list-item.active .list-title,
 .list-item.active .list-icon-fallback {
-  color: var(--primary-strong);
+  color: var(--brand-strong);
 }
 
 .list-item.active .list-sub {
@@ -1357,7 +1358,7 @@ input[type='file'].input::file-selector-button {
 
 :root[data-theme='dark'] .list-item.active .list-title,
 :root[data-theme='dark'] .list-item.active .list-icon-fallback {
-  color: var(--primary-strong);
+  color: var(--brand-strong);
 }
 
 :root[data-theme='dark'] .list-item.active .list-sub {
