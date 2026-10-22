@@ -5,6 +5,25 @@ All notable changes to **888warden** (formerly NodeWarden) will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2026-10-22
+
+### Changed
+- **2md.aiurl.tw 潘通標準配色全面升級 (Pantone Standard Color Palette Upgrade)**:
+  - 配色全面升級為 2md.aiurl.tw 潘通標準：Pantone 14-1064 TPG Saffron (藏紅花黃 `#ffb010`)、Pantone 19-4024 TCX Dress Blues (夜幕深藍 `#17324d`)、Pantone 18-1442 TCX Clay (赤陶/陶土褐 `#a9471d`)、Pantone 11-0104 TCX Cream (暖奶油 `#fff9e8`)、Pantone 19-0303 TCX Jet Black / Deep Ink (沉木焦墨 `#2b251a`) 與畫布暖色 (`#faf6ee` / `#fff0cc`)。
+  - **嚴格落實 WCAG AA / AAA 無障礙可讀性標準**：
+    - 主按鈕（`.btn-primary`、`.auth-card .btn-primary`、`.btn-passkey-primary`）全面強制使用沉木焦墨（`#2b251a`）文字，對比度高達 8.30:1（超越 WCAG AAA 7.0:1 標準），徹底移除白字（1.83:1 嚴重不及格）之反模式。
+    - 主文字（`#2b251a`）在暖奶油背景對比度達 14.45:1（WCAG AAA）。
+    - 夜幕深藍（`#17324d`）在淺色背景對比度達 12.48:1（WCAG AAA）。
+    - 次要文字（`#655a43`）在淺色背景對比度達 6.45:1（WCAG AA >= 4.5:1）。
+    - 赤陶色（`#a9471d`）在淺色背景對比度達 5.54:1（WCAG AA >= 4.5:1）。
+  - **深色模式（Dark Mode）全面達標 WCAG AAA**：
+    - 深夜幕藍底色（`#0b131d`）與深藍面板（`#132030`）。
+    - 暖奶油主文字色（`#fff9e8`）在深底對比度達 15.64:1（WCAG AAA）。
+    - 暖米灰次要文字色（`#b5a990`）對比度達 7.08:1（WCAG AAA）。
+    - 藏紅花黃主色（`#ffb010`）對比度達 8.98:1（WCAG AAA）。
+  - **新增自動化 WCAG 對比度單元測試**：
+    - 建立 `scripts/wcag-contrast.test.ts` 與 `npm run test:wcag` 指令，將無障礙色彩對比度納入自動化測試保護。
+
 ## [v2026.10.15] - 2026-10-15
 
 ### Added

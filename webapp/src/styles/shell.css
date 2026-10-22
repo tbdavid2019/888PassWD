@@ -25,7 +25,7 @@
 }
 
 .brand-title-number {
-  color: #ea580c;
+  color: var(--clay);
   @apply font-black tracking-tight;
 }
 
@@ -35,7 +35,7 @@
 }
 
 :is(.dark) .brand-title-number {
-  color: #fb923c;
+  color: var(--primary);
 }
 
 :is(.dark) .brand-title-word {
@@ -265,12 +265,12 @@
 
 .side-link.active,
 .side-group-trigger.active {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(37, 99, 235, 0.08) 100%);
-  border-color: rgba(37, 99, 235, 0.32);
-  color: var(--primary-strong);
+  background: linear-gradient(135deg, rgba(255, 176, 16, 0.16) 0%, rgba(255, 176, 16, 0.08) 100%);
+  border-color: rgba(255, 176, 16, 0.40);
+  color: var(--brand-strong);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 2px 8px rgba(37, 99, 235, 0.15);
+    0 2px 8px rgba(255, 176, 16, 0.15);
 }
 
 .side-group-chevron {
@@ -319,9 +319,9 @@
 }
 
 .side-sub-link.active {
-  background: rgba(37, 99, 235, 0.10);
-  border-color: rgba(37, 99, 235, 0.18);
-  color: var(--primary-strong);
+  background: rgba(255, 176, 16, 0.14);
+  border-color: rgba(255, 176, 16, 0.32);
+  color: var(--brand-strong);
 }
 
 .nav-layout-control {
@@ -337,9 +337,9 @@
 
 .nav-layout-trigger:hover,
 .nav-layout-trigger.active {
-  border-color: rgba(37, 99, 235, 0.20);
+  border-color: rgba(255, 176, 16, 0.40);
   background: #fff;
-  color: var(--primary-strong);
+  color: var(--brand-strong);
 }
 
 .nav-layout-menu {

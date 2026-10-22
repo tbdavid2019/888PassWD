@@ -580,7 +580,7 @@ export default function VaultListPanel(props: VaultListPanelProps) {
                 </div>
                 <button
                   type="button"
-                  className="btn btn-primary small flex-shrink-0 text-xs bg-amber-600 hover:bg-amber-500 text-white font-semibold"
+                  className="btn btn-primary small flex-shrink-0 text-xs"
                   onClick={props.onOpenSmartCategorize}
                 >
                   <Sparkles size={13} />
