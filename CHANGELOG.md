@@ -5,7 +5,7 @@ All notable changes to **888warden** (formerly NodeWarden) will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2026-10-22
+## [v2026.10.22] - 2026-10-22
 
 ### Changed
 - **2md.aiurl.tw 潘通標準配色全面升級 (Pantone Standard Color Palette Upgrade)**:
