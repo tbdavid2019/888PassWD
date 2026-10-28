@@ -34,7 +34,7 @@ import {
   bulkPermanentDeleteCiphers,
   bulkRestoreCiphers,
   bulkUnarchiveCiphers,
-  createCipher as createVaultCipher,
+  createVaultCipher,
   createFolder,
   deleteCipher,
   deleteCipherAttachment,
@@ -535,8 +535,6 @@ export default function useVaultSendActions(options: UseVaultSendActionsOptions)
         const optimistic = optimisticCipherFromDraft(draft, null);
         patchDecryptedCiphers((prev) => [optimistic, ...prev.filter((cipher) => cipher.id !== optimistic.id)]);
         try {
-          // nosemgrep: javascript.node-crypto.security.create-de-cipher-no-iv.create-de-cipher-no-iv
-          // This is the vault REST API create-cipher request, not a Node crypto cipher primitive.
           const created = await createVaultCipher(authedFetch, session, draft);
           for (const file of attachments) {
             setUploadingAttachmentName(file.name);
