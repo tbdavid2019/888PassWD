@@ -5,7 +5,9 @@ type WorkerRequest =
   | { id: number; kind: 'sends'; payload: DecryptSendsArgs };
 
 self.onmessage = async (event: MessageEvent<WorkerRequest>) => {
+  if (event.origin !== self.location.origin) return;
   const request = event.data;
+  if (!request || !Number.isSafeInteger(request.id) || (request.kind !== 'vault-core' && request.kind !== 'sends')) return;
   try {
     if (request.kind === 'vault-core') {
       const result = await decryptVaultCore(request.payload);

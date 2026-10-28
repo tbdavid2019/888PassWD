@@ -5,6 +5,13 @@ All notable changes to **888warden** (formerly NodeWarden) will be documented in
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+- Remove the TypeSafe API key from tracked Wrangler configuration and the decision service default. Configure `TYPESAFE_API_KEY` as a Cloudflare Worker secret to enable that provider fallback.
+- Keep password-security assessment results in memory and clear the older browser-local cache. Profile snapshots no longer persist the master-password hint.
+- Pin deployment actions, scope workflow token permissions, add Dependabot cooldowns, and update vulnerable npm packages.
+
 ## [v2026.10.22] - 2026-10-22
 
 ### Changed

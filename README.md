@@ -121,6 +121,9 @@ npx wrangler secret put JWT_SECRET
 # Set Resend API key to enable Email 2FA OTP (optional)
 npx wrangler secret put RESEND_API_KEY
 
+# Set TypeSafe API key to enable the final decision-service fallback (optional)
+npx wrangler secret put TYPESAFE_API_KEY
+
 # Set custom sender address (optional)
 npx wrangler secret put RESEND_FROM
 ```

@@ -192,8 +192,11 @@ function readBodyString(body: Record<string, unknown>, names: string[]): string 
 function readNestedString(source: unknown, path: string[]): string {
   let current = source;
   for (const key of path) {
+    if (key === '__proto__' || key === 'prototype' || key === 'constructor') return '';
     if (!current || typeof current !== 'object') return '';
-    current = (current as Record<string, unknown>)[key];
+    const property = Object.getOwnPropertyDescriptor(current, key);
+    if (!property) return '';
+    current = property.value;
   }
   return typeof current === 'string' ? current : '';
 }
@@ -201,8 +204,11 @@ function readNestedString(source: unknown, path: string[]): string {
 function readNestedNumber(source: unknown, path: string[]): number | undefined {
   let current = source;
   for (const key of path) {
+    if (key === '__proto__' || key === 'prototype' || key === 'constructor') return undefined;
     if (!current || typeof current !== 'object') return undefined;
-    current = (current as Record<string, unknown>)[key];
+    const property = Object.getOwnPropertyDescriptor(current, key);
+    if (!property) return undefined;
+    current = property.value;
   }
   return typeof current === 'number' ? current : undefined;
 }
@@ -546,7 +552,6 @@ export async function handleUpdateProfile(request: Request, env: Env, userId: st
 // the user's preference.
 export async function handleSetVerifyDevices(request: Request, env: Env, userId: string): Promise<Response> {
   const storage = new StorageService(env.DB);
-  const auth = new AuthService(env);
   const user = await storage.getUserById(userId);
   if (!user) return errorResponse('User not found', 404);
 
@@ -1338,9 +1343,8 @@ export async function handleBootstrapTwoFactorYubiKeyConfig(request: Request, en
     return errorResponse('Yubico validation credentials are already configured.', 403);
   }
 
-  let credentials;
   if (user.role === 'admin') {
-    credentials = await requestYubicoApiCredentials(user.email, otp);
+    const credentials = await requestYubicoApiCredentials(user.email, otp);
     if (!credentials?.clientId || !credentials.secretKey) {
       return errorResponse('Unable to initialize Yubico validation credentials.', 400);
     }
@@ -1355,7 +1359,6 @@ export async function handleBootstrapTwoFactorYubiKeyConfig(request: Request, en
         initialized?.credentials ? 403 : 400
       );
     }
-    credentials = initialized.credentials;
   }
 
   await writeAuditEvent(storage, {

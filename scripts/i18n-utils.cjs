@@ -20,8 +20,16 @@ const localeFiles = [
   ['sv', 'sv.ts', 'sv', 'Swedish'],
 ];
 
+const localePaths = new Map(localeFiles.map(([, fileName]) => [fileName, path.join(localeDir, fileName)]));
+
+function resolveLocaleFile(fileName) {
+  const resolved = localePaths.get(fileName);
+  if (!resolved) throw new Error(`Unsupported locale file: ${fileName}`);
+  return resolved;
+}
+
 function readLocale(fileName, variableName) {
-  let code = fs.readFileSync(path.join(localeDir, fileName), 'utf8');
+  let code = fs.readFileSync(resolveLocaleFile(fileName), 'utf8');
   code = code
     .replace(/const (\w+): Record<string, string> =/g, 'const $1 =')
     .replace(/export default \w+;\s*$/m, '');
@@ -35,7 +43,7 @@ function readLocale(fileName, variableName) {
 function writeLocale(fileName, variableName, table, header) {
   const body = JSON.stringify(table, null, 2);
   fs.writeFileSync(
-    path.join(localeDir, fileName),
+    resolveLocaleFile(fileName),
     `${header}\nconst ${variableName}: Record<string, string> = ${body};\n\nexport default ${variableName};\n`,
     'utf8'
   );

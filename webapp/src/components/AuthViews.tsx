@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { AlertTriangle, ArrowLeft, ChevronDown, Eye, EyeOff, KeyRound, LoaderCircle, Lock, LogIn, LogOut, Mail, Send, ShieldCheck, Unlock, UserPlus } from 'lucide-preact';
+import { AlertTriangle, ArrowLeft, Eye, EyeOff, KeyRound, LoaderCircle, Lock, LogIn, LogOut, Mail, ShieldCheck, Unlock, UserPlus } from 'lucide-preact';
 import StandalonePageFrame from '@/components/StandalonePageFrame';
 import { t } from '@/lib/i18n';
 import { getCurrentNetworkStatus, subscribeNetworkStatus, type NetworkStatus } from '@/lib/network-status';

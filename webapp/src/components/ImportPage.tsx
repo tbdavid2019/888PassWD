@@ -697,10 +697,8 @@ export default function ImportPage({ onImport, onImportEncryptedRaw, accountKeys
       return;
     }
     await runExportWithMasterPassword(masterPassword);
-    if (!isExporting) {
-      setExportAuthPassword('');
-      setExportAuthDialogOpen(false);
-    }
+    setExportAuthPassword('');
+    setExportAuthDialogOpen(false);
   }
 
   function handleExport() {

@@ -236,7 +236,6 @@ export default function App() {
   const [hashPathRaw, setHashPathRaw] = useState(() => (typeof window !== 'undefined' ? window.location.hash || '' : ''));
   const [unlockPassword, setUnlockPassword] = useState('');
   const [pendingTotp, setPendingTotp] = useState<PendingTotp | null>(null);
-  const [pendingTotpMode, setPendingTotpMode] = useState<'login' | 'unlock' | null>(null);
   const [pendingPasskeyPassword, setPendingPasskeyPassword] = useState<PendingPasskeyPassword | null>(null);
   const [passkeyPassword, setPasskeyPassword] = useState('');
   const [totpCode, setTotpCode] = useState('');
@@ -577,7 +576,6 @@ export default function App() {
     setUnlockPreparing(false);
     setLockedSessionRefreshError('');
     setPendingTotp(null);
-    setPendingTotpMode(null);
     setPendingPasskeyPassword(null);
     setTotpCode('');
     setPasskeyPassword('');
@@ -621,7 +619,6 @@ export default function App() {
       }
       if (result.kind === 'totp') {
         setPendingTotp(result.pendingTotp);
-        setPendingTotpMode('login');
         setTotpCode('');
         setRememberDevice(true);
         return;
@@ -672,7 +669,6 @@ export default function App() {
       }
       if (result.kind === 'totp') {
         setPendingTotp(result.pendingTotp);
-        setPendingTotpMode('login');
         setTotpCode('');
         setRememberDevice(true);
         return;
@@ -945,7 +941,6 @@ export default function App() {
       }
       if (result.kind === 'totp') {
         setPendingTotp(result.pendingTotp);
-        setPendingTotpMode('unlock');
         setTotpCode('');
         setRememberDevice(true);
         return;
@@ -972,7 +967,6 @@ export default function App() {
     clearPasswordSecurityCache();
     setUnlockPassword('');
     setPendingTotp(null);
-    setPendingTotpMode(null);
     setTotpCode('');
     setUnlockPreparing(false);
     setLockedSessionRefreshError('');
@@ -996,7 +990,6 @@ export default function App() {
     setProfile(null);
     setUnlockPreparing(false);
     setPendingTotp(null);
-    setPendingTotpMode(null);
     setPhase('login');
     navigate('/login');
   }
@@ -2396,14 +2389,12 @@ export default function App() {
           onCancelTotp={() => {
             if (totpSubmitting) return;
             setPendingTotp(null);
-            setPendingTotpMode(null);
             setTotpCode('');
             setRememberDevice(true);
           }}
           onUseRecoveryCode={() => {
             if (totpSubmitting) return;
             setPendingTotp(null);
-            setPendingTotpMode(null);
             setTotpCode('');
             setRememberDevice(true);
             navigate('/recover-2fa');

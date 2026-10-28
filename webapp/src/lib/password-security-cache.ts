@@ -32,60 +32,22 @@ export interface PasswordSecurityState {
 
 type InternalPasswordSecurityState = PasswordSecurityState & { controller: AbortController | null };
 
-const STORAGE_KEY = 'nodewarden_security_assessment_v1';
-
-function loadPersistedState(): {
-  report: PasswordSecurityReport | null;
-  scannedAt: number | null;
-  triageMap: Record<string, SecurityTriageItemResult>;
-  aiEvaluation: SecurityAiEvaluation | null;
-} | null {
-  try {
-    if (typeof localStorage === 'undefined') return null;
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === 'object') {
-      return {
-        report: parsed.report || null,
-        scannedAt: typeof parsed.scannedAt === 'number' ? parsed.scannedAt : null,
-        triageMap: parsed.triageMap && typeof parsed.triageMap === 'object' ? parsed.triageMap : {},
-        aiEvaluation: parsed.aiEvaluation || null,
-      };
-    }
-  } catch (err) {
-    console.warn('Failed to load persisted security assessment:', err);
-  }
-  return null;
+try {
+  if (typeof localStorage !== 'undefined') localStorage.removeItem('nodewarden_security_assessment_v1');
+} catch {
+  // Browser storage may be unavailable; assessments remain in memory only.
 }
-
-function savePersistedState(s: PasswordSecurityState): void {
-  try {
-    if (typeof localStorage === 'undefined') return;
-    const toSave = {
-      report: s.report,
-      scannedAt: s.scannedAt,
-      triageMap: s.triageMap,
-      aiEvaluation: s.aiEvaluation,
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
-  } catch (err) {
-    console.warn('Failed to persist security assessment:', err);
-  }
-}
-
-const initialPersisted = loadPersistedState();
 
 let state: InternalPasswordSecurityState = {
   fingerprint: '',
-  report: initialPersisted?.report || null,
-  scannedAt: initialPersisted?.scannedAt || null,
+  report: null,
+  scannedAt: null,
   scanning: false,
   progress: { checked: 0, total: 0 },
   scanError: false,
   controller: null,
-  triageMap: initialPersisted?.triageMap || {},
-  aiEvaluation: initialPersisted?.aiEvaluation || null,
+  triageMap: {},
+  aiEvaluation: null,
 };
 
 const listeners = new Set<() => void>();
@@ -125,7 +87,6 @@ export function setSecurityTriageResults(
     triageMap: map,
     aiEvaluation,
   };
-  savePersistedState(state);
   notify();
 }
 
@@ -153,7 +114,6 @@ export function removeCipherFromSecurityAssessment(cipherId: string): void {
     report: nextReport,
     triageMap: nextTriageMap,
   };
-  savePersistedState(state);
   notify();
 }
 
@@ -208,7 +168,6 @@ export function startPasswordSecurityScan(fingerprint: string, ciphers: Cipher[]
       }, fetch, controller.signal);
       if (controller.signal.aborted || state?.controller !== controller) return;
       state = { ...state, report, scannedAt: Date.now() };
-      savePersistedState(state);
     } catch (error) {
       if (controller.signal.aborted || (error as { name?: string } | null)?.name === 'AbortError') return;
       if (state?.controller === controller) state = { ...state, scanError: true };

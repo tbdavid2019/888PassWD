@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import os from 'node:os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -69,17 +70,18 @@ export function applyIcon(choiceKey = 'pure_orange_text') {
   console.log(`[build-icons] Applying design: ${chosen.name} (${choiceKey})...`);
 
   // 1. Write master SVG to temp
-  const tmpSvg = '/tmp/chosen-icon.svg';
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'nodewarden-icons-'));
+  const tmpSvg = path.join(tempDir, 'chosen-icon.svg');
   fs.writeFileSync(tmpSvg, chosen.svg.trim());
 
   // 2. Render master PNG (512x512) via Chrome Headless
   console.log('[build-icons] Rendering vector SVG to 512x512 master PNG via Chrome headless...');
-  const masterPng = '/tmp/chosen-icon.svg.png';
+  const masterPng = path.join(tempDir, 'chosen-icon.svg.png');
   const chromePath = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
   if (fs.existsSync(chromePath)) {
-    execSync(`"${chromePath}" --headless=new --screenshot=${masterPng} --window-size=512,512 --default-background-color=00000000 "file://${tmpSvg}"`, { stdio: 'pipe' });
+    execFileSync(chromePath, ['--headless=new', `--screenshot=${masterPng}`, '--window-size=512,512', '--default-background-color=00000000', `file://${tmpSvg}`], { stdio: 'pipe' });
   } else {
-    execSync(`qlmanage -t -s 512 -o /tmp ${tmpSvg}`, { stdio: 'pipe' });
+    execFileSync('qlmanage', ['-t', '-s', '512', '-o', tempDir, tmpSvg], { stdio: 'pipe' });
   }
 
   // 3. Target paths
@@ -104,14 +106,14 @@ export function applyIcon(choiceKey = 'pure_orange_text') {
 
   for (const item of sizes) {
     const targetPng = path.join(rootDir, 'webapp/public', item.file);
-    execSync(`sips -z ${item.size} ${item.size} ${masterPng} --out ${targetPng}`, { stdio: 'pipe' });
+    execFileSync('sips', ['-z', String(item.size), String(item.size), masterPng, '--out', targetPng], { stdio: 'pipe' });
     console.log(`[build-icons] Generated ${item.file} (${item.size}x${item.size})`);
   }
 
   // 6. Generate favicon.ico via ffmpeg
   const icoTarget = path.join(rootDir, 'webapp/public/favicon.ico');
   const fav32 = path.join(rootDir, 'webapp/public/favicon-32.png');
-  execSync(`ffmpeg -y -i ${fav32} -s 32x32 ${icoTarget}`, { stdio: 'pipe' });
+  execFileSync('ffmpeg', ['-y', '-i', fav32, '-s', '32x32', icoTarget], { stdio: 'pipe' });
   console.log('[build-icons] Generated favicon.ico (32x32 ICO)');
 
   // 7. Update dist/ assets if dist/ exists
@@ -128,6 +130,7 @@ export function applyIcon(choiceKey = 'pure_orange_text') {
   }
 
   console.log(`[build-icons] Successfully rebuilt all icon assets with design [${choiceKey}]!`);
+  fs.rmSync(tempDir, { recursive: true, force: true });
 }
 
 // CLI Execution

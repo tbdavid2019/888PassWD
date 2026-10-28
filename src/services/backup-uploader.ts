@@ -127,8 +127,25 @@ function parseHttpDate(value: string): string | null {
   return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : null;
 }
 
+const XML_TAG_PATTERNS: Record<string, RegExp> = Object.assign(Object.create(null), {
+  response: /<(?:[^:>]+:)?response\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?response>/gi,
+  href: /<(?:[^:>]+:)?href\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?href>/gi,
+  resourcetype: /<(?:[^:>]+:)?resourcetype\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?resourcetype>/gi,
+  getcontentlength: /<(?:[^:>]+:)?getcontentlength\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?getcontentlength>/gi,
+  getlastmodified: /<(?:[^:>]+:)?getlastmodified\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?getlastmodified>/gi,
+  commonprefixes: /<(?:[^:>]+:)?commonprefixes\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?commonprefixes>/gi,
+  prefix: /<(?:[^:>]+:)?prefix\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?prefix>/gi,
+  contents: /<(?:[^:>]+:)?contents\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?contents>/gi,
+  key: /<(?:[^:>]+:)?key\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?key>/gi,
+  size: /<(?:[^:>]+:)?size\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?size>/gi,
+  lastmodified: /<(?:[^:>]+:)?lastmodified\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?lastmodified>/gi,
+  nextcontinuationtoken: /<(?:[^:>]+:)?nextcontinuationtoken\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?nextcontinuationtoken>/gi,
+});
+
 function extractXmlBlocks(xml: string, tagName: string): string[] {
-  const pattern = new RegExp(`<(?:[^:>]+:)?${tagName}\\b[^>]*>([\\s\\S]*?)</(?:[^:>]+:)?${tagName}>`, 'gi');
+  const pattern = XML_TAG_PATTERNS[tagName.toLowerCase()];
+  if (!pattern) return [];
+  pattern.lastIndex = 0;
   const blocks: string[] = [];
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(xml))) {
@@ -138,8 +155,10 @@ function extractXmlBlocks(xml: string, tagName: string): string[] {
 }
 
 function extractXmlFirst(xml: string, tagName: string): string | null {
-  const pattern = new RegExp(`<(?:[^:>]+:)?${tagName}\\b[^>]*>([\\s\\S]*?)</(?:[^:>]+:)?${tagName}>`, 'i');
-  const match = xml.match(pattern);
+  const pattern = XML_TAG_PATTERNS[tagName.toLowerCase()];
+  if (!pattern) return null;
+  pattern.lastIndex = 0;
+  const match = pattern.exec(xml);
   return match?.[1] ? decodeXmlText(match[1].trim()) : null;
 }
 
@@ -232,7 +251,8 @@ function ensureDestinationConfigReady(destination: BackupDestinationRecord): voi
 }
 
 function buildWebDavUrl(baseUrl: string, relativePath: string): string {
-  const trimmedBase = baseUrl.replace(/\/+$/, '');
+  let trimmedBase = baseUrl;
+  while (trimmedBase.endsWith('/')) trimmedBase = trimmedBase.slice(0, -1);
   const normalized = normalizeRelativePath(relativePath);
   return normalized ? `${trimmedBase}/${encodePathSegments(normalized)}` : trimmedBase;
 }
@@ -473,7 +493,9 @@ function isBucketHostedS3Endpoint(endpoint: URL, bucket: string): boolean {
 }
 
 function s3BucketBaseUrl(config: S3BackupDestination): URL {
-  const endpoint = new URL(config.endpoint.replace(/\/+$/, ''));
+  let endpointValue = config.endpoint;
+  while (endpointValue.endsWith('/')) endpointValue = endpointValue.slice(0, -1);
+  const endpoint = new URL(endpointValue);
   const bucket = config.bucket.trim();
 
   if (config.addressingStyle === 'virtual-hosted-style') {
@@ -482,11 +504,15 @@ function s3BucketBaseUrl(config: S3BackupDestination): URL {
     return endpoint;
   }
 
-  return new URL(`${endpoint.toString().replace(/\/+$/, '')}/${encodeURIComponent(bucket)}`);
+  let endpointUrl = endpoint.toString();
+  while (endpointUrl.endsWith('/')) endpointUrl = endpointUrl.slice(0, -1);
+  return new URL(`${endpointUrl}/${encodeURIComponent(bucket)}`);
 }
 
 function s3ObjectUrl(config: S3BackupDestination, objectKey: string): URL {
-  return new URL(`${s3BucketBaseUrl(config).toString().replace(/\/+$/, '')}/${encodePathSegments(objectKey)}`);
+  let bucketUrl = s3BucketBaseUrl(config).toString();
+  while (bucketUrl.endsWith('/')) bucketUrl = bucketUrl.slice(0, -1);
+  return new URL(`${bucketUrl}/${encodePathSegments(objectKey)}`);
 }
 
 function normalizeS3ObjectKey(config: S3BackupDestination, relativePath: string): string {
@@ -588,7 +614,8 @@ async function listS3Entries(config: S3BackupDestination, relativePath: string):
         : fullPrefix;
       const normalizedRelative = trimSlashes(relative);
       if (!normalizedRelative) continue;
-      const itemPath = normalizedRelative.replace(/\/+$/, '');
+      let itemPath = normalizedRelative;
+      while (itemPath.endsWith('/')) itemPath = itemPath.slice(0, -1);
       if ((parentPath(itemPath) || '') !== currentPath) continue;
       items.push({
         path: itemPath,

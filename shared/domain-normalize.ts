@@ -114,10 +114,10 @@ function extractHost(input: string): string {
     if (colonIndex > -1 && raw.indexOf(':') === colonIndex) raw = raw.slice(0, colonIndex);
   }
 
-  return raw
-    .replace(/^\*+\./, '')
-    .replace(/^\.+/, '')
-    .replace(/\.+$/, '');
+  if (raw.startsWith('*.')) raw = raw.slice(2);
+  while (raw.startsWith('.')) raw = raw.slice(1);
+  while (raw.endsWith('.')) raw = raw.slice(0, -1);
+  return raw;
 }
 
 function isValidHost(host: string): boolean {
