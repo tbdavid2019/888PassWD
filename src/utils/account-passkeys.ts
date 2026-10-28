@@ -68,7 +68,9 @@ function uuidToDotNetGuidBytes(value: string): Uint8Array | null {
 }
 
 function normalizeWebAuthnBase64(value: unknown): string {
-  return String(value || '').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  let normalized = String(value || '').replace(/\+/g, '-').replace(/\//g, '_');
+  while (normalized.endsWith('=')) normalized = normalized.slice(0, -1);
+  return normalized;
 }
 
 async function importHmacKey(secret: string): Promise<CryptoKey> {

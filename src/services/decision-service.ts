@@ -171,7 +171,6 @@ export function isPrivilegedAccount(username?: string): boolean {
 const DEFAULT_PRIMARY_URL = 'https://clef.create360.ai/v1/systemone';
 const DEFAULT_FALLBACK_Q4_URL = 'https://clef.aiurl.tw/v1/systemone';
 const DEFAULT_TYPESAFE_URL = 'https://api.typesafe.ai/v1/systemone';
-const DEFAULT_TYPESAFE_KEY = 'apikey_259d4143052cecd4163b1c9f0a242ce8261_dbb3e525dc222cbf9ffed9a63213f95ee18822f0bccda8b3baaff5461008ae55';
 
 const REQUEST_TIMEOUT_MS = 2000;
 
@@ -185,7 +184,7 @@ export class DecisionService {
     this.primaryUrl = this.env?.CLEF_PRIMARY_URL?.trim() || DEFAULT_PRIMARY_URL;
     this.fallbackQ4Url = this.env?.CLEF_FALLBACK_URL?.trim() || DEFAULT_FALLBACK_Q4_URL;
     this.typesafeUrl = this.env?.TYPESAFE_API_URL?.trim() || DEFAULT_TYPESAFE_URL;
-    this.typesafeKey = this.env?.TYPESAFE_API_KEY?.trim() || DEFAULT_TYPESAFE_KEY;
+    this.typesafeKey = this.env?.TYPESAFE_API_KEY?.trim() || '';
   }
 
   /**

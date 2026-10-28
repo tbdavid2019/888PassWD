@@ -95,18 +95,18 @@ async function getTableCreateSql(db: D1Database, table: BackupTableName): Promis
 }
 
 function buildShadowTableCreateSql(createSql: string, table: BackupTableName): string {
-  const tablePattern = new RegExp(`^CREATE TABLE(?:\\s+IF NOT EXISTS)?\\s+(?:\"${table}\"|${table})(?=\\s*\\()`, 'i');
-  let next = createSql.replace(tablePattern, `CREATE TABLE "${shadowTableName(table)}"`);
-  if (next === createSql) {
+  const tablePattern = /^CREATE TABLE(?:\s+IF NOT EXISTS)?\s+"?([A-Za-z_][A-Za-z0-9_]*)"?(?=\s*\()/i;
+  const createMatch = createSql.match(tablePattern);
+  if (createMatch?.[1] !== table) {
     throw new Error(`Restore shadow schema could not rewrite CREATE TABLE statement for ${table}`);
   }
-  for (const currentTable of BACKUP_TABLES) {
-    const referencePattern = new RegExp(`\\bREFERENCES\\s+(?:\"${currentTable}\"|${currentTable})(?=\\s*\\()`, 'gi');
-    next = next.replace(
-      referencePattern,
-      `REFERENCES "${shadowTableName(currentTable)}"`
-    );
-  }
+  let next = createSql.replace(tablePattern, `CREATE TABLE "${shadowTableName(table)}"`);
+  next = next.replace(
+    /\bREFERENCES\s+"?([A-Za-z_][A-Za-z0-9_]*)"?(?=\s*\()/gi,
+    (reference, referencedTable: string) => BACKUP_TABLES.includes(referencedTable as BackupTableName)
+      ? `REFERENCES "${shadowTableName(referencedTable as BackupTableName)}"`
+      : reference
+  );
   return next;
 }
 

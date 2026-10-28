@@ -110,6 +110,9 @@ npx wrangler secret put JWT_SECRET
 # 設定 Resend API 金鑰以啟用 Email 2FA OTP 發信（可選）
 npx wrangler secret put RESEND_API_KEY
 
+# 設定 TypeSafe API 金鑰以啟用決策服務最後一層備援（可選）
+npx wrangler secret put TYPESAFE_API_KEY
+
 # 自訂發信寄件人名稱與信箱（可選）
 npx wrangler secret put RESEND_FROM
 ```

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import {
   Check,
-  CheckCircle2,
   FolderCheck,
   FolderPlus,
   Globe2,
@@ -18,7 +17,6 @@ import type {
   VaultCategorizeItemResult,
   VaultCategorizeResponse,
 } from '@/lib/api/vault';
-import { t } from '@/lib/i18n';
 
 interface VaultSmartCategorizeDialogProps {
   open: boolean;

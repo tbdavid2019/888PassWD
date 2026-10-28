@@ -20,8 +20,17 @@ const localeFiles = [
   ['sv', 'sv.ts', 'sv', 'Swedish'],
 ];
 
+const allowedLocaleFiles = new Set(localeFiles.map(([, fileName]) => fileName));
+
+function resolveLocaleFile(fileName) {
+  if (!allowedLocaleFiles.has(fileName)) throw new Error(`Unsupported locale file: ${fileName}`);
+  const resolved = path.resolve(localeDir, fileName);
+  if (!resolved.startsWith(`${localeDir}${path.sep}`)) throw new Error('Locale file path escapes the locale directory');
+  return resolved;
+}
+
 function readLocale(fileName, variableName) {
-  let code = fs.readFileSync(path.join(localeDir, fileName), 'utf8');
+  let code = fs.readFileSync(resolveLocaleFile(fileName), 'utf8');
   code = code
     .replace(/const (\w+): Record<string, string> =/g, 'const $1 =')
     .replace(/export default \w+;\s*$/m, '');
@@ -35,7 +44,7 @@ function readLocale(fileName, variableName) {
 function writeLocale(fileName, variableName, table, header) {
   const body = JSON.stringify(table, null, 2);
   fs.writeFileSync(
-    path.join(localeDir, fileName),
+    resolveLocaleFile(fileName),
     `${header}\nconst ${variableName}: Record<string, string> = ${body};\n\nexport default ${variableName};\n`,
     'utf8'
   );

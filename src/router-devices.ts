@@ -22,8 +22,23 @@ import {
   handleReportLostTrust,
 } from './handlers/devices';
 
-function devicesPath(pattern: string): RegExp {
-  return new RegExp(`^/(?:api/)?devices${pattern}$`, 'i');
+const DEVICE_PATH_PATTERNS = {
+  '/authorized/([^/]+)': /^\/(?:api\/)?devices\/authorized\/([^/]+)$/i,
+  '/authorized/([^/]+)/permanent': /^\/(?:api\/)?devices\/authorized\/([^/]+)\/permanent$/i,
+  '/([^/]+)': /^\/(?:api\/)?devices\/([^/]+)$/i,
+  '/([^/]+)/name': /^\/(?:api\/)?devices\/([^/]+)\/name$/i,
+  '/identifier/([^/]+)': /^\/(?:api\/)?devices\/identifier\/([^/]+)$/i,
+  '/([^/]+)/keys': /^\/(?:api\/)?devices\/([^/]+)\/keys$/i,
+  '/identifier/([^/]+)/keys': /^\/(?:api\/)?devices\/identifier\/([^/]+)\/keys$/i,
+  '/identifier/([^/]+)/token': /^\/(?:api\/)?devices\/identifier\/([^/]+)\/token$/i,
+  '/identifier/([^/]+)/web-push-auth': /^\/(?:api\/)?devices\/identifier\/([^/]+)\/web-push-auth$/i,
+  '/identifier/([^/]+)/clear-token': /^\/(?:api\/)?devices\/identifier\/([^/]+)\/clear-token$/i,
+  '/([^/]+)/retrieve-keys': /^\/(?:api\/)?devices\/([^/]+)\/retrieve-keys$/i,
+  '/([^/]+)/deactivate': /^\/(?:api\/)?devices\/([^/]+)\/deactivate$/i,
+} as const;
+
+function devicesPath(pattern: keyof typeof DEVICE_PATH_PATTERNS): RegExp {
+  return DEVICE_PATH_PATTERNS[pattern];
 }
 
 export async function handleAuthenticatedDeviceRoute(

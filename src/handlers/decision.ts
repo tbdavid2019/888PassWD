@@ -1,5 +1,5 @@
 import type { Env } from '../types';
-import { jsonResponse, errorResponse } from '../utils/response';
+import { jsonResponse } from '../utils/response';
 import {
   DecisionService,
   type VaultTriageItemInput,
