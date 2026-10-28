@@ -12,6 +12,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Keep password-security assessment results in memory and clear the older browser-local cache. Profile snapshots no longer persist the master-password hint.
 - Pin deployment actions, scope workflow token permissions, add Dependabot cooldowns, and update vulnerable npm packages.
 
+## [v2026.10.28] - 2026-10-28
+
+### Added
+- **🛡️ 接入 Cloudflare Turnstile 機器人防禦、降階可用（Fail-Open）與零打擾 Clearance Cookie 機制**:
+  - **Web Vault 註冊與登入邊緣防護**：於 Web Vault（`webapp/`）整合 Cloudflare Turnstile，全面防堵惡意機器人爆破帳號與大量偽造註冊，守護 Cloudflare Workers / D1 帳單。
+  - **零打擾（Zero Disturbance）極致體驗**：
+    - 採用按需動態排程與免干擾容器（預設隱藏，僅在真人校驗時於右下角浮動呼出）。
+    - 智慧 Clearance 免驗機制：驗證通過後核發安全 `nw_turnstile_cleared` Cookie 與 `sessionStorage` 快取，2 小時內日常操作完全零打擾。
+  - **官方原生客戶端平滑相容（Native Apps Exemption）**：
+    - 嚴格識別原生 Bitwarden 官方客戶端（iOS、Android、Chrome/Firefox/Edge 擴充套件、桌面端與 CLI `bw`），豁免 Turnstile 挑戰，維持密碼庫自動填充與背景同步體驗順暢無阻。
+  - **全方位高可用容錯（Graceful Degradation / Fail-Open）**：
+    - 內建 5 秒逾時保護；當 Cloudflare Siteverify 出現 5xx 或網路中斷時自動降階放行，絕不卡死使用者登入。
+  - **單元測試防護**：新增 `scripts/turnstile.test.ts` 與 `npm run test:turnstile`，驗證金鑰偵測、Siteverify 校驗、憑據生命週期與容錯降階。
+
 ## [v2026.10.22] - 2026-10-22
 
 ### Changed

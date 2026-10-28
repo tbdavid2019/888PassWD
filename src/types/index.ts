@@ -24,6 +24,10 @@ export interface Env {
   CLEF_FALLBACK_URL?: string;
   TYPESAFE_API_URL?: string;
   TYPESAFE_API_KEY?: string;
+  TURNSTILE_SITE_KEY?: string;
+  TURNSTILE_SECRET_KEY?: string;
+  TURNSTILE_SECRET?: string;
+  TURNSTILE_FAIL_OPEN?: string;
 }
 
 export type UserRole = 'admin' | 'user';

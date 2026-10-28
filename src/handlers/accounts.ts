@@ -19,6 +19,7 @@ import {
 } from '../services/yubico-config';
 import { isResendConfigured, sendTwoFactorOtpEmail } from '../services/resend-service';
 import { generate6DigitOtp } from '../services/storage-email-2fa-repo';
+import { verifyTurnstileAccess, isTurnstileEnabled } from '../services/turnstile';
 
 const TWO_FACTOR_PROVIDER_AUTHENTICATOR = 0;
 const TWO_FACTOR_PROVIDER_EMAIL = 1;
@@ -292,6 +293,17 @@ export async function handleRegister(request: Request, env: Env): Promise<Respon
     return errorResponse('Invalid JSON', 400);
   }
 
+  let turnstileSetCookie: string | null = null;
+  if (isTurnstileEnabled(env)) {
+    const turnstileCheck = await verifyTurnstileAccess(request, env);
+    if (!turnstileCheck.ok) {
+      return errorResponse('Turnstile verification required', 403);
+    }
+    if (turnstileCheck.setCookieHeader) {
+      turnstileSetCookie = turnstileCheck.setCookieHeader;
+    }
+  }
+
   const email = body.email?.toLowerCase().trim();
   const name = body.name?.trim() || email;
   const masterPasswordHash = body.masterPasswordHash;
@@ -376,7 +388,8 @@ export async function handleRegister(request: Request, env: Env): Promise<Respon
       level: 'security',
       metadata: { email: user.email, ...auditRequestMetadata(request) },
     });
-    return jsonResponse({ success: true, role: user.role }, 200);
+    const regHeaders = turnstileSetCookie ? { 'Set-Cookie': turnstileSetCookie } : undefined;
+    return jsonResponse({ success: true, role: user.role }, 200, regHeaders);
   }
 
   if (!inviteCode) {
@@ -420,7 +433,8 @@ export async function handleRegister(request: Request, env: Env): Promise<Respon
     metadata: { email: user.email, inviteCode, ...auditRequestMetadata(request) },
   });
 
-  return jsonResponse({ success: true, role: user.role }, 200);
+  const regHeaders = turnstileSetCookie ? { 'Set-Cookie': turnstileSetCookie } : undefined;
+  return jsonResponse({ success: true, role: user.role }, 200, regHeaders);
 }
 
 // POST /api/accounts/password-hint

@@ -419,6 +419,7 @@ export interface WebBootstrapResponse {
   registrationInviteRequired?: boolean;
   webAuthnAllowedOrigins?: string[];
   websiteIconsEnabled?: boolean;
+  turnstileSiteKey?: string;
 }
 
 export interface YubiKeyOtpSettings {

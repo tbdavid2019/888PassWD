@@ -23,6 +23,8 @@ const DEFAULT_CORS_HEADERS = [
   'X-Device-Identifier',
   'X-Device-Name',
   'X-NodeWarden-Web-Session',
+  'cf-turnstile-response',
+  'x-turnstile-token',
 ];
 
 function isWildcardCorsPath(path: string): boolean {

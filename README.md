@@ -53,6 +53,7 @@
 | Fill-assist | ✅ | ✅ | `POST /fill-assist`|
 | **AI Edge Decision Intelligence** | ❌ | ✅ | **Clef-Flash & TypeSafe Jev (<200ms), 4-tier fail-open fallback** |
 | **Security Triage (P0-P3)** | ❌ | ✅ | **Automated breach & weak password prioritization with caching** |
+| **Bot Defense & Anti-Abuse** | ❌ | ✅ | **Cloudflare Turnstile, zero-disturbance clearance cookie, native app pass-through** |
 | **Smart Website Categorization** | ❌ | ✅ | **AI folder & tag recommendations with 1-click batch move** |
 | Organizations / collections / roles | ✅ | ❌ | Not implemented |
 | SSO / SCIM / directory | ✅ | ❌ | Not implemented |

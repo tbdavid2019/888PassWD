@@ -49,6 +49,7 @@ export interface WebBootstrapResponse {
   registrationInviteRequired: boolean;
   webAuthnAllowedOrigins: string[];
   websiteIconsEnabled: boolean;
+  turnstileSiteKey?: string;
 }
 
 function isWebsiteIconProxyEnabled(env: Env): boolean {
@@ -283,6 +284,7 @@ export async function buildWebBootstrapResponse(env: Env): Promise<WebBootstrapR
     registrationInviteRequired: userCount > 0,
     webAuthnAllowedOrigins: getConfiguredWebAuthnAllowedOrigins(env),
     websiteIconsEnabled: isWebsiteIconProxyEnabled(env),
+    turnstileSiteKey: env.TURNSTILE_SITE_KEY || '',
   };
 }
 

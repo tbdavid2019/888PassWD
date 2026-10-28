@@ -28,6 +28,7 @@ import { createPasskeyUserVerificationToken } from '../utils/user-verification-t
 import { constantTimeEquals, verifyApiKey } from '../utils/api-key';
 import { isYubiKeyEnabled, userYubiKeyPublicIds, verifyYubicoOtp, yubiKeyPublicIdFromOtp } from '../utils/yubico-otp';
 import { getYubicoCredentials, initializeYubicoCredentialsOnce } from '../services/yubico-config';
+import { verifyTurnstileAccess, isTurnstileEnabled } from '../services/turnstile';
 import { isResendConfigured, sendTwoFactorOtpEmail } from '../services/resend-service';
 import { generate6DigitOtp } from '../services/storage-email-2fa-repo';
 
@@ -404,6 +405,15 @@ export async function handleToken(request: Request, env: Env): Promise<Response>
       // Bitwarden clients expect OAuth-style error fields.
       return identityErrorResponse('Email and password are required', 'invalid_request', 400);
     }
+
+    const isWebVault = (deviceInfo.deviceType === 14 || request.headers.get('X-NodeWarden-Web-Session') === '1');
+    if (isWebVault && isTurnstileEnabled(env)) {
+      const turnstileCheck = await verifyTurnstileAccess(request, env, body['cf-turnstile-response']);
+      if (!turnstileCheck.ok) {
+        return identityErrorResponse('Turnstile verification required', 'invalid_request', 400);
+      }
+    }
+
     const loginIdentifier = await loginRateLimitKey(clientIdentifier!, grantType, email);
 
     // Check login lockout before user lookup to reduce user-enumeration signal

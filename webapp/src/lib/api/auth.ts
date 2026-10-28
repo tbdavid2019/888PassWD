@@ -21,6 +21,7 @@ import type {
 import type { AccountPasskeyAssertion, AccountPasskeyPrfKeySet } from '../account-passkeys';
 import { recordNodeWardenReachable, recordNodeWardenUnreachable } from '../network-status';
 import { parseJson, type AuthedFetch, type SessionSetter } from './shared';
+import { acquireTurnstileToken } from '../turnstile';
 
 const SESSION_KEY = 'nodewarden.web.session.v4';
 const PROFILE_SNAPSHOT_KEY = 'nodewarden.web.profile-snapshot.v1';
@@ -289,11 +290,17 @@ export async function loginWithPassword(
       body.set('twoFactorRemember', '1');
     }
   }
+  const turnstileToken = await acquireTurnstileToken();
+  if (turnstileToken) {
+    body.set('cf-turnstile-response', turnstileToken);
+  }
+
   const resp = await fetch('/identity/connect/token', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       [WEB_SESSION_HEADER]: '1',
+      ...(turnstileToken ? { 'cf-turnstile-response': turnstileToken } : {}),
     },
     body: body.toString(),
     signal: options?.signal,
@@ -329,11 +336,17 @@ export async function loginWithAccountPasskeyAssertion(assertion: AccountPasskey
   body.set('deviceName', guessDeviceName());
   body.set('deviceType', '14');
 
+  const turnstileToken = await acquireTurnstileToken();
+  if (turnstileToken) {
+    body.set('cf-turnstile-response', turnstileToken);
+  }
+
   const resp = await fetch('/identity/connect/token', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
       [WEB_SESSION_HEADER]: '1',
+      ...(turnstileToken ? { 'cf-turnstile-response': turnstileToken } : {}),
     },
     body: body.toString(),
   });
@@ -458,9 +471,13 @@ export async function registerAccount(args: {
     const privateKey = new Uint8Array(await webCrypto.subtle.exportKey('pkcs8', keyPair.privateKey));
     const encryptedPrivateKey = await encryptBw(privateKey, sym.slice(0, 32), sym.slice(32, 64));
 
+    const turnstileToken = await acquireTurnstileToken();
     const resp = await fetch('/api/accounts/register', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(turnstileToken ? { 'cf-turnstile-response': turnstileToken } : {}),
+      },
       body: JSON.stringify({
         email: email.toLowerCase(),
         name,
