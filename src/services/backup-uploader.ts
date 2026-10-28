@@ -127,10 +127,25 @@ function parseHttpDate(value: string): string | null {
   return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : null;
 }
 
+const XML_TAG_PATTERNS: Record<string, RegExp> = Object.assign(Object.create(null), {
+  response: /<(?:[^:>]+:)?response\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?response>/gi,
+  href: /<(?:[^:>]+:)?href\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?href>/gi,
+  resourcetype: /<(?:[^:>]+:)?resourcetype\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?resourcetype>/gi,
+  getcontentlength: /<(?:[^:>]+:)?getcontentlength\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?getcontentlength>/gi,
+  getlastmodified: /<(?:[^:>]+:)?getlastmodified\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?getlastmodified>/gi,
+  commonprefixes: /<(?:[^:>]+:)?commonprefixes\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?commonprefixes>/gi,
+  prefix: /<(?:[^:>]+:)?prefix\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?prefix>/gi,
+  contents: /<(?:[^:>]+:)?contents\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?contents>/gi,
+  key: /<(?:[^:>]+:)?key\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?key>/gi,
+  size: /<(?:[^:>]+:)?size\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?size>/gi,
+  lastmodified: /<(?:[^:>]+:)?lastmodified\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?lastmodified>/gi,
+  nextcontinuationtoken: /<(?:[^:>]+:)?nextcontinuationtoken\b[^>]*>([\s\S]*?)<\/(?:[^:>]+:)?nextcontinuationtoken>/gi,
+});
+
 function extractXmlBlocks(xml: string, tagName: string): string[] {
-  if (!/^[A-Za-z][A-Za-z0-9:_-]{0,63}$/.test(tagName)) return [];
-  const safeTagName = tagName;
-  const pattern = new RegExp(`<(?:[^:>]+:)?${safeTagName}\\b[^>]*>([\\s\\S]*?)</(?:[^:>]+:)?${safeTagName}>`, 'gi');
+  const pattern = XML_TAG_PATTERNS[tagName.toLowerCase()];
+  if (!pattern) return [];
+  pattern.lastIndex = 0;
   const blocks: string[] = [];
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(xml))) {
@@ -140,10 +155,10 @@ function extractXmlBlocks(xml: string, tagName: string): string[] {
 }
 
 function extractXmlFirst(xml: string, tagName: string): string | null {
-  if (!/^[A-Za-z][A-Za-z0-9:_-]{0,63}$/.test(tagName)) return null;
-  const safeTagName = tagName;
-  const pattern = new RegExp(`<(?:[^:>]+:)?${safeTagName}\\b[^>]*>([\\s\\S]*?)</(?:[^:>]+:)?${safeTagName}>`, 'i');
-  const match = xml.match(pattern);
+  const pattern = XML_TAG_PATTERNS[tagName.toLowerCase()];
+  if (!pattern) return null;
+  pattern.lastIndex = 0;
+  const match = pattern.exec(xml);
   return match?.[1] ? decodeXmlText(match[1].trim()) : null;
 }
 

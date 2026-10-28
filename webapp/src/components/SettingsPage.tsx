@@ -50,7 +50,6 @@ type ThemePreference = 'system' | 'light' | 'dark';
 type SettingsSection = 'appearance' | 'session' | 'masterPassword' | 'twoStep' | 'keys';
 
 type MasterPasswordPromptAction =
-  | 'enableTotp'
   | 'recovery'
   | 'apiKey'
   | 'rotateApiKey'
@@ -212,15 +211,6 @@ export default function SettingsPage(props: SettingsPageProps) {
     return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
   }, [props.profile.email, secret]);
 
-  async function enableTotp(): Promise<void> {
-    if (totpLocked) return;
-    if (!secret.trim() || !token.trim()) {
-      props.onNotify?.('error', t('txt_secret_and_code_are_required'));
-      return;
-    }
-    openMasterPasswordPrompt('enableTotp');
-  }
-
   async function refreshAccountPasskeys(): Promise<void> {
     setAccountPasskeysLoading(true);
     try {
@@ -250,10 +240,7 @@ export default function SettingsPage(props: SettingsPageProps) {
     const masterPassword = masterPasswordPromptValue;
     setMasterPasswordPromptSubmitting(true);
     try {
-      if (masterPasswordPrompt === 'enableTotp') {
-        await props.onEnableTotp(secret, token, masterPassword);
-        setTotpLocked(true);
-      } else if (masterPasswordPrompt === 'recovery') {
+      if (masterPasswordPrompt === 'recovery') {
         const code = await props.onGetRecoveryCode(masterPassword);
         setRecoveryCode(code);
         setRecoveryCodeDialogOpen(true);
@@ -312,9 +299,7 @@ export default function SettingsPage(props: SettingsPageProps) {
   }
 
   const masterPasswordPromptTitle =
-    masterPasswordPrompt === 'enableTotp'
-      ? t('txt_enable_totp')
-      : masterPasswordPrompt === 'recovery'
+    masterPasswordPrompt === 'recovery'
       ? t('txt_view_recovery_code')
       : masterPasswordPrompt === 'rotateApiKey'
         ? t('txt_rotate_api_key')

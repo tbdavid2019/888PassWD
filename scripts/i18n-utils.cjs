@@ -20,12 +20,11 @@ const localeFiles = [
   ['sv', 'sv.ts', 'sv', 'Swedish'],
 ];
 
-const allowedLocaleFiles = new Set(localeFiles.map(([, fileName]) => fileName));
+const localePaths = new Map(localeFiles.map(([, fileName]) => [fileName, path.join(localeDir, fileName)]));
 
 function resolveLocaleFile(fileName) {
-  if (!allowedLocaleFiles.has(fileName)) throw new Error(`Unsupported locale file: ${fileName}`);
-  const resolved = path.resolve(localeDir, fileName);
-  if (!resolved.startsWith(`${localeDir}${path.sep}`)) throw new Error('Locale file path escapes the locale directory');
+  const resolved = localePaths.get(fileName);
+  if (!resolved) throw new Error(`Unsupported locale file: ${fileName}`);
   return resolved;
 }
 

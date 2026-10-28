@@ -19,8 +19,15 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+const SQL_TABLE_REFERENCE_PATTERN = /\b(?:from|into|table)\s+["']?([A-Za-z_][A-Za-z0-9_]*)\b/gi;
+
 function sqlTouchesTable(sql, table) {
-  return new RegExp(`\\b(?:from|into|table)\\s+[\"']?${table}\\b`, 'i').test(sql);
+  SQL_TABLE_REFERENCE_PATTERN.lastIndex = 0;
+  let match;
+  while ((match = SQL_TABLE_REFERENCE_PATTERN.exec(sql))) {
+    if (match[1].toLowerCase() === table.toLowerCase()) return true;
+  }
+  return false;
 }
 
 function emptyBackupDb(extra = {}) {

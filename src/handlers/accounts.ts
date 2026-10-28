@@ -194,7 +194,9 @@ function readNestedString(source: unknown, path: string[]): string {
   for (const key of path) {
     if (key === '__proto__' || key === 'prototype' || key === 'constructor') return '';
     if (!current || typeof current !== 'object') return '';
-    current = (current as Record<string, unknown>)[key];
+    const property = Object.getOwnPropertyDescriptor(current, key);
+    if (!property) return '';
+    current = property.value;
   }
   return typeof current === 'string' ? current : '';
 }
@@ -204,7 +206,9 @@ function readNestedNumber(source: unknown, path: string[]): number | undefined {
   for (const key of path) {
     if (key === '__proto__' || key === 'prototype' || key === 'constructor') return undefined;
     if (!current || typeof current !== 'object') return undefined;
-    current = (current as Record<string, unknown>)[key];
+    const property = Object.getOwnPropertyDescriptor(current, key);
+    if (!property) return undefined;
+    current = property.value;
   }
   return typeof current === 'number' ? current : undefined;
 }

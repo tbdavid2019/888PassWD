@@ -778,7 +778,7 @@ export class DecisionService {
         uri.includes('colab.google')
       ) {
         let matchedFolder: ExistingFolderInput | null = null;
-        let defaultFolderName = '內部網路';
+        let defaultFolderName: string;
         const tags: string[] = ['#內網'];
 
         if (uri.includes('10.') || combined.includes('10.') || combined.includes('區網10')) {
